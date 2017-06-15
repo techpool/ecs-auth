@@ -1,0 +1,12 @@
+FROM $DOCKER_REPO/node:8.0.0
+
+COPY package.json .
+RUN npm install
+
+EXPOSE 80
+
+COPY server.js .
+COPY AccessTokenService.js .
+COPY config/main.js config/main.js
+
+CMD [ "npm", "start" ]

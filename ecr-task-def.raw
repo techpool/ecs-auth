@@ -1,0 +1,20 @@
+{
+    "family": "auth",
+    "networkMode": "bridge",
+    "containerDefinitions": [
+        {
+            "name": "auth",
+            "image": "$AWS_PROJ_ID.dkr.ecr.ap-southeast-1.amazonaws.com/$APP_NAME:$APP_VERSION",
+            "cpu": 100,
+            "memory": 256,
+            "portMappings": [
+                {
+                    "hostPort": 0,
+                    "containerPort": 80,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": true
+        }
+    ]
+}
