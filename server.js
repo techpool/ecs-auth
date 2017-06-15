@@ -85,5 +85,5 @@ var server = app.listen(app.get('port'), function () {
    var host = server.address().address
    var port = server.address().port
    
-   log.info("App listening at http://%s:%s", host, port)
+   //log.info("App listening at http://%s:%s", host, port)
 })
