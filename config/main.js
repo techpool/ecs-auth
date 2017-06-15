@@ -1,13 +1,13 @@
 var config = {};
 
-config.development = {
+config.devo = {
   'ACCESS_TOKEN_DATASTORE_PROJECT': 'devo-pratilipi',
   'API_ORCHESTRATOR_PORT': 80,
   'LOGGING_PROJECT': 'devo-pratilipi',
   'METRIC_PROJECT': 'devo-pratilipi',
 };
 
-config.production = {
+config.prod = {
   'ACCESS_TOKEN_DATASTORE_PROJECT': 'prod-pratilipi',
   'API_ORCHESTRATOR_PORT': 80,
   'LOGGING_PROJECT': 'pratilipi-157909',

@@ -3,7 +3,7 @@
 var express = require('express');
 
 // Load Configurations
-var config = require( './config/main' )[ process.env.NODE_ENV ];
+var config = require( './config/main' )[ process.env.STAGE ];
 
 //Initialize app
 const app = express();
