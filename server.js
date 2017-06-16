@@ -76,7 +76,7 @@ app.use( ( request,response, next ) => {
 
 //Request Handlers
 app.get("/auth/*", function (req, res) {
-	var log = request.log;
+	var log = req.log;
 	var data = "Request is authorized";
 	res.status(204).send();
 	log.info(data);
