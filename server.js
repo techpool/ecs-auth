@@ -75,7 +75,7 @@ app.get("/health", function (req, res) {
 	res.status("200").send(message);
 });
 
-app.get("/authorize", function (req, res) {
+app.get("auth/authorize", function (req, res) {
 	res.status(204).send();
 });
 
