@@ -1,17 +1,13 @@
 var config = {};
 
 config.devo = {
-  'ACCESS_TOKEN_DATASTORE_PROJECT': 'devo-pratilipi',
-  'API_ORCHESTRATOR_PORT': 80,
-  'LOGGING_PROJECT': 'devo-pratilipi',
-  'METRIC_PROJECT': 'devo-pratilipi',
+  'PORT': 80,
+  'SERVICE': 'devo-auth-aws'
 };
 
 config.prod = {
-  'ACCESS_TOKEN_DATASTORE_PROJECT': 'prod-pratilipi',
-  'API_ORCHESTRATOR_PORT': 80,
-  'LOGGING_PROJECT': 'pratilipi-157909',
-  'METRIC_PROJECT': 'pratilipi-157909',
+  'PORT': 80,
+  'SERVICE': 'prod-auth-aws'
 };
 
 module.exports = config;
