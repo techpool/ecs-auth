@@ -48,26 +48,31 @@ app.get("/health", function (req, res) {
  * before reaching the handlers
  */ 
 app.use( ( request,response, next ) => {
-	
 	request.accessToken = request.headers.accesstoken;
 	//log.info( 'accessToken ' + request.accessToken );
 	var existingUserId = accessTokenUserIdHash[ request.accessToken ];
 	if( existingUserId ) {
+		var data = "Reading user-id from hash";
 		response.header('User-Id' , existingUserId );
+		request.log.info(data);
+		request.log.submit( 204, data.length );
 		next();
 	 } else {
 		 accessTokenService
      	.getUserId( request.accessToken )
      	.then( ( userId ) => {
+     		var data = "Reading user-id from gcp";
      		response.header('User-Id' , userId );
      		accessTokenUserIdHash[ request.accessToken ] = userId;
+     		request.log.info(data);
+    		request.log.submit( 204, data.length );
      		next();
      	})
      	.catch( ( err ) => {
      		var data = 'You are not authorized!';
      		response.status( 403 ).send( data );
-     		log.error( JSON.stringify( err ) );
-     		log.submit( 403, data.length );
+     		request.log.error( JSON.stringify( err ) );
+     		request.log.submit( 403, data.length );
      		latencyMetric.write( Date.now() - request.startTimestamp );
      	});
 	}
