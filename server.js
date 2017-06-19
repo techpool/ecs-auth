@@ -23,6 +23,13 @@ const Metric = require( './lib/MetricGcp.js' ).init({
 	service: config.SERVICE
 });
 
+const redisUtility = require( './lib/RedisUtility.js' ) ( {
+  port : config.REDIS_HOST_PORT,
+  hostIp : config.REDIS_HOST_IP,
+  resourceType : config.REDIS_KIND,
+  db : 3
+});
+
 
 const latencyMetric = new Metric( 'int64', 'Latency' );
 
@@ -49,33 +56,39 @@ app.get("/health", function (req, res) {
  */ 
 app.use( ( request,response, next ) => {
 	request.accessToken = request.headers.accesstoken;
-	//log.info( 'accessToken ' + request.accessToken );
-	var existingUserId = accessTokenUserIdHash[ request.accessToken ];
-	if( existingUserId ) {
-		var data = "Reading user-id from hash";
-		response.header('User-Id' , existingUserId );
-		request.log.info(data);
-		request.log.submit( 204, data.length );
-		next();
-	 } else {
-		 accessTokenService
-     	.getUserId( request.accessToken )
-     	.then( ( userId ) => {
-     		var data = "Reading user-id from gcp";
-     		response.header('User-Id' , userId );
-     		accessTokenUserIdHash[ request.accessToken ] = userId;
-     		request.log.info(data);
-    		request.log.submit( 204, data.length );
-     		next();
-     	})
-     	.catch( ( err ) => {
-     		var data = 'You are not authorized!';
-     		response.status( 403 ).send( data );
-     		request.log.error( JSON.stringify( err ) );
-     		request.log.submit( 403, data.length );
-     		latencyMetric.write( Date.now() - request.startTimestamp );
-     	});
-	}
+	var promise =  redisUtility.getResourceFromRedis(request.accessToken)
+	.catch((error) => {
+	    var error = 'Redis Get id Error';
+	    request.log.submit(500,error.length);
+	  })
+	.then((value) => {
+		if( value !== null ) {
+        		request.log.info("The user-id is "+value);
+				response.header('User-Id' , value );
+				next();
+		} else {
+			 accessTokenService
+	     	.getUserId( request.accessToken )
+	     	.then( ( userId ) => {
+	     		request.log.info("Reading user-id from gcp : "+userId);
+	     		response.header('User-Id' , userId );
+	    		redisUtility.insertResourceInRedis( request.accessToken, userId )
+	             .catch((error) => {
+	            	  var error = 'Redis Insert ids Error';
+	            	 request.log.submit( 500, error.length );
+	              });
+	     		next();
+	     	})
+	     	.catch( ( err ) => {
+	     		var data = 'You are not authorized!';
+	     		response.status( 403 ).send( data );
+	     		request.log.error( JSON.stringify( err ) );
+	     		request.log.submit( 403, data.length );
+	     		latencyMetric.write( Date.now() - request.startTimestamp );
+	     	});
+		}
+	});
+
 });
 
 
@@ -86,6 +99,7 @@ app.get("/auth/*", function (req, res) {
 	res.status(204).send();
 	log.info(data);
 	log.submit( 204, data.length );
+	latencyMetric.write( Date.now() - request.startTimestamp );
 });
 
 
@@ -93,6 +107,4 @@ app.get("/auth/*", function (req, res) {
 var server = app.listen(app.get('port'), function () {
    var host = server.address().address
    var port = server.address().port
-   
-   //log.info("App listening at http://%s:%s", host, port)
 })

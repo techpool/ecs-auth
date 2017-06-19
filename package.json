@@ -6,11 +6,13 @@
     "start": "node server.js"
   },
   "dependencies": {
-	"@google-cloud/datastore": "^1.0.0",
+    "@google-cloud/datastore": "^1.0.0",
     "@google-cloud/trace-agent": "^1.0.3",
     "@google-cloud/monitoring": "^0.2.0",
     "cookie-parser": "^1.4.3",
-    "express": "^4.15.2"
+    "express": "^4.15.2",
+    "bluebird": "^3.5.0",
+    "redis": "^2.7.1"
   },
   "author": "Giridhar"
 }
