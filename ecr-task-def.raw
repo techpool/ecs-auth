@@ -1,11 +1,12 @@
 {
-    "family": "auth",
+    "family": "$APP_NAME",
     "networkMode": "bridge",
     "containerDefinitions": [
         {
             "name": "auth",
-            "image": "$AWS_PROJ_ID.dkr.ecr.ap-southeast-1.amazonaws.com/$APP_NAME:$APP_VERSION",
-            "cpu": 100,
+            "image": "$DOCKER_REPO/$APP_NAME:$APP_VERSION",
+            "cpu": 64,
+            "memoryReservation": 512,
             "memory": 256,
             "portMappings": [
                 {
@@ -14,7 +15,14 @@
                     "protocol": "tcp"
                 }
             ],
-            "essential": true
+            "essential": true,
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "$STAGE-$APP_NAME",
+                    "awslogs-region": "ap-southeast-1"
+                }
+            }
         }
     ]
 }
