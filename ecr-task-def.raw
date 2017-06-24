@@ -6,7 +6,7 @@
             "name": "auth",
             "image": "$DOCKER_REPO/$APP_NAME:$APP_VERSION",
             "cpu": 64,
-            "memoryReservation": 512,
+            "memoryReservation": 128,
             "memory": 256,
             "portMappings": [
                 {
