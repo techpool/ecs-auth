@@ -23,17 +23,30 @@ const Metric = require( './lib/MetricGcp.js' ).init({
 	service: config.SERVICE
 });
 
+/*
 const redisUtility = require( './lib/RedisUtility.js' ) ( {
   port : config.REDIS_HOST_PORT,
   hostIp : config.REDIS_HOST_IP,
   resourceType : config.REDIS_KIND,
   db : 3
 });
+*/
+
+const cacheUtility = require('./lib/CacheUtility.js')({
+	port : config.REDIS_HOST_PORT,
+	hostIp : config.REDIS_HOST_IP,
+	resource : config.REDIS_KIND,
+	db : 3
+});
 
 
 const latencyMetric = new Metric( 'int64', 'Latency' );
 
 var accessTokenUserIdHash = {};
+
+function User(id) {
+    this.id = id;
+}
 
 //for initializing log object
 app.use((request, response, next) => {
@@ -56,31 +69,38 @@ app.get("/health", function (req, res) {
  */ 
 app.use( ( request,response, next ) => {
 	request.accessToken = request.headers.accesstoken;
-	var promise =  redisUtility.getResourceFromRedis(request.accessToken)
+	//var promise =  redisUtility.getResourceFromRedis(request.accessToken)
+	var promise =  cacheUtility.get(request.accessToken)
 	.catch((error) => {
 	    var error = 'Redis Get id Error';
+	    console.log('Redis Get id Error');
 	    request.log.submit(500,error.length);
 	  })
-	.then((value) => {
-		if( value !== null ) {
-        		request.log.info("The user-id is "+value);
-				response.header('User-Id' , value );
+	.then((user) => {
+		if( user !== null ) {
+				console.log('Got user-id from redis');
+        		request.log.info("The user-id is "+user.id);
+				response.header('User-Id' , user.id );
 				next();
 		} else {
 			 accessTokenService
 	     	.getUserId( request.accessToken )
 	     	.then( ( userId ) => {
 	     		request.log.info("Reading user-id from gcp : "+userId);
+	     		console.log("Reading user-id from gcp : "+userId);
 	     		response.header('User-Id' , userId );
-	    		redisUtility.insertResourceInRedis( request.accessToken, userId )
+	     		var user = new User(userId);
+	     		cacheUtility.insert( request.accessToken, user )
 	             .catch((error) => {
 	            	  var error = 'Redis Insert ids Error';
+	            	  request.log.error(error);
 	            	 request.log.submit( 500, error.length );
 	              });
 	     		next();
 	     	})
 	     	.catch( ( err ) => {
 	     		var data = 'You are not authorized!';
+	     		console.log(data);
 	     		response.status( 403 ).send( data );
 	     		request.log.error( JSON.stringify( err ) );
 	     		request.log.submit( 403, data.length );
@@ -98,6 +118,7 @@ app.get("/auth/*", function (req, res) {
 	var data = "Request is authorized";
 	res.status(204).send();
 	log.info(data);
+	console.log(data);
 	log.submit( 204, data.length );
 	latencyMetric.write( Date.now() - request.startTimestamp );
 });

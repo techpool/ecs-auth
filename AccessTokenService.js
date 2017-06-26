@@ -1,25 +1,43 @@
 module.exports = AccessToken;
 
-var dbUtility = require( './lib/DatastoreUtility' );
+var dbUtility = require( './lib/DbUtility.js' );
+var AccessTokenSchema = {
+	structure : {
+		'ID': { 'type' : 'STRING', 'default' : 0},
+		'USER_ID': {'type': 'INTEGER', 'default': 0}
+	},primaryKey  : 'ID'
+};
 
 function AccessToken ( config ) {
-
-  // private data
-  dbUtility = dbUtility( { projectId: config.projectId, resourceType: 'ACCESS_TOKEN' } );
-
-  // API/data for end-user
-
-  return {
-    getUserId: function getUserId( accessToken ) {
-      return dbUtility
-        .getResourceFromDb( accessToken )
-        .then( ( accessTokenEntity ) => {
-          if( accessTokenEntity ) {
-            return accessTokenEntity.USER_ID;
-          }
-          throw 'ENTITY NOT FOUND';
-        })
-        ;
-    }
-  };
+	// initialize db utility
+	dbUtility = dbUtility( { projectId: config.projectId, kind: 'ACCESS_TOKEN', 'schema' : AccessTokenSchema} );
+	return {
+		getUserId: function getUserId (accessToken) {
+			return dbUtility.list([accessToken])
+			.then ((data) => {
+				if (data) {
+					return data[0].USER_ID;
+				}
+				throw 'ENTITY NOT FOUND';
+			});
+		} 
+	};
 }
+
+
+//API/data for end-user
+/*
+return {
+  getUserId: function getUserId( accessToken ) {
+    return dbUtility
+      .getResourceFromDb( accessToken )
+      .then( ( accessTokenEntity ) => {
+        if( accessTokenEntity ) {
+          return accessTokenEntity.USER_ID;
+        }
+        throw 'ENTITY NOT FOUND';
+      })
+      ;
+  }
+};
+*/
