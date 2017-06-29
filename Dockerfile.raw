@@ -6,7 +6,9 @@ RUN npm install
 EXPOSE 80
 
 COPY server.js .
-COPY AccessTokenService.js .
+COPY service/AccessTokenService.js service/AccessTokenService.js
+COPY service/AuthorService.js service/AuthorService.js
+COPY service/PratilipiService.js service/PratilipiService.js
 COPY config/main.js config/main.js
 
 CMD [ "npm", "start" ]
