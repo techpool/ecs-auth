@@ -20,6 +20,15 @@ function Author ( config ) {
 				}
 				throw 'ENTITY NOT FOUND';
 			});
+		},
+		getAuthor: function getAuthorId (authorId) {
+			return dbUtility.list([authorId])
+			.then ((data) => {
+				if (data) {
+					return data;
+				}
+				throw 'ENTITY NOT FOUND';
+			});
 		} 
 	};
 }
