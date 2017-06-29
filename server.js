@@ -41,9 +41,9 @@ function User(id) {
     this.id = id;
 }
 
-function isAllowed(id,isAllowed) {
-    this._id = id;
-    this._isAllowed = isAllowed;
+function permission(id,hasAccessToUpdate) {
+    this.id = id;
+    this.hasAccessToUpdate = hasAccessToUpdate;
 };
 
 //for initializing log object
@@ -109,6 +109,49 @@ app.get("/auth/authorize", function (req, res) {
 	     	});
 		}
 	});
+});
+
+
+app.get("/auth/hasAccess", function (req, res) {
+	var userId = req.get('user-id');
+	if (userId) {
+		if (req.query.resource == "pratilipi") {
+			var ids = JSON.parse(req.query.ids);
+			var promise = pratilipiService.getPratilipis(ids)
+			.then ((pratilipis) => {
+				var authorIds = [];
+				console.log("The pratilipis are "+pratilipis);
+				pratilipis.forEach( function(pratilipi) {
+					if (pratilipi != null) {
+						console.log(JSON.stringify(pratilipi));
+						/*
+						authorService.getAuthor(pratilipi.AUTHOR_ID)
+						.then ((authors) => {
+							
+						})
+						*/
+						
+					} 
+				});
+				res.status( 200 ).send(JSON.stringify(pratilipis));
+			})
+			.catch( (err) => {
+				var data = 'Something went wrong!';
+	     		console.log(err);
+	     		res.status( 502 ).send( data );
+	     		req.log.error( JSON.stringify( err ) );
+	     		req.log.submit( 502, data.length );
+			});
+		} else {
+			res.status( 400 ).send( "Invalid resource");
+		}
+		
+	} else {
+		var data = 'User id is required';
+		res.status( 400 ).send( data );
+		req.log.error( JSON.stringify( err ) );
+ 		req.log.submit( 400, data.length );
+	}
 });
 
 

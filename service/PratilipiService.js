@@ -12,14 +12,14 @@ function Pratilipi ( config ) {
 	// initialize db utility
 	dbUtility = dbUtility( { projectId: config.projectId, kind: 'PRATILIPI', 'schema' : PratilipiSchema} );
 	return {
-		getAuthorId: function getAuthorId (pratilipiId) {
-			return dbUtility.list([pratilipiId])
+		getPratilipis: function getPratilipis (pratilipiIds) {
+			return dbUtility.list(pratilipiIds)
 			.then ((data) => {
 				if (data) {
-					return data[0].AUTHOR_ID;
+					return data;
 				}
 				throw 'ENTITY NOT FOUND';
 			});
-		} 
+		}
 	};
 }
