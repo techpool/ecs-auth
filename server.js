@@ -32,7 +32,6 @@ const cacheUtility = require('./lib/CacheUtility.js')({
 	db : 3
 });
 
-
 const latencyMetric = new Metric( 'int64', 'Latency' );
 
 var accessTokenUserIdHash = {};
@@ -68,6 +67,27 @@ app.get("/health", function (req, res) {
 
 app.get("/auth/authorize", function (req, res) {
 	req.accessToken = req.headers.accesstoken;
+	console.log("Fetching user-id for accesstoken : "+req.accessToken);
+	accessTokenService
+ 	.getUserId( req.accessToken )
+ 	.then( ( userId ) => {
+ 		req.log.info("Reading user-id from gcp : "+userId);
+ 		console.log("Reading user-id from gcp : "+userId);
+ 		res.header('User-Id' , userId );
+ 		res.status(204).send();
+ 		var data = "req is authorized";
+		req.log.info(data);
+		req.log.submit( 204, data.length );
+		latencyMetric.write( Date.now() - req.startTimestamp );
+ 	})
+ 	.catch( ( err ) => {
+ 		var data = 'You are not authorized!';
+ 		console.log(err);
+ 		res.status( 403 ).send( data );
+ 		req.log.error( JSON.stringify( err ) );
+ 		req.log.submit( 403, data.length );
+ 	});
+	/*
 	var promise =  cacheUtility.get(req.accessToken)
 	.catch((error) => {
 	    var error = 'Redis Get id Error';
@@ -114,6 +134,7 @@ app.get("/auth/authorize", function (req, res) {
 	     	});
 		}
 	});
+	*/
 });
 
 
