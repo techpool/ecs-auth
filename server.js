@@ -41,10 +41,15 @@ function User(id) {
     this.id = id;
 }
 
-function isAllowed(id,isAllowed) {
-    this._id = id;
-    this._isAllowed = isAllowed;
+
+function pratilipisResponse(list) {
+    this.pratilipis = list;
 };
+
+function access(id,hasAccessToUpdate) {
+	this.id = id;
+	this.hasAccessToUpdate = hasAccessToUpdate;
+}
 
 //for initializing log object
 app.use((request, response, next) => {
@@ -109,6 +114,64 @@ app.get("/auth/authorize", function (req, res) {
 	     	});
 		}
 	});
+});
+
+
+app.get("/auth/hasAccess", function (req, res) {
+	var userId = req.get('user-id');
+	if (userId) {
+		if (req.query.resource == "pratilipi") {
+			var ids = JSON.parse(req.query.ids);
+            pratilipiService.getPratilipis(ids)
+            .then ((pratilipis) => {
+                var permissions = [];
+                console.log("fetched pratilipis");
+                pratilipis.forEach( function(pratilipi) {
+                    if (pratilipi != null) {
+                        console.log("fetching author for pratilipi "+JSON.stringify(pratilipi));
+                        permissions.push( authorService.getAuthor(pratilipi.AUTHOR_ID)
+                        .then ((author) => {
+                            if (author.USER_ID == userId) {
+                                return new access(pratilipi.ID,true);
+                            } else {
+                                return new access(pratilipi.ID,false);
+                            }
+                        }).catch( (err) => {
+                        	console.log("Error while fetching authors");
+                            console.log(err);
+                        }));
+                    } 
+                });
+
+                Promise.all(permissions)
+                .then(data => {
+                	console.log("Returning response");
+                  var response = new pratilipisResponse(data);
+                  res.status( 200 ).send(response);
+                })
+                .catch(error => {
+                	console.log("Error while building response");
+                  console.log(error);
+                });
+            })
+            .catch( (err) => {
+                var data = 'Error while fetching access permissions';
+                console.log(data);
+                 console.log(err);
+                 res.status( 502 ).send( data );
+                 req.log.error( JSON.stringify( err ) );
+                 req.log.submit( 502, data.length );
+            });
+		} else {
+			res.status( 400 ).send( "Invalid resource");
+		}
+		
+	} else {
+		var data = 'User id is required';
+		res.status( 400 ).send( data );
+		req.log.error( JSON.stringify( err ) );
+ 		req.log.submit( 400, data.length );
+	}
 });
 
 
