@@ -3,11 +3,11 @@
   This api is to check if the current user has permission to perform the requested action on the specified resource.
 
 * **URL**
-  /auth/isAuthorized?resource=&action=
+  /auth/isAuthorized?resource=&method=
 
     ***Example***
     ~~~
-    /auth/isAuthorized?resource=%2Fpratilipi&action=update
+    /auth/isAuthorized?resource=%2Fpratilipi&method=PATCH
     ~~~
 * **Method:**
   GET
@@ -17,10 +17,10 @@
 
 *  **Query Params**
     
-    | Field      | Description                                                    | Optional   |
+    | Field      | Description                                                    | Required   |
     | ---------- | -------------------------------------------------------------- | ---------- |
     | `resource`   | URL encoded URI (eg: %2Fpratilipi)    | yes        |
-    | `action` | It can be create, update, delete or read        | yes        |
+    | `method` | The HTTP method that client used to make the request        | yes        |
     
 
 * **Success Response:**
@@ -67,7 +67,7 @@
 
 *  **Query Params**
     
-    | Field      | Description                                                    | Optional   |
+    | Field      | Description                                                    | Required   |
     | ---------- | -------------------------------------------------------------- | ---------- |
     | `resource`   | The resource type (eg: pratilipi/author)    | yes        |
     | `id` | comma seperated resource ids        | yes        |
