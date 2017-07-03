@@ -2,21 +2,25 @@
 ----
   This api is to check if the current user has permission to perform the requested action on the specified resource.
 
-* **URL:**
+* **URL**
   /auth/isAuthorized?resource=&action=
 
+    ***Example***
+    ~~~
+    /auth/isAuthorized?resource=%2Fpratilipi&action=update
+    ~~~
 * **Method:**
   GET
 
-*  **Headers:**
+*  **Headers**
     AccessToken
 
 *  **Query Params**
     
-    | Field      | Description                                                    | Required   |
+    | Field      | Description                                                    | Optional   |
     | ---------- | -------------------------------------------------------------- | ---------- |
-    | resource   | URL encoded URI (eg: %2Fpratilipi)    | yes        |
-    | action | It can be create, update, delete or read        | yes        |
+    | `resource`   | URL encoded URI (eg: %2Fpratilipi)    | yes        |
+    | `action` | It can be create, update, delete or read        | yes        |
     
 
 * **Success Response:**
@@ -48,21 +52,25 @@
 ----
   This api is to return the access permissions of logged in user for given set of resources.
 
-* **URL:**
+* **URL**
   /auth/hasAccess?resource=&id=
+    ***Example***
+    ~~~
+        /auth/hasAccess?resource=pratilipi&id=12345,8903744,238979343
+    ~~~
 
 * **Method:**
   GET
 
-*  **Headers:**
+*  **Headers**
     User-Id
 
 *  **Query Params**
     
-    | Field      | Description                                                    | Required   |
+    | Field      | Description                                                    | Optional   |
     | ---------- | -------------------------------------------------------------- | ---------- |
-    | resource   | The resource type (eg: pratilipi/author)    | yes        |
-    | id | comma seperated resource ids        | yes        |
+    | `resource`   | The resource type (eg: pratilipi/author)    | yes        |
+    | `id` | comma seperated resource ids        | yes        |
     
 
 * **Success Response:**
