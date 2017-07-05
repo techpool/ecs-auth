@@ -20,7 +20,7 @@
     | Field      | Description                                                    | Required   |
     | ---------- | -------------------------------------------------------------- | ---------- |
     | `resource`   | URL encoded URI (eg: %2Fpratilipi)    | yes        |
-    | `id`   | The unique identifier of resource    | optional        |
+    | `id`   | The unique identifier of resource. (Not requried for create(post) request)    | yes        |
     | `method` | The HTTP method that client used to make the request        | yes        |
     
 
@@ -29,6 +29,7 @@
     ~~~
     {
         isAuthorized : true 
+        userId : 1234567890
     }
     ~~~
 * **Error Response:**
