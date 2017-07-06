@@ -119,7 +119,8 @@ class AEES {
 	}
 
 	getAeeUserIdList(language) {
-		var aeeUserIdList = [];
+		var aeeUserIdList = new Set();
+		var aeeUserIdList1 = [];
 		var keys = Object.keys(AEE);
 		for(var i = 0; i< keys.length;i++) {
 			var aEEE = keys[i];
@@ -129,12 +130,15 @@ class AEES {
 				var roleq = keys2[j];
 				var role = aEE.roles[roleq];
 				var roleObject = new Roles(role);
-				if(role.language === language ) {
-					aeeUserIdList.push(aEE.userId);
+				if(roleObject.language === language ) {
+					aeeUserIdList.add(aEE.userId);
 				}
 			}
 		}
-		return aeeUserIdList;
+		aeeUserIdList.forEach(e => {
+    aeeUserIdList1.push(e);
+		});
+		return aeeUserIdList1;
 	}
 }
 
