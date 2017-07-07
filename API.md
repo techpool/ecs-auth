@@ -8,7 +8,7 @@
 * **Method:**  
   POST
 
-*  **Headers**  
+* **Request Headers**  
   AccessToken (Requests coming from PAG)  
   User-Id (Requests coming from internal services)
     
@@ -22,6 +22,9 @@
 	    ]
     }
     ~~~
+
+* **Response Headers**  
+  User-Id (Converts AccessToken to User-Id, on requests from PAG).
 
 * **Success Response:**
   * **Code:** 200 
