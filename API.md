@@ -38,32 +38,24 @@
 		"method": "GET",
 		"data": [
 	        {
-	          "code": 200,
-	          "body": {
+	        	"code":200,
 	          	"id":523523549343,
 	            	"isAuthorized": true
-	           }
 	        },
 	        {
-	          "code": 401,
-	          "body": {
+		        "code": 401,
 	          	"id":93309245319,
 	            	"isAuthorized": false
-	           }
 	        },
 	        {
-	          "code": 403,
-	          "body": {
+		        "code": 403,
 	          	"id":73284523450,
 	            	"isAuthorized": false
-	          }
 	        },
 	        {
-	          "code": 404,
-	          "body": {
+		        "code": 404,
 	          	"id":0000,
 	            	"isAuthorized": false
-	          }
 	        }
 		]
 	}
