@@ -3,54 +3,70 @@
   This api is to check if the current user has permission to perform the requested action on the specified resource.
 
 * **URL**  
-  /auth/isAuthorized
+  /auth/isAuthorized?resource=&method=&id= 
+  
+  Example:  
+  ```
+  /auth/isAuthorized?resource=%2Fpratilipi&method=GET&id=23452353245235,1234236547865,69785476456746
+   ```
 
-* **Method:**  
-  POST
+* **Method:**
+  GET
 
-* **Request Headers**  
-  AccessToken (Requests coming from PAG)  
-  User-Id (Requests coming from internal services)
+* **Headers:**  
+    Access-Token (Requests coming from PAG)  
+    User-Id (Requests coming from internal services)
+
+* **Query Params**
     
-*  **Request Body**
-    ~~~
-    {
-	    "batch":[
-          {"method":"GET", "resource":"/pratilipi", "id":5698028945},
-          {"method":"GET", "resource":"/pratilipi", "id":9378459023},
-          {"method":"GET", "resource":"/pratilipi", "id":9073094325}
-	    ]
-    }
-    ~~~
+    | Field      | Description                                                    | Required   |
+    | ---------- | -------------------------------------------------------------- | ---------- |
+    | resource   | URL encoded URI (eg: %2Fpratilipi)    | Yes        |
+    | method | The HTTP method        | Yes        |
+    | id	| The resource id, multiple comma seperated ids are accepeted	| Yes	|
+    
+  For certain cases, few additional parameters are required to validate authorization.
 
 * **Response Headers**  
-  User-Id (Converts AccessToken to User-Id, on requests from PAG).
+  User-Id (Adds User-Id to the response header, on requests from PAG).
 
 * **Success Response:**
   * **Code:** 200 
     ~~~
-    {
-        "data": [
-        {
-          "code": 200,
-          "body": {
-            "isAuthorized": true
-           }
-        },
-        {
-          "code": 401,
-          "body": {
-            "isAuthorized": true
-           }
-        },
-        {
-          "code": 403,
-          "body": {
-            "isAuthorized": false
-          }
-        }
-      ]
-    }
+	{
+		"resource": "/pratilipi",
+		"method": "GET",
+		"data": [
+	        {
+	          "code": 200,
+	          "body": {
+	          	"id":523523549343,
+	            	"isAuthorized": true
+	           }
+	        },
+	        {
+	          "code": 401,
+	          "body": {
+	          	"id":93309245319,
+	            	"isAuthorized": false
+	           }
+	        },
+	        {
+	          "code": 403,
+	          "body": {
+	          	"id":73284523450,
+	            	"isAuthorized": false
+	          }
+	        },
+	        {
+	          "code": 404,
+	          "body": {
+	          	"id":0000,
+	            	"isAuthorized": false
+	          }
+	        }
+		]
+	}
     ~~~
     
 * **Error Response:**

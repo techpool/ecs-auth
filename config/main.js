@@ -25,4 +25,10 @@ config.prod = {
   'REDIS_KIND':'AUTH'
 };
 
+config.local = {
+  'LOGGING_METRIC_SERVICE_NAME': 'auth-local',
+  'PORT' : 8080,
+  'GCP_PROJ_ID' : 'devo-pratilipi'
+};
+
 module.exports = config;
