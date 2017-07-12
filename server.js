@@ -248,8 +248,7 @@ function isUserAuthorToPratilipi(index,data,userId,pratilipi) {
 	return new Promise( function (resolve,reject) {
 		AuthorService.getAuthor(pratilipi.AUTHOR_ID)
 	    .then ((author) => {
-	    	console.log(JSON.stringify(author));
-	        if ( author!=null &&  author.USER_ID == userId ) {
+	        if (author!=null &&  author.USER_ID == userId) {
 	        	data[index] = new resourceResponse(200,pratilipi.ID,true);
 	        } else {
 	        	data[index] = new resourceResponse(403,pratilipi.ID,false);
@@ -258,7 +257,7 @@ function isUserAuthorToPratilipi(index,data,userId,pratilipi) {
 	    }).catch( (err) => {
 	    	console.log("Error while fetching authors");
 	        console.log(err);
-	        reject();	        
+	        reject();  
 	    });
 	});	
 }
