@@ -212,7 +212,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 						if (hasAccess) {
 							fetchPromises.push(isUserAuthorToPratilipi(i,data,userId,pratilipi));
 						} else {
-							data[i] = new resourceResponse(403,pratilipi.ID,true);
+							data[i] = new resourceResponse(403,pratilipi.ID,false);
 						}
 						
 					} else if (roles.includes(Role.GUEST)) {
@@ -248,7 +248,8 @@ function isUserAuthorToPratilipi(index,data,userId,pratilipi) {
 	return new Promise( function (resolve,reject) {
 		AuthorService.getAuthor(pratilipi.AUTHOR_ID)
 	    .then ((author) => {
-	        if ( 1==1 || author.USER_ID == userId ) {
+	    	console.log(JSON.stringify(author));
+	        if ( author!=null &&  author.USER_ID == userId ) {
 	        	data[index] = new resourceResponse(200,pratilipi.ID,true);
 	        } else {
 	        	data[index] = new resourceResponse(403,pratilipi.ID,false);
@@ -257,7 +258,7 @@ function isUserAuthorToPratilipi(index,data,userId,pratilipi) {
 	    }).catch( (err) => {
 	    	console.log("Error while fetching authors");
 	        console.log(err);
-	        reject();
+	        reject();	        
 	    });
 	});	
 }
