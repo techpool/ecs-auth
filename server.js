@@ -177,7 +177,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		var fetchPromises = [];
 		var pratilipiId;
 		for (i=0;i<resources.length;i++) {
-			if (resource == "/pratilipi") {
+			if (resource == "/pratilipis") {
 				pratilipi = resources[i];
 				if (pratilipi != null) {
 					pratilipiId = pratilipi.ID;
