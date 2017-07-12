@@ -150,7 +150,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	// Get resources by ids
 	var resources;
 	var resourcePromise = userIdPromise.then (function () {
-		if (resource == "/pratilipi") {
+		if (resource == "/pratilipis") {
 			return PratilipiService
 			.getPratilipis(resourceIds)
 			.then ((pratilipis) => {
@@ -180,19 +180,17 @@ app.get("/auth/isAuthorized", function (req, res) {
 			if (resource == "/pratilipis") {
 				pratilipi = resources[i];
 				if (pratilipi != null) {
-					pratilipiId = pratilipi.ID;
 					console.log("verifying authorization for  "+pratilipi.ID);
 					langugeAdmin = Role["ADMIN_"+pratilipi.LANGUAGE];
 					if (roles.includes(Role.ADMINISTRATOR)) {
-						data.push(new resourceResponse(200,pratilipiId,true));
+						data[i] = new resourceResponse(200,pratilipi.ID,true);
 					} else if (roles.includes(Role.ADMIN)) {
 						// to handle admin
 					} else if (roles.includes(langugeAdmin)) {
-						data.push(new resourceResponse(200,pratilipiId,true));
+						data[i] = new resourceResponse(200,pratilipi.ID,true);
 					} else if (roles.includes(Role.MEMBER)) {
 						
 						var accessType = null;
-						
 						if (method == "GET") {
 							accessType = AccessType.PRATILIPI_READ_CONTENT;
 						} else if (method == "PUT" || method == "PATCH" ) {
@@ -208,30 +206,20 @@ app.get("/auth/isAuthorized", function (req, res) {
 						
 						var hasAccess = AEES.hasUserAccess(userId,language,accessType);
 						if (hasAccess) {
-							fetchPromises.push(AuthorService.getAuthor(pratilipi.AUTHOR_ID)
-		                        .then ((author) => {
-		                            if ( 1==1 || author.USER_ID == userId ) {
-		                            	data.push(new resourceResponse(200,pratilipiId,true));
-		                            } else {
-		                            	data.push(new resourceResponse(403,pratilipiId,false));
-		                            }
-		                        }).catch( (err) => {
-		                        	console.log("Error while fetching authors");
-		                            console.log(err);
-		                        }));
+							fetchPromises.push(isUserAuthorToPratilipi(i,data,userId,pratilipi));
 						} else {
-							data.push(new resourceResponse(403,pratilipiId,false));
+							data[i] = new resourceResponse(403,pratilipi.ID,true);
 						}
 						
 					} else if (roles.includes(Role.GUEST)) {
 						if (method == "GET") {
-							data.push(new resourceResponse(200,pratilipiId,true));
+							data[i] = new resourceResponse(200,pratilipi.ID,true)
 						} else {
-							data.push(new resourceResponse(403,pratilipiId,false));
+							data[i] = new resourceResponse(403,pratilipi.ID,false);
 						}
 					}
 				} else {
-					data.push(new resourceResponse(404,resourceIds[i],false));
+					data[i] = new resourceResponse(404,resourceIds[i],false);
 				}
 			}
 		}
@@ -251,6 +239,25 @@ app.get("/auth/isAuthorized", function (req, res) {
 	});
 
 });
+
+function isUserAuthorToPratilipi(index,data,userId,pratilipi) {
+	return new Promise( function (resolve,reject) {
+		AuthorService.getAuthor(pratilipi.AUTHOR_ID)
+	    .then ((author) => {
+	        if ( 1==1 || author.USER_ID == userId ) {
+	        	data[index] = new resourceResponse(200,pratilipi.ID,true);
+	        } else {
+	        	data[index] = new resourceResponse(403,pratilipi.ID,false);
+	        }
+	        resolve();
+	    }).catch( (err) => {
+	    	console.log("Error while fetching authors");
+	        console.log(err);
+	        reject();
+	    });
+	});	
+}
+
 
 
 // Initialize server
