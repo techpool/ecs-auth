@@ -4,7 +4,7 @@ const Language = require("./Language.js").Language;
 const AccessType = require("./AccessType.js").AccessType;
 
 const MEMBER_ACCESS =[
-			AccessType.PRATILIPI_ADD_REVIEW,
+			AccessType.PRATILIPI_ADD_REVIEW, AccessType.PRATILIPI_UPDATE,
 			AccessType.USER_PRATILIPI_REVIEW, AccessType.USER_PRATILIPI_LIBRARY,
 			AccessType.USER_AUTHOR_FOLLOWING,
 			AccessType.COMMENT_ADD, AccessType.COMMENT_UPDATE,
