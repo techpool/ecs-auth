@@ -7,7 +7,7 @@
   
   Example:  
   ```
-  /auth/isAuthorized?resource=%2Fpratilipi&method=GET&id=23452353245235,1234236547865,69785476456746
+  /auth/isAuthorized?resource=%2Fpratilipis&method=GET&id=23452353245235,1234236547865,69785476456746
    ```
 
 * **Method:**
@@ -34,7 +34,7 @@
   * **Code:** 200 
     ~~~
 	{
-		"resource": "/pratilipi",
+		"resource": "/pratilipis",
 		"method": "GET",
 		"data": [
 	        {
