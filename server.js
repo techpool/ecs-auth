@@ -113,7 +113,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	
 	// Read Headers
 	var accessToken = req.headers['access-token'];
-	var userId = req.headers.userId;
+	var userId = req.headers['user-id'];
 	if (accessToken == null && userId == null) {
 		res.status( 400 ).send( "Bad request" );
 		return;
@@ -145,6 +145,10 @@ app.get("/auth/isAuthorized", function (req, res) {
 	 		console.log(err);
 	 		return;
 	 	});
+	} else {
+		userIdPromise = new Promise((resolve,reject)=>{
+			resolve();
+		});
 	}
 
 	// Get resources by ids
