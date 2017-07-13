@@ -9,6 +9,11 @@
   ```
   /auth/isAuthorized?resource=%2Fpratilipis&method=GET&id=23452353245235,1234236547865,69785476456746
    ```
+   
+   ```
+   /auth/isAuthorized?resource=%2Fauthors&method=GET&id=23452353245235,1234236547865,69785476456746
+   ```
+   
 
 * **Method:**
   GET
@@ -21,9 +26,9 @@
     
     | Field      | Description                                                    | Required   |
     | ---------- | -------------------------------------------------------------- | ---------- |
-    | resource   | URL encoded URI (eg: %2Fpratilipi)    | Yes        |
-    | method | The HTTP method        | Yes        |
-    | id	| The resource id, multiple comma seperated ids are accepeted	| Yes	|
+    | resource   | URL encoded URI (valid: %2Fpratilipis, %2Fauthors)    | Yes        |
+    | method | The HTTP method (valid: POST, GET, PUT, PATCH, DELETE)       | Yes        |
+    | id	| The resource id, multiple comma seperated ids are accepeted 	| Yes	|
     
   For certain cases, few additional parameters are required to validate authorization.
 
