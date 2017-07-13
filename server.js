@@ -166,8 +166,23 @@ app.get("/auth/isAuthorized", function (req, res) {
 		 		console.log(err);
 		 		return;
 		 	});
+		} else if (resource == "/authors") {
+			return AuthorService
+			.getAuthors(resourceIds)
+			.then ((authors) => {
+				console.log(JSON.stringify(authors));
+				resources = authors;
+				return;
+			})
+			.catch( ( err ) => {
+		 		var data = 'Error in getting authors!';
+		 		console.log(err);
+		 		return;
+		 	});
 		} else {
-			resourcePromise = null;
+			userIdPromise = new Promise((resolve,reject)=>{
+				resolve();
+			});
 		}
 		
 	});
@@ -210,7 +225,11 @@ app.get("/auth/isAuthorized", function (req, res) {
 						
 						var hasAccess = AEES.hasUserAccess(userId,language,accessType);
 						if (hasAccess) {
-							fetchPromises.push(isUserAuthorToPratilipi(i,data,userId,pratilipi));
+							if (accessType == AccessType.PRATILIPI_UPDATE) {
+								fetchPromises.push(isUserAuthorToPratilipi(i,data,userId,pratilipi));
+							} else {
+								data[i] = new resourceResponse(200,pratilipi.ID,true)
+							}
 						} else {
 							data[i] = new resourceResponse(403,pratilipi.ID,false);
 						}
@@ -225,13 +244,69 @@ app.get("/auth/isAuthorized", function (req, res) {
 				} else {
 					data[i] = new resourceResponse(404,resourceIds[i],false);
 				}
+			} else if (resource == "/authors") {
+				author = resources[i];
+				if (author != null) {
+					console.log("verifying authorization for  "+author.ID);
+					langugeAdmin = Role["ADMIN_"+author.LANGUAGE];
+					if (roles.includes(Role.ADMINISTRATOR)) {
+						data[i] = new resourceResponse(200,author.ID,true);
+					} else if (roles.includes(Role.ADMIN)) {
+						// to handle admin
+					} else if (roles.includes(langugeAdmin)) {
+						data[i] = new resourceResponse(200,author.ID,true);
+					} else if (roles.includes(Role.MEMBER)) {
+						
+						var accessType = null;
+						if (method == "GET") {
+							accessType = AccessType.AUTHOR_READ;
+						} else if (method == "PUT" || method == "PATCH" ) {
+							accessType = AccessType.AUTHOR_UPDATE;
+						} else if (method == "POST" ) {
+							accessType = AccessType.AUTHOR_ADD;
+						}
+						
+						var language = null;
+						if (accessType != AccessType.AUTHOR_ADD) {
+							language = author.LANGUAGE;
+						}
+						
+						var hasAccess = AEES.hasUserAccess(userId,language,accessType);
+						if (hasAccess) {
+							
+							if (accessType == AccessType.AUTHOR_UPDATE) {
+								if (author!=null &&  author.USER_ID == userId) {
+						        	data[i] = new resourceResponse(200,author.ID,true);
+						        } else {
+						        	data[i] = new resourceResponse(403,author.ID,false);
+						        }
+							} else {
+								data[i] = new resourceResponse(200,author.ID,true);
+							}
+							
+						} else {
+							data[i] = new resourceResponse(403,author.ID,false);
+						}
+						
+					} else if (roles.includes(Role.GUEST)) {
+						if (method == "GET") {
+							data[i] = new resourceResponse(200,author.ID,true)
+						} else {
+							data[i] = new resourceResponse(403,author.ID,false);
+						}
+					}
+				} else {
+					data[i] = new resourceResponse(404,resourceIds[i],false);
+				}
 			}
 		}
-		return new Promise((resolve,reject)=>{
-			Promise.all(fetchPromises).then (function () {
-				resolve();
+		if (resource == "/pratilipis") {
+			return new Promise((resolve,reject)=>{
+				Promise.all(fetchPromises).then (function () {
+					resolve();
+				});
 			});
-		});
+		}
 	});
 	
 	// Generate and send the response

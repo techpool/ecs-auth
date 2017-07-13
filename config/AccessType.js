@@ -15,6 +15,7 @@ AccessType = {
               	AUTHOR_LIST	                 : "List Author" ,
               	AUTHOR_ADD	                 : "Add Author" ,
               	AUTHOR_UPDATE                : "Update Author" ,
+              	AUTHOR_READ                  : "View Author",
               	EVENT_ADD	                   : "Add Event" ,
               	EVENT_UPDATE                 : "Update Event" ,
               	I18N_UPDATE                  : "Update I18N Table" ,
