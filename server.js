@@ -1,19 +1,20 @@
-
-// Modules
+// Imports
 var express = require('express');
-//var bodyParser = require('body-parser');
 
 // Load Configurations
 var config = require( './config/main' )[ process.env.STAGE || 'local'];
 
-//Initialize app
+// Initialize app
 const app = express();
 app.set('port', config.PORT);
 
 // Load Services
-const AccessTokenService = require( './service/AccessTokenService' )( { projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID} );
-const PratilipiService = require('./service/PratilipiService')( { projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID} );
-const AuthorService = require('./service/AuthorService')( { projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID} );
+const AccessTokenService = require('./service/AccessTokenService' )( { projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID} );
+const PratilipiService   = require('./service/PratilipiService')( { projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID} );
+const AuthorService      = require('./service/AuthorService')( { projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID} );
+const UserAccessList     = require('./config/UserAccessUtil.js');
+const Language           = require('./config/Language.js').Language;
+const AccessType         = require('./config/AccessType.js').AccessType;
 
 // Initialize utilities
 const Logging = require( './lib/LoggingGcp.js' ).init({
@@ -26,23 +27,16 @@ const Metric = require( './lib/MetricGcp.js' ).init({
 	service: config.SERVICE
 });
 
-const UserAccessList = require('./config/UserAccessUtil.js');
-const Language = require("./config/Language.js").Language;
-const AccessType = require("./config/AccessType.js").AccessType;
 
+var validResources = ['/pratilipis','/authors'];
+var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 var Role = UserAccessList.Role;
 var AEES = UserAccessList.AEES;
 AEES = new AEES();
 
 const latencyMetric = new Metric( 'int64', 'Latency' );
 
-
-//app.use(bodyParser.urlencoded({ extended: false }));
-//app.use(bodyParser.json())
-
-var accessTokenUserIdHash = {};
-
-//for initializing log object
+// for initializing log object
 app.use((request, response, next) => {
   var log = request.log = new Logging( request );
   request.startTimestamp = Date.now();
@@ -50,7 +44,7 @@ app.use((request, response, next) => {
 });
 
 
-//Request Handlers
+// Request Handlers
 app.get("/health", function (req, res) {
 	console.log("Request reached health");
 	var message = {"message":"Auth service is running healthy."};
@@ -71,7 +65,7 @@ function access(id,hasAccessToUpdate) {
 	this.hasAccessToUpdate = hasAccessToUpdate;
 }
 
-// This API is depricated, will no longer be available after Jul 15
+// This API is depricated, will no longer be available after Jul 30
 app.get("/auth/authorize", function (req, res) {
 	req.accessToken = req.headers.accesstoken;
 	console.log("Fetching user-id for accesstoken : "+req.accessToken);
@@ -109,22 +103,25 @@ function resourceResponse (code, id, isAuthorized) {
 	this.isAuthorized = isAuthorized;
 }
 
+function errorResponse (message) {
+	this.message = message;
+}
+
 app.get("/auth/isAuthorized", function (req, res) {
 	
 	// Read Headers
 	var accessToken = req.headers['access-token'];
 	var userId = req.headers['user-id'];
-	if (accessToken == null && userId == null) {
-		res.status( 400 ).send( "Bad request" );
-		return;
-	}
 	
 	// Read query parameters
 	var resource = unescape(req.query.resource);
 	var method = req.query.method;
 	var resourceIds = req.query.id;
-	if (resourceIds == null) {
-		res.status( 400 ).send( "Bad request" );
+	
+	// Validate query parameters
+	if (!validResources.includes(resource) || resourceIds == null || !validMethods.includes(method)) {
+		res.setHeader('content-type', 'application/json');
+		res.status(400).send( JSON.stringify(new errorResponse("Invalid parameters")));
 		return;
 	} else {
 		resourceIds = resourceIds.split(',').map(Number);
@@ -132,25 +129,26 @@ app.get("/auth/isAuthorized", function (req, res) {
 	
 	// Get User-Id for accessToken
 	var userIdPromise;
-	if (userId == null) {
+	if (userId == null && accessToken != null) {
 		userIdPromise = AccessTokenService
 	 	.getUserId( accessToken )
 	 	.then( ( id ) => {
 	 		console.log("Reading user-id from gcp : "+id);
 	 		userId = id;
+	 		res.setHeader('User-Id', userId);
 	 		return;
 	 	})
 	 	.catch( ( err ) => {
-	 		var data = 'You are not authorized!';
 	 		console.log(err);
 	 		return;
 	 	});
 	} else {
+		// TODO: Check if given User-Id is valid
 		userIdPromise = new Promise((resolve,reject)=>{
 			resolve();
 		});
 	}
-
+	
 	// Get resources by ids
 	var resources;
 	var resourcePromise = userIdPromise.then (function () {
@@ -170,7 +168,6 @@ app.get("/auth/isAuthorized", function (req, res) {
 			return AuthorService
 			.getAuthors(resourceIds)
 			.then ((authors) => {
-				console.log(JSON.stringify(authors));
 				resources = authors;
 				return;
 			})
@@ -179,141 +176,107 @@ app.get("/auth/isAuthorized", function (req, res) {
 		 		console.log(err);
 		 		return;
 		 	});
-		} else {
-			userIdPromise = new Promise((resolve,reject)=>{
-				resolve();
-			});
 		}
-		
 	});
 
 	
-	// Find if user is authorized
+	// Verify authorization
 	var data = [];
-	var dataPromise = resourcePromise.then (function () {
+	var authorizePromise = resourcePromise.then (function () {
+		
+		// Get roles for the user
 		var roles = AEES.getRoles(userId);
-		var langugeAdmin;
-		var fetchPromises = [];
-		var pratilipiId;
-		for (i=0;i<resources.length;i++) {
-			if (resource == "/pratilipis") {
-				pratilipi = resources[i];
+		
+		if (resource == "/pratilipis") {
+			var ownerPromises = [];
+			for (i = 0; i < resources.length; i++) {
+				var pratilipi = resources[i];
 				if (pratilipi != null) {
-					console.log("verifying authorization for  "+pratilipi.ID);
-					langugeAdmin = Role["ADMIN_"+pratilipi.LANGUAGE];
-					if (roles.includes(Role.ADMINISTRATOR)) {
-						data[i] = new resourceResponse(200,pratilipi.ID,true);
-					} else if (roles.includes(Role.ADMIN)) {
-						// to handle admin
-					} else if (roles.includes(langugeAdmin)) {
-						data[i] = new resourceResponse(200,pratilipi.ID,true);
-					} else if (roles.includes(Role.MEMBER)) {
-						
-						var accessType = null;
-						if (method == "GET") {
-							accessType = AccessType.PRATILIPI_READ_CONTENT;
-						} else if (method == "PUT" || method == "PATCH" ) {
-							accessType = AccessType.PRATILIPI_UPDATE;
-						} else if (method == "POST" ) {
-							accessType = AccessType.PRATILIPI_ADD;
-						}
-						
-						var language = null;
-						if (accessType != AccessType.PRATILIPI_ADD) {
-							language = pratilipi.LANGUAGE;
-						}
-						
-						var hasAccess = AEES.hasUserAccess(userId,language,accessType);
-						if (hasAccess) {
-							if (accessType == AccessType.PRATILIPI_UPDATE) {
-								fetchPromises.push(isUserAuthorToPratilipi(i,data,userId,pratilipi));
-							} else {
-								data[i] = new resourceResponse(200,pratilipi.ID,true)
-							}
-						} else {
-							data[i] = new resourceResponse(403,pratilipi.ID,false);
-						}
-						
-					} else if (roles.includes(Role.GUEST)) {
-						if (method == "GET") {
-							data[i] = new resourceResponse(200,pratilipi.ID,true)
-						} else {
-							data[i] = new resourceResponse(403,pratilipi.ID,false);
-						}
+					
+					var accessType=null;
+					if (method == "GET") {
+						accessType = AccessType.PRATILIPI_READ_CONTENT;
+					} else if (method == "PUT" || method == "PATCH" ) {
+						accessType = AccessType.PRATILIPI_UPDATE;
+					} else if (method == "POST" ) {
+						accessType = AccessType.PRATILIPI_ADD;
+					} else if (method == "DELETE") {
+						accessType = AccessType.PRATILIPI_DELETE;
 					}
+					
+					
+					var language = null;
+					if (accessType != AccessType.PRATILIPI_ADD) {
+						language = pratilipi.LANGUAGE;
+					}
+					
+					var hasAccess = AEES.hasUserAccess(userId,language,accessType);
+					if (hasAccess) {
+						if (accessType == AccessType.PRATILIPI_UPDATE || accessType == AccessType.PRATILIPI_DELETE) {
+							ownerPromises.push(isUserAuthorToPratilipi(i,data,userId,pratilipi));
+						} else {
+							data[i] = new resourceResponse(200,pratilipi.ID,true)
+						}
+					} else {
+						data[i] = new resourceResponse(403,pratilipi.ID,false);
+					}
+					
 				} else {
 					data[i] = new resourceResponse(404,resourceIds[i],false);
 				}
-			} else if (resource == "/authors") {
-				author = resources[i];
+			}
+			return new Promise((resolve,reject)=>{
+				Promise.all(ownerPromises).then (function () {
+					resolve();
+				});
+			});
+		} else if (resource == "/authors") {
+			for (i = 0; i < resources.length; i++) {
+				var author = resources[i];
 				if (author != null) {
-					console.log("verifying authorization for  "+author.ID);
-					langugeAdmin = Role["ADMIN_"+author.LANGUAGE];
-					if (roles.includes(Role.ADMINISTRATOR)) {
-						data[i] = new resourceResponse(200,author.ID,true);
-					} else if (roles.includes(Role.ADMIN)) {
-						// to handle admin
-					} else if (roles.includes(langugeAdmin)) {
-						data[i] = new resourceResponse(200,author.ID,true);
-					} else if (roles.includes(Role.MEMBER)) {
-						
-						var accessType = null;
-						if (method == "GET") {
-							accessType = AccessType.AUTHOR_READ;
-						} else if (method == "PUT" || method == "PATCH" ) {
-							accessType = AccessType.AUTHOR_UPDATE;
-						} else if (method == "POST" ) {
-							accessType = AccessType.AUTHOR_ADD;
-						}
-						
-						var language = null;
-						if (accessType != AccessType.AUTHOR_ADD) {
-							language = author.LANGUAGE;
-						}
-						
-						var hasAccess = AEES.hasUserAccess(userId,language,accessType);
-						if (hasAccess) {
-							
-							if (accessType == AccessType.AUTHOR_UPDATE) {
-								if (author!=null &&  author.USER_ID == userId) {
-						        	data[i] = new resourceResponse(200,author.ID,true);
-						        } else {
-						        	data[i] = new resourceResponse(403,author.ID,false);
-						        }
-							} else {
-								data[i] = new resourceResponse(200,author.ID,true);
-							}
-							
-						} else {
-							data[i] = new resourceResponse(403,author.ID,false);
-						}
-						
-					} else if (roles.includes(Role.GUEST)) {
-						if (method == "GET") {
-							data[i] = new resourceResponse(200,author.ID,true)
-						} else {
-							data[i] = new resourceResponse(403,author.ID,false);
-						}
+					
+					var accessType=null;
+					if (method == "GET") {
+						accessType = AccessType.AUTHOR_READ;
+					} else if (method == "PUT" || method == "PATCH" ) {
+						accessType = AccessType.AUTHOR_UPDATE;
+					} else if (method == "POST" ) {
+						accessType = AccessType.AUTHOR_ADD;
+					} else if (method == "DELETE") {
+						accessType = AccessType.AUTHOR_DELETE;
 					}
+					
+					var language = null;
+					if (accessType != AccessType.AUTHOR_ADD) {
+						language = author.LANGUAGE;
+					}
+					
+					var hasAccess = AEES.hasUserAccess(userId,language,accessType);
+					if (hasAccess) {
+						if (accessType == AccessType.AUTHOR_UPDATE) {
+							if (author.USER_ID == userId) {
+					        	data[i] = new resourceResponse(200,author.ID,true);
+					        } else {
+					        	data[i] = new resourceResponse(403,author.ID,false);
+					        }
+						} else {
+							data[i] = new resourceResponse(200,author.ID,true);
+						}
+					} else {
+						data[i] = new resourceResponse(403,author.ID,false);
+					}
+					
 				} else {
 					data[i] = new resourceResponse(404,resourceIds[i],false);
 				}
 			}
 		}
-		if (resource == "/pratilipis") {
-			return new Promise((resolve,reject)=>{
-				Promise.all(fetchPromises).then (function () {
-					resolve();
-				});
-			});
-		}
+		
 	});
 	
-	// Generate and send the response
-	dataPromise.then (function (){
+	authorizePromise.then (function (){
 		console.log("sending response");
 		res.setHeader('content-type', 'application/json');
-		res.setHeader('User-Id', userId);
 		res.status(200).send(JSON.stringify(new isAuthorizedResponse(resource,method,data)));
 	});
 

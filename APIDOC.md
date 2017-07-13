@@ -62,8 +62,17 @@
     ~~~
     
 * **Error Response:**
+  * **Code:** 400  
+  ~~~
+  {
+  	"message": "Invalid parameters"
+  }
+  ~~~
+ 
+    OR
+ 
   * **Code:** 500 INTERNAL SERVER ERROR  
 
-    OR
+	OR
 
   * **Code:** 502 BAD GATEWAY  
