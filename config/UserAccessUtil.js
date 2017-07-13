@@ -1,12 +1,12 @@
 'use strict';
 
-const Language = require("./Language.js").Language;
-const AccessType = require("./AccessType.js").AccessType;
+const Language   	= require("./Language.js").Language;
+const AccessType 	= require("./AccessType.js").AccessType;
 
 const MEMBER_ACCESS =[
 			AccessType.PRATILIPI_ADD_REVIEW, AccessType.PRATILIPI_UPDATE,
 			AccessType.USER_PRATILIPI_REVIEW, AccessType.USER_PRATILIPI_LIBRARY,
-			AccessType.AUTHOR_READ,AccessType.AUTHOR_UPDATE,
+			AccessType.AUTHOR_READ, AccessType.AUTHOR_UPDATE, 
 			AccessType.USER_AUTHOR_FOLLOWING,
 			AccessType.COMMENT_ADD, AccessType.COMMENT_UPDATE,
 			AccessType.VOTE,AccessType.PRATILIPI_READ_CONTENT ];
@@ -110,6 +110,9 @@ class AEES {
 	}
 
 	hasUserAccess(userId,language,accessType) {
+		if(userId == null || accessType == null) {
+			return false;
+		}
 		var roles = this.getRoles(userId);
 		for(var i = 0; i< roles.length;i++) {
 			var role = new Roles(roles[i]);
