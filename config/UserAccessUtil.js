@@ -6,6 +6,7 @@ const AccessType = require("./AccessType.js").AccessType;
 const MEMBER_ACCESS =[
 			AccessType.PRATILIPI_ADD_REVIEW, AccessType.PRATILIPI_UPDATE,
 			AccessType.USER_PRATILIPI_REVIEW, AccessType.USER_PRATILIPI_LIBRARY,
+			AccessType.AUTHOR_READ,AccessType.AUTHOR_UPDATE,
 			AccessType.USER_AUTHOR_FOLLOWING,
 			AccessType.COMMENT_ADD, AccessType.COMMENT_UPDATE,
 			AccessType.VOTE,AccessType.PRATILIPI_READ_CONTENT ];

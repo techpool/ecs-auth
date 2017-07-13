@@ -4,7 +4,8 @@ var dbUtility = require( '../lib/DbUtility.js' );
 var AuthorSchema = {
 	structure : {
 		'ID': { 'type' : 'INTEGER', 'default' : 0},
-		'USER_ID': { 'type' : 'INTEGER', 'default' : 0}
+		'USER_ID': { 'type' : 'INTEGER', 'default' : 0},
+		'LANGUAGE': { 'type' : 'STRING', 'default' : null }
 	},primaryKey  : 'ID'
 };
 
