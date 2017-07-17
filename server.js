@@ -1,45 +1,60 @@
-
-// Modules
+// Imports
 var express = require('express');
 
 // Load Configurations
-var config = require( './config/main' )[ process.env.STAGE ];
+var config = require( './config/main' )[ process.env.STAGE || 'local'];
 
-//Initialize app
+// Initialize app
 const app = express();
 app.set('port', config.PORT);
 
 // Load Services
-var accessTokenService = require( './service/AccessTokenService' )( { projectId: process.env.GCP_PROJ_ID } );
-var pratilipiService = require('./service/PratilipiService')( { projectId: process.env.GCP_PROJ_ID } );
-var authorService = require('./service/AuthorService')( { projectId: process.env.GCP_PROJ_ID } );
+const AccessTokenService = require('./service/AccessTokenService' )( { projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID} );
+const PratilipiService   = require('./service/PratilipiService')( { projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID} );
+const AuthorService      = require('./service/AuthorService')( { projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID} );
+const UserAccessList     = require('./config/UserAccessUtil.js');
+const Language           = require('./config/Language.js').Language;
+const AccessType         = require('./config/AccessType.js').AccessType;
 
 // Initialize utilities
 const Logging = require( './lib/LoggingGcp.js' ).init({
-  projectId: process.env.GCP_PROJ_ID,
+  projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID,
   service: config.SERVICE
 });
 
 const Metric = require( './lib/MetricGcp.js' ).init({
-	projectId: process.env.GCP_PROJ_ID,
+	projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID,
 	service: config.SERVICE
 });
 
-const cacheUtility = require('./lib/CacheUtility.js')({
-	port : config.REDIS_HOST_PORT,
-	hostIp : config.REDIS_HOST_IP,
-	resource : config.REDIS_KIND,
-	db : 3
-});
+
+var validResources = ['/pratilipis','/authors'];
+var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
+var Role = UserAccessList.Role;
+var AEES = UserAccessList.AEES;
+AEES = new AEES();
 
 const latencyMetric = new Metric( 'int64', 'Latency' );
 
-var accessTokenUserIdHash = {};
+// for initializing log object
+app.use((request, response, next) => {
+  var log = request.log = new Logging( request );
+  request.startTimestamp = Date.now();
+  next();
+});
+
+
+// Request Handlers
+app.get("/health", function (req, res) {
+	console.log("Request reached health");
+	var message = {"message":"Auth service is running healthy."};
+	res.status("200").send(message);
+});
+
 
 function User(id) {
     this.id = id;
 }
-
 
 function pratilipisResponse(list) {
     this.pratilipis = list;
@@ -50,25 +65,11 @@ function access(id,hasAccessToUpdate) {
 	this.hasAccessToUpdate = hasAccessToUpdate;
 }
 
-//for initializing log object
-app.use((request, response, next) => {
-  var log = request.log = new Logging( request );
-  request.startTimestamp = Date.now();
-  next();
-});
-
-
-//Request Handlers
-app.get("/health", function (req, res) {
-	var message = {"message":"Auth service is running healthy."};
-	res.status("200").send(message);
-});
-
-
+// This API is depricated, will no longer be available after Jul 30
 app.get("/auth/authorize", function (req, res) {
 	req.accessToken = req.headers.accesstoken;
 	console.log("Fetching user-id for accesstoken : "+req.accessToken);
-	accessTokenService
+	AccessTokenService
  	.getUserId( req.accessToken )
  	.then( ( userId ) => {
  		req.log.info("Reading user-id from gcp : "+userId);
@@ -87,113 +88,217 @@ app.get("/auth/authorize", function (req, res) {
  		req.log.error( JSON.stringify( err ) );
  		req.log.submit( 403, data.length );
  	});
-	/*
-	var promise =  cacheUtility.get(req.accessToken)
-	.catch((error) => {
-	    var error = 'Redis Get id Error';
-	    console.log(error);
-	    req.log.submit(500,error.length);
-	  })
-	.then((user) => {
-		if( user !== null ) {
-			console.log('Got user-id from redis');
-        	//req.log.info("The user-id is "+user.id);
-			res.header('User-Id' , user.id );
-			res.status(204).send();
-			var data = "req is authorized";
-			req.log.info(data);
-			req.log.submit( 204, data.length );
-			latencyMetric.write( Date.now() - req.startTimestamp );
-		} else {
-			accessTokenService
-	     	.getUserId( req.accessToken )
-	     	.then( ( userId ) => {
-	     		req.log.info("Reading user-id from gcp : "+userId);
-	     		console.log("Reading user-id from gcp : "+userId);
-	     		res.header('User-Id' , userId );
-	     		var user = new User(userId);
-	     		cacheUtility.insert( req.accessToken, user )
-	             .catch((error) => {
-	            	 console.log('Redis get ids Error');
-	            	 var error = 'Redis Insert ids Error';
-	            	 req.log.error(error);
-	            	 req.log.submit( 500, error.length );
-	              });
-	     		res.status(204).send();
-	     		var data = "req is authorized";
-				req.log.info(data);
-				req.log.submit( 204, data.length );
-				latencyMetric.write( Date.now() - req.startTimestamp );
-	     	})
-	     	.catch( ( err ) => {
-	     		var data = 'You are not authorized!';
-	     		console.log(err);
-	     		res.status( 403 ).send( data );
-	     		req.log.error( JSON.stringify( err ) );
-	     		req.log.submit( 403, data.length );
-	     	});
+});
+
+
+function isAuthorizedResponse (resource,method,data) {
+	this.resource = resource;
+	this.method = method;
+	this.data = data;
+}
+
+function resourceResponse (code, id, isAuthorized) {
+	this.code = code;
+	this.id = id;
+	this.isAuthorized = isAuthorized;
+}
+
+function errorResponse (message) {
+	this.message = message;
+}
+
+app.get("/auth/isAuthorized", function (req, res) {
+	
+	// Read Headers
+	var accessToken = req.headers['access-token'];
+	var userId = req.headers['user-id'];
+	
+	// Read query parameters
+	var resource = unescape(req.query.resource);
+	var method = req.query.method;
+	var resourceIds = req.query.id;
+	
+	// Validate query parameters
+	if (!validResources.includes(resource) || resourceIds == null || !validMethods.includes(method)) {
+		res.setHeader('content-type', 'application/json');
+		res.status(400).send( JSON.stringify(new errorResponse("Invalid parameters")));
+		return;
+	} else {
+		resourceIds = resourceIds.split(',').map(Number);
+	}
+	
+	// Get User-Id for accessToken
+	var userIdPromise;
+	if (userId == null && accessToken != null) {
+		userIdPromise = AccessTokenService
+	 	.getUserId( accessToken )
+	 	.then( ( id ) => {
+	 		console.log("Reading user-id from gcp : "+id);
+	 		userId = id;
+	 		res.setHeader('User-Id', userId);
+	 		return;
+	 	})
+	 	.catch( ( err ) => {
+	 		console.log(err);
+	 		return;
+	 	});
+	} else {
+		// TODO: Check if given User-Id is valid
+		userIdPromise = new Promise((resolve,reject)=>{
+			resolve();
+		});
+	}
+	
+	// Get resources by ids
+	var resources;
+	var resourcePromise = userIdPromise.then (function () {
+		if (resource == "/pratilipis") {
+			return PratilipiService
+			.getPratilipis(resourceIds)
+			.then ((pratilipis) => {
+				resources = pratilipis;
+				return;
+			})
+			.catch( ( err ) => {
+		 		var data = 'Error in getting pratilipi!';
+		 		console.log(err);
+		 		return;
+		 	});
+		} else if (resource == "/authors") {
+			return AuthorService
+			.getAuthors(resourceIds)
+			.then ((authors) => {
+				resources = authors;
+				return;
+			})
+			.catch( ( err ) => {
+		 		var data = 'Error in getting authors!';
+		 		console.log(err);
+		 		return;
+		 	});
 		}
 	});
-	*/
-});
 
-
-app.get("/auth/hasAccess", function (req, res) {
-	var userId = req.get('user-id');
-	if (userId) {
-		if (req.query.resource == "pratilipi") {
-			var ids = JSON.parse(req.query.ids);
-            pratilipiService.getPratilipis(ids)
-            .then ((pratilipis) => {
-                var permissions = [];
-                console.log("fetched pratilipis");
-                pratilipis.forEach( function(pratilipi) {
-                    if (pratilipi != null) {
-                        console.log("fetching author for pratilipi "+JSON.stringify(pratilipi));
-                        permissions.push( authorService.getAuthor(pratilipi.AUTHOR_ID)
-                        .then ((author) => {
-                            if (author.USER_ID == userId) {
-                                return new access(pratilipi.ID,true);
-                            } else {
-                                return new access(pratilipi.ID,false);
-                            }
-                        }).catch( (err) => {
-                        	console.log("Error while fetching authors");
-                            console.log(err);
-                        }));
-                    } 
-                });
-
-                Promise.all(permissions)
-                .then(data => {
-                	console.log("Returning response");
-                  var response = new pratilipisResponse(data);
-                  res.status( 200 ).send(response);
-                })
-                .catch(error => {
-                	console.log("Error while building response");
-                  console.log(error);
-                });
-            })
-            .catch( (err) => {
-                var data = 'Error while fetching access permissions';
-                console.log(data);
-                 console.log(err);
-                 res.status( 502 ).send( data );
-                 req.log.error( JSON.stringify( err ) );
-                 req.log.submit( 502, data.length );
-            });
-		} else {
-			res.status( 400 ).send( "Invalid resource");
+	
+	// Verify authorization
+	var data = [];
+	var authorizePromise = resourcePromise.then (function () {
+		
+		// Get roles for the user
+		var roles = AEES.getRoles(userId);
+		
+		if (resource == "/pratilipis") {
+			var ownerPromises = [];
+			for (i = 0; i < resources.length; i++) {
+				var pratilipi = resources[i];
+				if (pratilipi != null) {
+					
+					var accessType=null;
+					if (method == "GET") {
+						accessType = AccessType.PRATILIPI_READ_CONTENT;
+					} else if (method == "PUT" || method == "PATCH" ) {
+						accessType = AccessType.PRATILIPI_UPDATE;
+					} else if (method == "POST" ) {
+						accessType = AccessType.PRATILIPI_ADD;
+					} else if (method == "DELETE") {
+						accessType = AccessType.PRATILIPI_DELETE;
+					}
+					
+					
+					var language = null;
+					if (accessType != AccessType.PRATILIPI_ADD) {
+						language = pratilipi.LANGUAGE;
+					}
+					
+					var hasAccess = AEES.hasUserAccess(userId,language,accessType);
+					if (hasAccess) {
+						if (accessType == AccessType.PRATILIPI_UPDATE || accessType == AccessType.PRATILIPI_DELETE) {
+							ownerPromises.push(isUserAuthorToPratilipi(i,data,userId,pratilipi));
+						} else {
+							data[i] = new resourceResponse(200,pratilipi.ID,true)
+						}
+					} else {
+						data[i] = new resourceResponse(403,pratilipi.ID,false);
+					}
+					
+				} else {
+					data[i] = new resourceResponse(404,resourceIds[i],false);
+				}
+			}
+			return new Promise((resolve,reject)=>{
+				Promise.all(ownerPromises).then (function () {
+					resolve();
+				});
+			});
+		} else if (resource == "/authors") {
+			for (i = 0; i < resources.length; i++) {
+				var author = resources[i];
+				if (author != null) {
+					
+					var accessType=null;
+					if (method == "GET") {
+						accessType = AccessType.AUTHOR_READ;
+					} else if (method == "PUT" || method == "PATCH" ) {
+						accessType = AccessType.AUTHOR_UPDATE;
+					} else if (method == "POST" ) {
+						accessType = AccessType.AUTHOR_ADD;
+					} else if (method == "DELETE") {
+						accessType = AccessType.AUTHOR_DELETE;
+					}
+					
+					var language = null;
+					if (accessType != AccessType.AUTHOR_ADD) {
+						language = author.LANGUAGE;
+					}
+					
+					var hasAccess = AEES.hasUserAccess(userId,language,accessType);
+					if (hasAccess) {
+						if (accessType == AccessType.AUTHOR_UPDATE) {
+							if (author.USER_ID == userId) {
+					        	data[i] = new resourceResponse(200,author.ID,true);
+					        } else {
+					        	data[i] = new resourceResponse(403,author.ID,false);
+					        }
+						} else {
+							data[i] = new resourceResponse(200,author.ID,true);
+						}
+					} else {
+						data[i] = new resourceResponse(403,author.ID,false);
+					}
+					
+				} else {
+					data[i] = new resourceResponse(404,resourceIds[i],false);
+				}
+			}
 		}
 		
-	} else {
-		var data = 'User id is required';
-		res.status( 400 ).send( data );
-		req.log.error( JSON.stringify( err ) );
- 		req.log.submit( 400, data.length );
-	}
+	});
+	
+	authorizePromise.then (function (){
+		console.log("sending response");
+		res.setHeader('content-type', 'application/json');
+		res.status(200).send(JSON.stringify(new isAuthorizedResponse(resource,method,data)));
+	});
+
 });
+
+function isUserAuthorToPratilipi(index,data,userId,pratilipi) {
+	return new Promise( function (resolve,reject) {
+		AuthorService.getAuthor(pratilipi.AUTHOR_ID)
+	    .then ((author) => {
+	        if (author!=null &&  author.USER_ID == userId) {
+	        	data[index] = new resourceResponse(200,pratilipi.ID,true);
+	        } else {
+	        	data[index] = new resourceResponse(403,pratilipi.ID,false);
+	        }
+	        resolve();
+	    }).catch( (err) => {
+	    	console.log("Error while fetching authors");
+	        console.log(err);
+	        reject();  
+	    });
+	});	
+}
 
 
 
@@ -201,4 +306,9 @@ app.get("/auth/hasAccess", function (req, res) {
 var server = app.listen(app.get('port'), function () {
    var host = server.address().address
    var port = server.address().port
-})
+   console.log("The service running on "+host+":"+port);
+});
+
+
+// exports
+module.exports = server
