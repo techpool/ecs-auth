@@ -3,9 +3,13 @@
 const Language   	= require("./Language.js").Language;
 const AccessType 	= require("./AccessType.js").AccessType;
 
+const GUEST_ACCESS=[
+	AccessType.PRATILIPI_READ_CONTENT, AccessType.AUTHOR_READ
+];
+
 const MEMBER_ACCESS =[
 			AccessType.PRATILIPI_ADD_REVIEW, AccessType.PRATILIPI_UPDATE,
-			AccessType.USER_PRATILIPI_REVIEW, AccessType.USER_PRATILIPI_LIBRARY,
+			AccessType.USER_PRATILIPI_REVIEW, AccessType.USER_PRATILIPI_LIBRARY, AccessType.PRATILIPI_READ_CONTENT,
 			AccessType.AUTHOR_READ, AccessType.AUTHOR_UPDATE, 
 			AccessType.USER_AUTHOR_FOLLOWING,
 			AccessType.COMMENT_ADD, AccessType.COMMENT_UPDATE,
@@ -15,14 +19,14 @@ const ADMIN_ACCESS = [
   AccessType.INIT_UPDATE,
 			AccessType.PRATILIPI_LIST, AccessType.PRATILIPI_ADD, AccessType.PRATILIPI_UPDATE,
 			AccessType.PRATILIPI_READ_META, AccessType.PRATILIPI_UPDATE_META, AccessType.PRATILIPI_READ_CONTENT,
-			AccessType.AUTHOR_LIST, AccessType.AUTHOR_ADD, AccessType.AUTHOR_UPDATE,
+			AccessType.AUTHOR_LIST, AccessType.AUTHOR_ADD, AccessType.AUTHOR_UPDATE, AccessType.AUTHOR_READ,
 			AccessType.EVENT_ADD, AccessType.EVENT_UPDATE,
 			AccessType.BLOG_POST_LIST, AccessType.BLOG_POST_ADD, AccessType.BLOG_POST_UPDATE, AccessType.I18N_UPDATE
 ];
 
 var Role = {};
 
-Role.GUEST 			 = {language:null,accessTypes:null};
+Role.GUEST 			 = {language:null,accessTypes:GUEST_ACCESS};
 Role.MEMBER 		 = {language:null,accessTypes:MEMBER_ACCESS};
 Role.ADMIN			 = {language:null,accessTypes:[AccessType.USER_ADD, AccessType.USER_UPDATE, AccessType.PRATILIPI_LIST, AccessType.BATCH_PROCESS_ADD, AccessType.BATCH_PROCESS_LIST]};
 Role.ADMIN_BENGALI	 = {language:Language.BENGALI,accessTypes:ADMIN_ACCESS};
