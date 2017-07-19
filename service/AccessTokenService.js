@@ -3,7 +3,7 @@ module.exports = AccessToken;
 var dbUtility = require( '../lib/DbUtility.js' );
 var AccessTokenSchema = {
 	structure : {
-		'ID'		: { 'type' : 'STRING', 'default' : 0},
+		'ID'		: { 'type' : 'STRING', 'default' : null},
 		'USER_ID'	: {'type': 'INTEGER', 'default': 0}
 	},primaryKey : 'ID'
 };
