@@ -117,13 +117,16 @@ app.get("/auth/isAuthorized", function (req, res) {
 	var resource = unescape(req.query.resource);
 	var method = req.query.method;
 	var resourceIds = req.query.id;
+	var language = req.query.language;
 	
 	// Validate query parameters
-	if (!validResources.includes(resource) || resourceIds == null || !validMethods.includes(method)) {
+	if (!validResources.includes(resource) || !validMethods.includes(method)  || (method != 'POST' && resourceIds == null) || (method == 'POST' && language == null)) {
 		res.setHeader('content-type', 'application/json');
 		res.status(400).send( JSON.stringify(new errorResponse("Invalid parameters")));
 		return;
-	} else {
+	}
+	
+	if (method != 'POST'){
 		resourceIds = resourceIds.split(',').map(Number);
 	}
 	
@@ -152,7 +155,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	// Get resources by ids
 	var resources;
 	var resourcePromise = userIdPromise.then (function () {
-		if (resource == "/pratilipis") {
+		if (resource == "/pratilipis" && method != "POST") {
 			return PratilipiService
 			.getPratilipis(resourceIds)
 			.then ((pratilipis) => {
@@ -164,7 +167,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		 		console.log(err);
 		 		return;
 		 	});
-		} else if (resource == "/authors") {
+		} else if (resource == "/authors" && method != "POST") {
 			return AuthorService
 			.getAuthors(resourceIds)
 			.then ((authors) => {
@@ -186,8 +189,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		
 		// Get roles for the user
 		var roles = AEES.getRoles(userId);
-		
-		if (resource == "/pratilipis") {
+		if (resource == "/pratilipis" && method != "POST") {
 			var ownerPromises = [];
 			for (i = 0; i < resources.length; i++) {
 				var pratilipi = resources[i];
@@ -198,17 +200,11 @@ app.get("/auth/isAuthorized", function (req, res) {
 						accessType = AccessType.PRATILIPI_READ_CONTENT;
 					} else if (method == "PUT" || method == "PATCH" ) {
 						accessType = AccessType.PRATILIPI_UPDATE;
-					} else if (method == "POST" ) {
-						accessType = AccessType.PRATILIPI_ADD;
 					} else if (method == "DELETE") {
 						accessType = AccessType.PRATILIPI_DELETE;
 					}
 					
-					
-					var language = null;
-					if (accessType != AccessType.PRATILIPI_ADD) {
-						language = pratilipi.LANGUAGE;
-					}
+					language = pratilipi.LANGUAGE;
 					
 					var hasAccess = AEES.hasUserAccess(userId,language,accessType);
 					if (hasAccess) {
@@ -230,7 +226,16 @@ app.get("/auth/isAuthorized", function (req, res) {
 					resolve();
 				});
 			});
-		} else if (resource == "/authors") {
+		} else if (resource == "/pratilipis" && method == "POST") { 
+			
+			var hasAccess = AEES.hasUserAccess(userId, language, AccessType.PRATILIPI_ADD);
+			if (hasAccess) {
+				data[0] = new resourceResponse(200, 0, true)
+			} else {
+				data[0] = new resourceResponse(403, 0, false);
+			}
+			
+		} else if (resource == "/authors" && method != "POST") {
 			for (i = 0; i < resources.length; i++) {
 				var author = resources[i];
 				if (author != null) {
@@ -240,16 +245,11 @@ app.get("/auth/isAuthorized", function (req, res) {
 						accessType = AccessType.AUTHOR_READ;
 					} else if (method == "PUT" || method == "PATCH" ) {
 						accessType = AccessType.AUTHOR_UPDATE;
-					} else if (method == "POST" ) {
-						accessType = AccessType.AUTHOR_ADD;
 					} else if (method == "DELETE") {
 						accessType = AccessType.AUTHOR_DELETE;
 					}
 					
-					var language = null;
-					if (accessType != AccessType.AUTHOR_ADD) {
-						language = author.LANGUAGE;
-					}
+					language = author.LANGUAGE;
 					
 					var hasAccess = AEES.hasUserAccess(userId,language,accessType);
 					if (hasAccess) {
@@ -269,6 +269,13 @@ app.get("/auth/isAuthorized", function (req, res) {
 				} else {
 					data[i] = new resourceResponse(404,resourceIds[i],false);
 				}
+			}
+		} else if (resource == "/authors" && method == "POST") {
+			var hasAccess = AEES.hasUserAccess(userId, language, AccessType.AUTHOR_ADD);
+			if (hasAccess) {
+				data[0] = new resourceResponse(200, 0, true);
+			} else {
+				data[0] = new resourceResponse(403, 0, false);
 			}
 		}
 		

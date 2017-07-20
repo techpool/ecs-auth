@@ -8,7 +8,7 @@ const GUEST_ACCESS=[
 ];
 
 const MEMBER_ACCESS =[
-			AccessType.PRATILIPI_ADD_REVIEW, AccessType.PRATILIPI_UPDATE,
+			AccessType.PRATILIPI_ADD_REVIEW, AccessType.PRATILIPI_UPDATE, AccessType.PRATILIPI_ADD,
 			AccessType.USER_PRATILIPI_REVIEW, AccessType.USER_PRATILIPI_LIBRARY, AccessType.PRATILIPI_READ_CONTENT,
 			AccessType.AUTHOR_READ, AccessType.AUTHOR_UPDATE, 
 			AccessType.USER_AUTHOR_FOLLOWING,
@@ -46,7 +46,8 @@ class Roles{
 	}
 
 	hasAccess(language, accessType ) {
-		if( this.language !== null && this.language !== language ){
+		
+		if( this.language !== null && this.language.nameEn.toLowerCase() !== language.toLowerCase() ){
 				return false;
 			}
 		if( this.accessTypes === null ) {
@@ -54,7 +55,6 @@ class Roles{
 			}
 
 			var keys = Object.keys(this.accessTypes);
-
 			for(var i = 0; i< keys.length;i++){
 				var att = keys[i];
 				var at = this.accessTypes[att];
@@ -106,7 +106,7 @@ class AEES {
 		for(var i = 0; i< keys.length;i++) {
 			var aEE = keys[i];
 			var value = AEE[aEE];
-			if( userId === value.userId  ) {
+			if( userId == value.userId  ) {
 				return value.roles;
 			}
 		}
@@ -118,7 +118,7 @@ class AEES {
 			return false;
 		}
 		var roles = this.getRoles(userId);
-		for(var i = 0; i< roles.length;i++) {
+		for(var i = 0; i < roles.length;i++) {
 			var role = new Roles(roles[i]);
 			if(role.hasAccess(language,accessType)){
 				return true;
