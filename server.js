@@ -21,7 +21,6 @@ const Logging = require( './lib/LoggingGcp.js' ).init({
   projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID,
   service: config.SERVICE
 });
-
 const Metric = require( './lib/MetricGcp.js' ).init({
 	projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID,
 	service: config.SERVICE
@@ -189,96 +188,97 @@ app.get("/auth/isAuthorized", function (req, res) {
 		
 		// Get roles for the user
 		var roles = AEES.getRoles(userId);
-		if (resource == "/pratilipis" && method != "POST") {
-			var ownerPromises = [];
-			for (i = 0; i < resources.length; i++) {
-				var pratilipi = resources[i];
-				if (pratilipi != null) {
-					
-					var accessType=null;
-					if (method == "GET") {
-						accessType = AccessType.PRATILIPI_READ_CONTENT;
-					} else if (method == "PUT" || method == "PATCH" ) {
-						accessType = AccessType.PRATILIPI_UPDATE;
-					} else if (method == "DELETE") {
-						accessType = AccessType.PRATILIPI_DELETE;
-					}
-					
-					language = pratilipi.LANGUAGE;
-					
-					var hasAccess = AEES.hasUserAccess(userId,language,accessType);
-					if (hasAccess) {
-						if (accessType == AccessType.PRATILIPI_UPDATE || accessType == AccessType.PRATILIPI_DELETE) {
-							ownerPromises.push(isUserAuthorToPratilipi(i,data,userId,pratilipi));
-						} else {
-							data[i] = new resourceResponse(200,pratilipi.ID,true)
-						}
-					} else {
-						data[i] = new resourceResponse(403,pratilipi.ID,false);
-					}
-					
+		if (resource == "/pratilipis") {
+			if (method == "POST") {
+				var hasAccess = AEES.hasUserAccess(userId, language, AccessType.PRATILIPI_ADD);
+				if (hasAccess) {
+					data[0] = new resourceResponse(200, 0, true)
 				} else {
-					data[i] = new resourceResponse(404,resourceIds[i],false);
+					data[0] = new resourceResponse(403, 0, false);
 				}
-			}
-			return new Promise((resolve,reject)=>{
-				Promise.all(ownerPromises).then (function () {
-					resolve();
+			} else {
+				var ownerPromises = [];
+				for (i = 0; i < resources.length; i++) {
+					var pratilipi = resources[i];
+					if (pratilipi != null) {
+						
+						var accessType=null;
+						if (method == "GET") {
+							accessType = AccessType.PRATILIPI_READ_CONTENT;
+						} else if (method == "PUT" || method == "PATCH" ) {
+							accessType = AccessType.PRATILIPI_UPDATE;
+						} else if (method == "DELETE") {
+							accessType = AccessType.PRATILIPI_DELETE;
+						}
+						
+						language = pratilipi.LANGUAGE;
+						
+						var hasAccess = AEES.hasUserAccess(userId,language,accessType);
+						if (hasAccess) {
+							if (accessType == AccessType.PRATILIPI_UPDATE || accessType == AccessType.PRATILIPI_DELETE) {
+								ownerPromises.push(isUserAuthorToPratilipi(i,data,userId,pratilipi));
+							} else {
+								data[i] = new resourceResponse(200,pratilipi.ID,true)
+							}
+						} else {
+							data[i] = new resourceResponse(403,pratilipi.ID,false);
+						}
+						
+					} else {
+						data[i] = new resourceResponse(404,resourceIds[i],false);
+					}
+				}
+				return new Promise((resolve,reject)=>{
+					Promise.all(ownerPromises).then (function () {
+						resolve();
+					});
 				});
-			});
-		} else if (resource == "/pratilipis" && method == "POST") { 
-			
-			var hasAccess = AEES.hasUserAccess(userId, language, AccessType.PRATILIPI_ADD);
-			if (hasAccess) {
-				data[0] = new resourceResponse(200, 0, true)
-			} else {
-				data[0] = new resourceResponse(403, 0, false);
 			}
-			
-		} else if (resource == "/authors" && method != "POST") {
-			for (i = 0; i < resources.length; i++) {
-				var author = resources[i];
-				if (author != null) {
-					
-					var accessType=null;
-					if (method == "GET") {
-						accessType = AccessType.AUTHOR_READ;
-					} else if (method == "PUT" || method == "PATCH" ) {
-						accessType = AccessType.AUTHOR_UPDATE;
-					} else if (method == "DELETE") {
-						accessType = AccessType.AUTHOR_DELETE;
-					}
-					
-					language = author.LANGUAGE;
-					
-					var hasAccess = AEES.hasUserAccess(userId,language,accessType);
-					if (hasAccess) {
-						if (accessType == AccessType.AUTHOR_UPDATE) {
-							if (author.USER_ID == userId) {
-					        	data[i] = new resourceResponse(200,author.ID,true);
-					        } else {
-					        	data[i] = new resourceResponse(403,author.ID,false);
-					        }
-						} else {
-							data[i] = new resourceResponse(200,author.ID,true);
-						}
-					} else {
-						data[i] = new resourceResponse(403,author.ID,false);
-					}
-					
+		} else if (resource == "/authors") {
+			if (method == "POST") {
+				var hasAccess = AEES.hasUserAccess(userId, language, AccessType.AUTHOR_ADD);
+				if (hasAccess) {
+					data[0] = new resourceResponse(200, 0, true);
 				} else {
-					data[i] = new resourceResponse(404,resourceIds[i],false);
+					data[0] = new resourceResponse(403, 0, false);
+				}
+			} else {
+				for (i = 0; i < resources.length; i++) {
+					var author = resources[i];
+					if (author != null) {
+						
+						var accessType=null;
+						if (method == "GET") {
+							accessType = AccessType.AUTHOR_READ;
+						} else if (method == "PUT" || method == "PATCH" ) {
+							accessType = AccessType.AUTHOR_UPDATE;
+						} else if (method == "DELETE") {
+							accessType = AccessType.AUTHOR_DELETE;
+						}
+						
+						language = author.LANGUAGE;
+						
+						var hasAccess = AEES.hasUserAccess(userId,language,accessType);
+						if (hasAccess) {
+							if (accessType == AccessType.AUTHOR_UPDATE) {
+								if (author.USER_ID == userId) {
+						        	data[i] = new resourceResponse(200,author.ID,true);
+						        } else {
+						        	data[i] = new resourceResponse(403,author.ID,false);
+						        }
+							} else {
+								data[i] = new resourceResponse(200,author.ID,true);
+							}
+						} else {
+							data[i] = new resourceResponse(403,author.ID,false);
+						}
+						
+					} else {
+						data[i] = new resourceResponse(404,resourceIds[i],false);
+					}
 				}
 			}
-		} else if (resource == "/authors" && method == "POST") {
-			var hasAccess = AEES.hasUserAccess(userId, language, AccessType.AUTHOR_ADD);
-			if (hasAccess) {
-				data[0] = new resourceResponse(200, 0, true);
-			} else {
-				data[0] = new resourceResponse(403, 0, false);
-			}
-		}
-		
+		} 
 	});
 	
 	authorizePromise.then (function (){
