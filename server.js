@@ -234,7 +234,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 					});
 				});
 			}
-		} else if (resource == "/authors" && method != "POST") {
+		} else if (resource == "/authors") {
 			if (method == "POST") {
 				var hasAccess = AEES.hasUserAccess(userId, language, AccessType.AUTHOR_ADD);
 				if (hasAccess) {
