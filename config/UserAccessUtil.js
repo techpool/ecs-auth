@@ -126,6 +126,22 @@ class AEES {
 		}
 		return false;
 	}
+	
+	isAEE(userId) {
+		if(userId == null) {
+			return false;
+		}
+		
+		var keys = Object.keys(AEE);
+		for(var i = 0; i< keys.length;i++) {
+			var aEE = keys[i];
+			var value = AEE[aEE];
+			if( userId == value.userId  ) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	getAeeUserIdList(language) {
 		var aeeUserIdList = new Set();

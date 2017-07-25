@@ -1,5 +1,6 @@
 // Imports
 var express = require('express');
+var url = require('url')
 
 // Load Configurations
 var config = require( './config/main' )[ process.env.STAGE || 'local'];
@@ -43,13 +44,43 @@ app.use((request, response, next) => {
 });
 
 
+//apis to resources mapping
+app.use((request, response, next) => {
+
+	var urlParts = url.parse(request.url, true);
+    var pathname = urlParts.pathname;
+    var isPathMapped = false;
+    if (pathname === "/auth/isAuthorized") {
+    	var resource = unescape(request.query.resource).replace(/\/+[0-9]+\//g, "/*/");
+    	if (resource == "/image/pratilipi/cover" || resource == "/image/pratilipi/*/cover") {
+    		resource = "/pratilipis";
+    		isPathMapped = true;
+    	} else if (resource == "/image/author/cover" || resource == "/image/author/*/cover"
+    		|| resource == "/image/author/profile" || resource == "/image/author/*/profile") {
+    		resource = "/authors";
+    		isPathMapped = true;
+    	}
+    	
+    	if (isPathMapped) {
+    		request.query.originalResource = request.query.resource;
+    		request.query.resource = resource;
+    		
+    		if (request.query.method == 'POST') {
+    			request.query.method = 'PATCH';
+    			request.query.originalMethod = 'POST';
+    		}
+    	} 
+    }
+	next();
+});
+
+
 // Request Handlers
 app.get("/health", function (req, res) {
 	console.log("Request reached health");
 	var message = {"message":"Auth service is running healthy."};
 	res.status("200").send(message);
 });
-
 
 function isAuthorizedResponse (resource,method,data) {
 	this.resource = resource;
@@ -176,7 +207,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 						
 						var hasAccess = AEES.hasUserAccess(userId,language,accessType);
 						if (hasAccess) {
-							if (accessType == AccessType.PRATILIPI_UPDATE || accessType == AccessType.PRATILIPI_DELETE) {
+							if (!AEES.isAEE(userId) && (accessType == AccessType.PRATILIPI_UPDATE || accessType == AccessType.PRATILIPI_DELETE)) {
 								ownerPromises.push(isUserAuthorToPratilipi(i,data,userId,pratilipi));
 							} else {
 								data[i] = new resourceResponse(200,pratilipi.ID,true)
@@ -221,7 +252,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 						
 						var hasAccess = AEES.hasUserAccess(userId,language,accessType);
 						if (hasAccess) {
-							if (accessType == AccessType.AUTHOR_UPDATE) {
+							if (!AEES.isAEE(userId) && accessType == AccessType.AUTHOR_UPDATE) {
 								if (author.USER_ID == userId) {
 						        	data[i] = new resourceResponse(200,author.ID,true);
 						        } else {
@@ -245,6 +276,12 @@ app.get("/auth/isAuthorized", function (req, res) {
 	authorizePromise.then (function (){
 		console.log("sending response");
 		res.setHeader('content-type', 'application/json');
+		if (req.query.originalResource != null && req.query.originalResource != "") {
+			resource = req.query.originalResource;
+		} 
+		if (req.query.originalMethod != null && req.query.originalMethod != "") {
+			method = req.query.originalMethod;
+		}
 		res.status(200).send(JSON.stringify(new isAuthorizedResponse(resource,method,data)));
 	});
 
