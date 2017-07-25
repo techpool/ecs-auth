@@ -51,45 +51,6 @@ app.get("/health", function (req, res) {
 });
 
 
-function User(id) {
-    this.id = id;
-}
-
-function pratilipisResponse(list) {
-    this.pratilipis = list;
-};
-
-function access(id,hasAccessToUpdate) {
-	this.id = id;
-	this.hasAccessToUpdate = hasAccessToUpdate;
-}
-
-// This API is depricated, will no longer be available after Jul 30
-app.get("/auth/authorize", function (req, res) {
-	req.accessToken = req.headers.accesstoken;
-	console.log("Fetching user-id for accesstoken : "+req.accessToken);
-	AccessTokenService
- 	.getUserId( req.accessToken )
- 	.then( ( userId ) => {
- 		req.log.info("Reading user-id from gcp : "+userId);
- 		console.log("Reading user-id from gcp : "+userId);
- 		res.header('User-Id' , userId );
- 		res.status(204).send();
- 		var data = "req is authorized";
-		req.log.info(data);
-		req.log.submit( 204, data.length );
-		latencyMetric.write( Date.now() - req.startTimestamp );
- 	})
- 	.catch( ( err ) => {
- 		var data = 'You are not authorized!';
- 		console.log(err);
- 		res.status( 403 ).send( data );
- 		req.log.error( JSON.stringify( err ) );
- 		req.log.submit( 403, data.length );
- 	});
-});
-
-
 function isAuthorizedResponse (resource,method,data) {
 	this.resource = resource;
 	this.method = method;
