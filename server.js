@@ -200,7 +200,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 						data[0] = new resourceResponse(200, author.ID, true);
 					}
 					else if (state == "DRAFTED") {
-						if (userId == author.ID || AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.AUTHOR_PRATILIPIS_READ)) {
+						if (userId == author.USER_ID || AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.AUTHOR_PRATILIPIS_READ)) {
 							data[0] = new resourceResponse(200, author.ID, true);
 						} else {
 							data[0] = new resourceResponse(403, author.ID, false);
