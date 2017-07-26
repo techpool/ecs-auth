@@ -51,12 +51,14 @@ app.use((request, response, next) => {
     var pathname = urlParts.pathname;
     var isPathMapped = false;
     if (pathname === "/auth/isAuthorized") {
-    	var resource = unescape(request.query.resource).replace(/\/+[0-9]+\//g, "/*/");
-    	if (resource == "/image/pratilipi/cover" || resource == "/image/pratilipi/*/cover") {
+    	var resource = unescape(request.query.resource).replace(/\/[0-9]+/g, "/*");
+    	if (resource == "/image/pratilipi/cover" || resource == "/image/pratilipi/*/cover" 
+    		|| resource == "/pratilipis/*") {
     		resource = "/pratilipis";
     		isPathMapped = true;
     	} else if (resource == "/image/author/cover" || resource == "/image/author/*/cover"
-    		|| resource == "/image/author/profile" || resource == "/image/author/*/profile") {
+    		|| resource == "/image/author/profile" || resource == "/image/author/*/profile"
+    			|| resource == "/authors/*") {
     		resource = "/authors";
     		isPathMapped = true;
     	}
