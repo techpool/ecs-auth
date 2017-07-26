@@ -18,6 +18,7 @@ AccessType = {
 	AUTHOR_UPDATE 					: "Update Author",
 	AUTHOR_READ 					: "View Author",
 	AUTHOR_DELETE 					: "Delete Author",
+	AUTHOR_PRATILIPIS_READ          : "Read Author Pratilipis",
 	EVENT_ADD 						: "Add Event",
 	EVENT_UPDATE 					: "Update Event",
 	I18N_UPDATE 					: "Update I18N Table",

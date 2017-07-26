@@ -19,7 +19,7 @@ const ADMIN_ACCESS = [
   AccessType.INIT_UPDATE,
 			AccessType.PRATILIPI_LIST, AccessType.PRATILIPI_ADD, AccessType.PRATILIPI_UPDATE, AccessType.PRATILIPI_DELETE,
 			AccessType.PRATILIPI_READ_META, AccessType.PRATILIPI_UPDATE_META, AccessType.PRATILIPI_READ_CONTENT,
-			AccessType.AUTHOR_LIST, AccessType.AUTHOR_ADD, AccessType.AUTHOR_UPDATE, AccessType.AUTHOR_READ,
+			AccessType.AUTHOR_LIST, AccessType.AUTHOR_ADD, AccessType.AUTHOR_UPDATE, AccessType.AUTHOR_READ, AccessType.AUTHOR_PRATILIPIS_READ, 
 			AccessType.EVENT_ADD, AccessType.EVENT_UPDATE,
 			AccessType.BLOG_POST_LIST, AccessType.BLOG_POST_ADD, AccessType.BLOG_POST_UPDATE, AccessType.I18N_UPDATE
 ];
@@ -53,7 +53,6 @@ class Roles{
 		if( this.accessTypes === null ) {
 				return false;
 			}
-
 			var keys = Object.keys(this.accessTypes);
 			for(var i = 0; i< keys.length;i++){
 				var att = keys[i];
@@ -143,7 +142,7 @@ class AEES {
 		}
 		return false;
 	}
-
+	
 	getAeeUserIdList(language) {
 		var aeeUserIdList = new Set();
 		var aeeUserIdList1 = [];

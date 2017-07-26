@@ -111,6 +111,14 @@ app.get("/auth/isAuthorized", function (req, res) {
 	var method = req.query.method;
 	var resourceIds = req.query.id;
 	var language = req.query.language;
+	var authorId = req.query.authorId;
+	var state = req.query.state;
+	
+	var resourceType = null;
+	if (authorId != null) {
+		resourceIds = authorId;
+		resourceType = "AUTHOR";
+	}
 	
 	// Validate query parameters
 	if (!validResources.includes(resource) || !validMethods.includes(method)  || (method != 'POST' && resourceIds == null) || (method == 'POST' && language == null)) {
@@ -148,7 +156,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 	// Get resources by ids
 	var resources;
 	var resourcePromise = userIdPromise.then (function () {
-		if (resource == "/pratilipis" && method != "POST") {
+		
+		if (resource == "/pratilipis" && method != "POST" && resourceType == null) {
 			return PratilipiService
 			.getPratilipis(resourceIds)
 			.then ((pratilipis) => {
@@ -160,7 +169,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		 		console.log(err);
 		 		return;
 		 	});
-		} else if (resource == "/authors" && method != "POST") {
+		} else if ((resource == "/authors" && method != "POST") || (resource == "/pratilipis" && method == "GET" && resourceType == "AUTHOR")) {
 			return AuthorService
 			.getAuthors(resourceIds)
 			.then ((authors) => {
@@ -183,50 +192,72 @@ app.get("/auth/isAuthorized", function (req, res) {
 		// Get roles for the user
 		var roles = AEES.getRoles(userId);
 		if (resource == "/pratilipis") {
-			if (method == "POST") {
-				var hasAccess = AEES.hasUserAccess(userId, language, AccessType.PRATILIPI_ADD);
-				if (hasAccess) {
-					data[0] = new resourceResponse(200, 0, true)
+			
+			if (resourceType == "AUTHOR") {
+				if (resources != null && resources.length > 0) {
+					var author = resources[0];
+					if (state == "PUBLISHED") {
+						data[0] = new resourceResponse(200, author.ID, true);
+					}
+					else if (state == "DRAFTED") {
+						if (userId == author.ID || AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.AUTHOR_PRATILIPIS_READ)) {
+							data[0] = new resourceResponse(200, author.ID, true);
+						} else {
+							data[0] = new resourceResponse(403, author.ID, false);
+						} 
+					} else {
+						data[0] = new resourceResponse(403, author.ID, false);
+					}
+					
 				} else {
-					data[0] = new resourceResponse(403, 0, false);
+					data[0] = new resourceResponse(403, resourceIds[0], false);
 				}
 			} else {
-				var ownerPromises = [];
-				for (i = 0; i < resources.length; i++) {
-					var pratilipi = resources[i];
-					if (pratilipi != null) {
-						
-						var accessType=null;
-						if (method == "GET") {
-							accessType = AccessType.PRATILIPI_READ_CONTENT;
-						} else if (method == "PUT" || method == "PATCH" ) {
-							accessType = AccessType.PRATILIPI_UPDATE;
-						} else if (method == "DELETE") {
-							accessType = AccessType.PRATILIPI_DELETE;
-						}
-						
-						language = pratilipi.LANGUAGE;
-						
-						var hasAccess = AEES.hasUserAccess(userId,language,accessType);
-						if (hasAccess) {
-							if (!AEES.isAEE(userId) && (accessType == AccessType.PRATILIPI_UPDATE || accessType == AccessType.PRATILIPI_DELETE)) {
-								ownerPromises.push(isUserAuthorToPratilipi(i,data,userId,pratilipi));
-							} else {
-								data[i] = new resourceResponse(200,pratilipi.ID,true)
-							}
-						} else {
-							data[i] = new resourceResponse(403,pratilipi.ID,false);
-						}
-						
+				 if (method == "POST") {
+					var hasAccess = AEES.hasUserAccess(userId, language, AccessType.PRATILIPI_ADD);
+					if (hasAccess) {
+						data[0] = new resourceResponse(200, 0, true)
 					} else {
-						data[i] = new resourceResponse(404,resourceIds[i],false);
+						data[0] = new resourceResponse(403, 0, false);
 					}
-				}
-				return new Promise((resolve,reject)=>{
-					Promise.all(ownerPromises).then (function () {
-						resolve();
+				} else {
+					var ownerPromises = [];
+					for (i = 0; i < resources.length; i++) {
+						var pratilipi = resources[i];
+						if (pratilipi != null) {
+							
+							var accessType=null;
+							if (method == "GET") {
+								accessType = AccessType.PRATILIPI_READ_CONTENT;
+							} else if (method == "PUT" || method == "PATCH" ) {
+								accessType = AccessType.PRATILIPI_UPDATE;
+							} else if (method == "DELETE") {
+								accessType = AccessType.PRATILIPI_DELETE;
+							}
+							
+							language = pratilipi.LANGUAGE;
+							
+							var hasAccess = AEES.hasUserAccess(userId,language,accessType);
+							if (hasAccess) {
+								if (!AEES.isAEE(userId) && (accessType == AccessType.PRATILIPI_UPDATE || accessType == AccessType.PRATILIPI_DELETE)) {
+									ownerPromises.push(isUserAuthorToPratilipi(i,data,userId,pratilipi));
+								} else {
+									data[i] = new resourceResponse(200,pratilipi.ID,true)
+								}
+							} else {
+								data[i] = new resourceResponse(403,pratilipi.ID,false);
+							}
+							
+						} else {
+							data[i] = new resourceResponse(404,resourceIds[i],false);
+						}
+					}
+					return new Promise((resolve,reject)=>{
+						Promise.all(ownerPromises).then (function () {
+							resolve();
+						});
 					});
-				});
+				}
 			}
 		} else if (resource == "/authors") {
 			if (method == "POST") {
