@@ -28,7 +28,7 @@ const Metric = require( './lib/MetricGcp.js' ).init({
 });
 
 
-var validResources = ['/pratilipis','/authors'];
+var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/search/search','/search/trending_search'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 var Role = UserAccessList.Role;
 var AEES = UserAccessList.AEES;
@@ -118,6 +118,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 	if (authorId != null) {
 		resourceIds = authorId;
 		resourceType = "AUTHOR";
+	} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search") {
+		resourceIds = "0";
 	}
 	
 	// Validate query parameters
@@ -149,7 +151,14 @@ app.get("/auth/isAuthorized", function (req, res) {
 	} else {
 		// TODO: Check if given User-Id is valid
 		userIdPromise = new Promise((resolve,reject)=>{
-			resolve();
+			if (userId == null) {
+				res.setHeader('content-type', 'application/json');
+				res.status(400).send( JSON.stringify(new errorResponse("Access-Token or User-Id are required in request header")));
+				return;
+			} else {
+				resolve();
+			}
+			
 		});
 	}
 	
@@ -303,7 +312,9 @@ app.get("/auth/isAuthorized", function (req, res) {
 					}
 				}
 			}
-		} 
+		} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search") {
+			data[0] = new resourceResponse(200,0,true);
+		}
 	});
 	
 	authorizePromise.then (function (){
