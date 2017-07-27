@@ -8,7 +8,7 @@ const GUEST_ACCESS=[
 ];
 
 const MEMBER_ACCESS =[
-			AccessType.PRATILIPI_ADD_REVIEW, AccessType.PRATILIPI_UPDATE,
+			AccessType.PRATILIPI_ADD_REVIEW, AccessType.PRATILIPI_UPDATE, AccessType.PRATILIPI_ADD, AccessType.PRATILIPI_DELETE,
 			AccessType.USER_PRATILIPI_REVIEW, AccessType.USER_PRATILIPI_LIBRARY, AccessType.PRATILIPI_READ_CONTENT,
 			AccessType.AUTHOR_READ, AccessType.AUTHOR_UPDATE, 
 			AccessType.USER_AUTHOR_FOLLOWING,
@@ -17,9 +17,9 @@ const MEMBER_ACCESS =[
 
 const ADMIN_ACCESS = [
   AccessType.INIT_UPDATE,
-			AccessType.PRATILIPI_LIST, AccessType.PRATILIPI_ADD, AccessType.PRATILIPI_UPDATE,
+			AccessType.PRATILIPI_LIST, AccessType.PRATILIPI_ADD, AccessType.PRATILIPI_UPDATE, AccessType.PRATILIPI_DELETE,
 			AccessType.PRATILIPI_READ_META, AccessType.PRATILIPI_UPDATE_META, AccessType.PRATILIPI_READ_CONTENT,
-			AccessType.AUTHOR_LIST, AccessType.AUTHOR_ADD, AccessType.AUTHOR_UPDATE, AccessType.AUTHOR_READ,
+			AccessType.AUTHOR_LIST, AccessType.AUTHOR_ADD, AccessType.AUTHOR_UPDATE, AccessType.AUTHOR_READ, AccessType.AUTHOR_PRATILIPIS_READ, 
 			AccessType.EVENT_ADD, AccessType.EVENT_UPDATE,
 			AccessType.BLOG_POST_LIST, AccessType.BLOG_POST_ADD, AccessType.BLOG_POST_UPDATE, AccessType.I18N_UPDATE
 ];
@@ -46,15 +46,14 @@ class Roles{
 	}
 
 	hasAccess(language, accessType ) {
-		if( this.language !== null && this.language !== language ){
+		
+		if( this.language !== null && this.language.nameEn.toLowerCase() !== language.toLowerCase() ){
 				return false;
 			}
 		if( this.accessTypes === null ) {
 				return false;
 			}
-
 			var keys = Object.keys(this.accessTypes);
-
 			for(var i = 0; i< keys.length;i++){
 				var att = keys[i];
 				var at = this.accessTypes[att];
@@ -88,11 +87,12 @@ class Roles{
 		AEE.DRASTI  	= {userId:4908348089565184, roles:[Role.MEMBER, Role.ADMIN, Role.ADMIN_HINDI, Role.ADMIN_GUJARATI ]};
 		AEE.ANURAG  	= {userId:5013864096727040, roles:[Role.MEMBER, Role.ADMIN, Role.ADMIN_HINDI ]};
 
-		AEE.RADHIKA 	= {userId:5124071978172416, roles:[Role.MEMBER, Role.ADMIN, Role.ADMIN_HINDI, Role.ADMIN_TAMIL ]};
+		AEE.RADHIKA 	= {userId:5124071978172416, roles:[Role.MEMBER, Role.ADMIN, Role.ADMIN_BENGALI, Role.ADMIN_GUJARATI, Role.ADMIN_HINDI, Role.ADMIN_KANNADA, Role.ADMIN_MALAYALAM, Role.ADMIN_MARATHI, Role.ADMIN_TAMIL, Role.ADMIN_TELUGU ]};
 		AEE.ABHISHEK	= {userId:5694768648552448, roles:[Role.MEMBER, Role.ADMIN, Role.ADMIN_BENGALI, Role.ADMIN_GUJARATI, Role.ADMIN_HINDI, Role.ADMIN_KANNADA, Role.ADMIN_MALAYALAM, Role.ADMIN_MARATHI, Role.ADMIN_TAMIL, Role.ADMIN_TELUGU ]};
 		AEE.RAHUL		= {userId:5073076857339904, roles:[Role.MEMBER, Role.ADMIN, Role.ADMIN_BENGALI, Role.ADMIN_GUJARATI, Role.ADMIN_HINDI, Role.ADMIN_KANNADA, Role.ADMIN_MALAYALAM, Role.ADMIN_MARATHI, Role.ADMIN_TAMIL, Role.ADMIN_TELUGU ]};
 		AEE.SHREYANS	= {userId:5451511011213312, roles:[Role.MEMBER, Role.ADMIN, Role.ADMIN_BENGALI, Role.ADMIN_GUJARATI, Role.ADMIN_HINDI, Role.ADMIN_KANNADA, Role.ADMIN_MALAYALAM, Role.ADMIN_MARATHI, Role.ADMIN_TAMIL, Role.ADMIN_TELUGU ]};
 		AEE.RANJEET 	= {userId:6264191547604992, roles:[Role.MEMBER, Role.ADMIN, Role.ADMIN_BENGALI, Role.ADMIN_GUJARATI, Role.ADMIN_HINDI, Role.ADMIN_KANNADA, Role.ADMIN_MALAYALAM, Role.ADMIN_MARATHI, Role.ADMIN_TAMIL, Role.ADMIN_TELUGU ]};
+		AEE.GAURI 	    = {userId:6311393362968576, roles:[Role.MEMBER, Role.ADMIN, Role.ADMIN_BENGALI, Role.ADMIN_GUJARATI, Role.ADMIN_HINDI, Role.ADMIN_KANNADA, Role.ADMIN_MALAYALAM, Role.ADMIN_MARATHI, Role.ADMIN_TAMIL, Role.ADMIN_TELUGU ]};
 		AEE.RAGHU   	= {userId:6196244602945536, roles:[Role.MEMBER, Role.ADMINISTRATOR ]};
 		AEE.PRASHANT	= {userId:5705241014042624, roles:[Role.MEMBER, Role.ADMINISTRATOR ]};
 
@@ -106,7 +106,7 @@ class AEES {
 		for(var i = 0; i< keys.length;i++) {
 			var aEE = keys[i];
 			var value = AEE[aEE];
-			if( userId === value.userId  ) {
+			if( userId == value.userId  ) {
 				return value.roles;
 			}
 		}
@@ -118,7 +118,7 @@ class AEES {
 			return false;
 		}
 		var roles = this.getRoles(userId);
-		for(var i = 0; i< roles.length;i++) {
+		for(var i = 0; i < roles.length;i++) {
 			var role = new Roles(roles[i]);
 			if(role.hasAccess(language,accessType)){
 				return true;
@@ -126,7 +126,23 @@ class AEES {
 		}
 		return false;
 	}
-
+	
+	isAEE(userId) {
+		if(userId == null) {
+			return false;
+		}
+		
+		var keys = Object.keys(AEE);
+		for(var i = 0; i< keys.length;i++) {
+			var aEE = keys[i];
+			var value = AEE[aEE];
+			if( userId == value.userId  ) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	getAeeUserIdList(language) {
 		var aeeUserIdList = new Set();
 		var aeeUserIdList1 = [];
