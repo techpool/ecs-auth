@@ -113,12 +113,14 @@ app.get("/auth/isAuthorized", function (req, res) {
 	var language = req.query.language;
 	var authorId = req.query.authorId;
 	var state = req.query.state;
-	
 	var resourceType = null;
+	
 	if (authorId != null) {
 		resourceIds = authorId;
 		resourceType = "AUTHOR";
-	} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search") {
+	} 
+	
+	if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search") {
 		resourceIds = "0";
 	}
 	
@@ -129,7 +131,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		return;
 	}
 	
-	if (method != 'POST'){
+	if (method != 'POST' || (resource == "/pratilipis" && resourceType == "AUTHOR")){
 		resourceIds = resourceIds.split(',').map(Number);
 	}
 	
@@ -162,6 +164,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 		});
 	}
 	
+	console.log(resourceIds);
+	
 	// Get resources by ids
 	var resources;
 	var resourcePromise = userIdPromise.then (function () {
@@ -178,7 +182,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		 		console.log(err);
 		 		return;
 		 	});
-		} else if ((resource == "/authors" && method != "POST") || (resource == "/pratilipis" && method == "GET" && resourceType == "AUTHOR")) {
+		} else if ((resource == "/authors" && method != "POST") || (resource == "/pratilipis" && resourceType == "AUTHOR")) {
 			return AuthorService
 			.getAuthors(resourceIds)
 			.then ((authors) => {
@@ -205,17 +209,25 @@ app.get("/auth/isAuthorized", function (req, res) {
 			if (resourceType == "AUTHOR") {
 				if (resources != null && resources.length > 0) {
 					var author = resources[0];
-					if (state == "PUBLISHED") {
-						data[0] = new resourceResponse(200, author.ID, true);
-					}
-					else if (state == "DRAFTED") {
-						if (userId == author.USER_ID || AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.AUTHOR_PRATILIPIS_READ)) {
+					if (method == "GET") {
+						if (state == "PUBLISHED") {
+							data[0] = new resourceResponse(200, author.ID, true);
+						}
+						else if (state == "DRAFTED") {
+							if (userId == author.USER_ID || AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.AUTHOR_PRATILIPIS_READ)) {
+								data[0] = new resourceResponse(200, author.ID, true);
+							} else {
+								data[0] = new resourceResponse(403, author.ID, false);
+							} 
+						} else {
+							data[0] = new resourceResponse(403, author.ID, false);
+						}
+					} else {
+						if (AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.AUTHOR_PRATILIPIS_ADD)) {
 							data[0] = new resourceResponse(200, author.ID, true);
 						} else {
 							data[0] = new resourceResponse(403, author.ID, false);
-						} 
-					} else {
-						data[0] = new resourceResponse(403, author.ID, false);
+						}
 					}
 					
 				} else {
