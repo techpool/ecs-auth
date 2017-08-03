@@ -26,6 +26,12 @@ const Metric = require( './lib/MetricGcp.js' ).init({
 	projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID,
 	service: config.SERVICE
 });
+const cacheUtility = require('./lib/CacheUtility.js')({
+ 	port : config.REDIS_HOST_PORT,
+ 	hostIp : config.REDIS_HOST_IP,
+ 	resource : config.REDIS_KIND,
+	db : 3
+});
 
 
 var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/search/search','/search/trending_search'];
@@ -43,6 +49,38 @@ app.use((request, response, next) => {
   next();
 });
 
+
+//Request Handlers
+// API to check health
+app.get("/health", function (req, res) {
+	console.log("Request reached health");
+	var message = {"message":"Auth service is running healthy."};
+	res.status("200").send(message);
+});
+
+
+// API to delete accessToken - userId from cache
+app.delete("/auth/accessToken", function(req, res){
+	console.log("Request to delete access token from cache");
+	
+	// read headers
+	var accessToken = req.headers['access-token'];
+	res.setHeader('content-type', 'application/json');
+	
+	if (accessToken != null) {
+	 		cacheUtility.delete( accessToken )
+	 		.then(function(){
+	 			res.status(200).send("Successfully deleted");
+	 		})
+	 		.catch((err) => {
+	 			console.log(err);
+	 			res.status(500).send();
+	 		});
+	 		
+	} else {
+		res.status(400).send( JSON.stringify(new errorResponse("Invalid parameters")));
+	}
+});
 
 //apis to resources mapping
 app.use((request, response, next) => {
@@ -76,14 +114,6 @@ app.use((request, response, next) => {
 	next();
 });
 
-
-// Request Handlers
-app.get("/health", function (req, res) {
-	console.log("Request reached health");
-	var message = {"message":"Auth service is running healthy."};
-	res.status("200").send(message);
-});
-
 function isAuthorizedResponse (resource,method,data) {
 	this.resource = resource;
 	this.method = method;
@@ -98,6 +128,10 @@ function resourceResponse (code, id, isAuthorized) {
 
 function errorResponse (message) {
 	this.message = message;
+}
+
+function User (id) {
+	this.id = id;
 }
 
 app.get("/auth/isAuthorized", function (req, res) {
@@ -135,21 +169,39 @@ app.get("/auth/isAuthorized", function (req, res) {
 		resourceIds = resourceIds.split(',').map(Number);
 	}
 	
+	
 	// Get User-Id for accessToken
 	var userIdPromise;
 	if (userId == null && accessToken != null) {
-		userIdPromise = AccessTokenService
-	 	.getUserId( accessToken )
-	 	.then( ( id ) => {
-	 		console.log("Reading user-id from gcp : "+id);
-	 		userId = id;
-	 		res.setHeader('User-Id', userId);
-	 		return;
-	 	})
-	 	.catch( ( err ) => {
-	 		console.log(err);
-	 		return;
-	 	});
+		userIdPromise = cacheUtility.get(accessToken)
+		.then((user) => {
+			if( user !== null ) {
+	 			userId = user.id;
+	 			console.log('Got user-id from redis '+userId);
+	 			res.setHeader('User-Id', userId);
+	 		} else {
+	 			AccessTokenService
+	 		 	.getUserId( accessToken )
+	 		 	.then( ( id ) => {
+	 		 		console.log("Reading user-id from gcp : "+id);
+	 		 		userId = id;
+	 		 		
+	 		 		// add to cache
+	 		 		var user = new User(userId);
+	 		 		cacheUtility.insert( accessToken, user );
+	 		 		
+	 		 		res.setHeader('User-Id', userId);
+	 		 		return;
+	 		 	})
+	 		 	.catch( ( err ) => {
+	 		 		console.log(err);
+	 		 		return;
+	 		 	});
+	 		}
+		})
+		.catch( (err) => {
+			console.log('Redis: error while fetching user-id from redis');
+		});
 	} else {
 		// TODO: Check if given User-Id is valid
 		userIdPromise = new Promise((resolve,reject)=>{
@@ -164,12 +216,11 @@ app.get("/auth/isAuthorized", function (req, res) {
 		});
 	}
 	
-	console.log(resourceIds);
 	
 	// Get resources by ids
 	var resources;
 	var resourcePromise = userIdPromise.then (function () {
-		
+		console.log(resourceIds);
 		if (resource == "/pratilipis" && method != "POST" && resourceType == null) {
 			return PratilipiService
 			.getPratilipis(resourceIds)
