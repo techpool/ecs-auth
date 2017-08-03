@@ -49,7 +49,6 @@ app.use((request, response, next) => {
   next();
 });
 
-
 //Request Handlers
 // API to check health
 app.get("/health", function (req, res) {
@@ -70,7 +69,8 @@ app.delete("/auth/accessToken", function(req, res){
 	if (accessToken != null) {
 	 		cacheUtility.delete( accessToken )
 	 		.then(function(){
-	 			res.status(200).send("Successfully deleted");
+	 			
+	 			res.status(200).send(JSON.stringify({"message":"Successfully deleted"}));
 	 		})
 	 		.catch((err) => {
 	 			console.log(err);
@@ -168,7 +168,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	if (method != 'POST' || (resource == "/pratilipis" && resourceType == "AUTHOR")){
 		resourceIds = resourceIds.split(',').map(Number);
 	}
-	
+
 	
 	// Get User-Id for accessToken
 	var userIdPromise;
@@ -180,27 +180,14 @@ app.get("/auth/isAuthorized", function (req, res) {
 	 			console.log('Got user-id from redis '+userId);
 	 			res.setHeader('User-Id', userId);
 	 		} else {
-	 			AccessTokenService
-	 		 	.getUserId( accessToken )
-	 		 	.then( ( id ) => {
-	 		 		console.log("Reading user-id from gcp : "+id);
-	 		 		userId = id;
-	 		 		
-	 		 		// add to cache
-	 		 		var user = new User(userId);
-	 		 		cacheUtility.insert( accessToken, user );
-	 		 		
-	 		 		res.setHeader('User-Id', userId);
-	 		 		return;
-	 		 	})
-	 		 	.catch( ( err ) => {
-	 		 		console.log(err);
-	 		 		return;
-	 		 	});
+
+ 				return getFromDB(accessToken,res);
+	 			
 	 		}
 		})
 		.catch( (err) => {
 			console.log('Redis: error while fetching user-id from redis');
+			return getFromDB(accessToken,res);
 		});
 	} else {
 		// TODO: Check if given User-Id is valid
@@ -217,9 +204,11 @@ app.get("/auth/isAuthorized", function (req, res) {
 	}
 	
 	
+	
 	// Get resources by ids
 	var resources;
 	var resourcePromise = userIdPromise.then (function () {
+		console.log("userId Promize is done");
 		console.log(resourceIds);
 		if (resource == "/pratilipis" && method != "POST" && resourceType == null) {
 			return PratilipiService
@@ -410,6 +399,72 @@ function isUserAuthorToPratilipi(index,data,userId,pratilipi) {
 	        reject();  
 	    });
 	});	
+}
+
+
+function addToCache(key, value) {
+	return new Promise (function (resolve,reject) {
+	 	cacheUtility.insert( key, value )
+	 	.then(function(){
+	 		console.log("Successfully added to cache!!!");
+	 		resolve();
+	 	})
+	 	.catch ((err) => {
+	 		console.log("Error while adding to cache");
+	        console.log(err);
+	        reject();  
+	 	});
+	});
+}
+
+function getFromCache (key) {
+	return new Promise (function (resolve,reject) {
+	 	cacheUtility.get( key )
+	 	.then( (data) => {
+	 		return data;
+	 		//resolve();
+	 	})
+	 	.catch ((err) => {
+	 		console.log("Error while getting from cache");
+	        console.log(err);
+	        reject();  
+	 	});
+	});
+}
+
+function deleteFromCache (key) {
+	return new Promise (function (resolve,reject) {
+	 	cacheUtility.delete( key )
+	 	.then( function(){
+	 		console.log("Successfully delete from cache!!!");
+	 		resolve();
+	 	})
+	 	.catch ((err) => {
+	 		console.log("Error while deleting from cache");
+	        console.log(err);
+	        reject();  
+	 	});
+	});
+}
+
+function getFromDB(accessToken, res) {
+	return AccessTokenService
+	 	.getUserId( accessToken )
+	 	.then( ( id ) => {
+	 		console.log("Reading user-id from gcp : "+id);
+	 		userId = id;
+	 		
+	 		// add to cache
+	 		var user = new User(userId);
+	 		cacheUtility.insert( accessToken, user );
+	 		
+	 		res.setHeader('User-Id', userId);
+	 		return;
+	 	})
+	 	.catch( ( err ) => {
+	 		console.log(err);
+	 		return;
+	 	});
 }
 
 
