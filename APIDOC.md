@@ -81,3 +81,79 @@
 	OR
 
   * **Code:** 502 BAD GATEWAY  
+
+  
+**Add AccessToken**
+----
+  This api is to add AccessToken to Cache.
+
+* **URL**  
+  /auth/accessToken  
+  
+* **Method:**
+  POST
+
+* **Headers:**  
+    Access-Token
+    
+* **Success Response:**
+  * **Code:** 200 
+  ~~~
+  {
+      "message": "Successfully added"
+  }
+    ~~~
+    
+* **Error Response:**
+  * **Code:** 400  
+  ~~~
+  {
+    "message": "Invalid parameters"
+  }
+  ~~~
+ 
+  OR
+ 
+  * **Code:** 500 INTERNAL SERVER ERROR  
+
+  OR
+
+  * **Code:** 502 BAD GATEWAY      
+  
+  
+**Delete AccessToken**
+----
+  This api is to delete AccessToken from Cache.
+
+* **URL**  
+  /auth/accessToken  
+  
+* **Method:**  
+  DELETE
+
+* **Headers:**  
+  Access-Token
+    
+* **Success Response:**
+  * **Code:** 200 
+  ~~~
+  {
+    "message": "Successfully deleted"
+  }
+  ~~~
+    
+* **Error Response:**
+  * **Code:** 400  
+  ~~~
+  {
+    "message": "Invalid parameters"
+  }
+  ~~~
+ 
+  OR
+ 
+  * **Code:** 500 INTERNAL SERVER ERROR  
+
+  OR
+
+  * **Code:** 502 BAD GATEWAY    
