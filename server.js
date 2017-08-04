@@ -1,5 +1,6 @@
 // Imports
 var express = require('express');
+var logger = require('morgan');
 var url = require('url')
 
 // Load Configurations
@@ -42,6 +43,9 @@ AEES = new AEES();
 
 const latencyMetric = new Metric( 'int64', 'Latency' );
 
+
+app.use(logger('short'));
+
 // for initializing log object
 app.use((request, response, next) => {
   var log = request.log = new Logging( request );
@@ -69,11 +73,11 @@ app.delete("/auth/accessToken", function(req, res){
 	if (accessToken != null) {
 	 		cacheUtility.delete( accessToken )
 	 		.then(function(){
-	 			
+	 			console.log("successfully deleted access token from cache "+err);
 	 			res.status(200).send(JSON.stringify({"message":"Successfully deleted"}));
 	 		})
 	 		.catch((err) => {
-	 			console.log(err);
+	 			console.log("Error while deleting access token from cache "+err);
 	 			res.status(500).send();
 	 		});
 	 		
@@ -177,7 +181,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		.then((user) => {
 			if( user !== null ) {
 	 			userId = user.id;
-	 			console.log('Got user-id from redis '+userId);
+	 			console.log('Got user-id from cache');
 	 			res.setHeader('User-Id', userId);
 	 			return userId;
 	 		} else {
@@ -185,7 +189,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	 		}
 		})
 		.catch( (err) => {
-			console.log('Redis: error while fetching user-id from redis');
+			console.log('error while fetching user-id from cache');
 			return getFromDB(accessToken, res);
 		}).then((id) => {
 			userId = id;
@@ -209,8 +213,9 @@ app.get("/auth/isAuthorized", function (req, res) {
 	// Get resources by ids
 	var resources;
 	var resourcePromise = userIdPromise.then (function () {
-		console.log("userId Promize is done "+userId);
-		console.log(resourceIds);
+		
+		console.log("Fetching resources for "+resourceIds);
+		
 		if (resource == "/pratilipis" && method != "POST" && resourceType == null) {
 			return PratilipiService
 			.getPratilipis(resourceIds)
@@ -243,6 +248,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	var data = [];
 	var authorizePromise = resourcePromise.then (function () {
 		
+		console.log("Verifying the authorization for user on the resource");
 		// Get roles for the user
 		var roles = AEES.getRoles(userId);
 		if (resource == "/pratilipis") {
@@ -452,7 +458,7 @@ function getFromDB(accessToken, res) {
 	return AccessTokenService
 	 	.getUserId( accessToken )
 	 	.then( ( id ) => {
-	 		console.log("Reading user-id from gcp : "+id);
+	 		console.log("Reading user-id from gcp");
 	 		
 	 		// add to cache
 	 		var user = new User(id);
