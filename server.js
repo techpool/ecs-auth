@@ -172,22 +172,23 @@ app.get("/auth/isAuthorized", function (req, res) {
 	
 	// Get User-Id for accessToken
 	var userIdPromise;
-	if (userId == null && accessToken != null) {
+	if ((userId == undefined || userId == null) && accessToken != null) {
 		userIdPromise = cacheUtility.get(accessToken)
 		.then((user) => {
 			if( user !== null ) {
 	 			userId = user.id;
 	 			console.log('Got user-id from redis '+userId);
 	 			res.setHeader('User-Id', userId);
+	 			return userId;
 	 		} else {
-
  				return getFromDB(accessToken,res);
-	 			
 	 		}
 		})
 		.catch( (err) => {
 			console.log('Redis: error while fetching user-id from redis');
-			return getFromDB(accessToken,res);
+			return getFromDB(accessToken, res);
+		}).then((id) => {
+			userId = id;
 		});
 	} else {
 		// TODO: Check if given User-Id is valid
@@ -208,7 +209,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	// Get resources by ids
 	var resources;
 	var resourcePromise = userIdPromise.then (function () {
-		console.log("userId Promize is done");
+		console.log("userId Promize is done "+userId);
 		console.log(resourceIds);
 		if (resource == "/pratilipis" && method != "POST" && resourceType == null) {
 			return PratilipiService
@@ -452,18 +453,17 @@ function getFromDB(accessToken, res) {
 	 	.getUserId( accessToken )
 	 	.then( ( id ) => {
 	 		console.log("Reading user-id from gcp : "+id);
-	 		userId = id;
 	 		
 	 		// add to cache
-	 		var user = new User(userId);
+	 		var user = new User(id);
 	 		cacheUtility.insert( accessToken, user );
 	 		
-	 		res.setHeader('User-Id', userId);
-	 		return;
+	 		res.setHeader('User-Id', id);
+	 		return id;
 	 	})
 	 	.catch( ( err ) => {
 	 		console.log(err);
-	 		return;
+	 		return 0;
 	 	});
 }
 
