@@ -3,16 +3,24 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "mocha"
   },
   "dependencies": {
     "@google-cloud/datastore": "^1.0.0",
     "@google-cloud/trace-agent": "^1.0.3",
     "@google-cloud/monitoring": "^0.2.0",
+    "googleapis": "18.0.0",
     "cookie-parser": "^1.4.3",
     "express": "^4.15.2",
     "bluebird": "^3.5.0",
-    "redis": "^2.7.1"
+    "redis": "^2.7.1",
+    "morgan": "1.8.2"
   },
+  "devDependencies": {
+    "mocha": "3.4.2",
+    "chai": "4.0.2",
+    "chai-http": "3.0.0"
+    },
   "author": "Giridhar"
 }

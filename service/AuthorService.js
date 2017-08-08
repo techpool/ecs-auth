@@ -4,7 +4,8 @@ var dbUtility = require( '../lib/DbUtility.js' );
 var AuthorSchema = {
 	structure : {
 		'ID': { 'type' : 'INTEGER', 'default' : 0},
-		'USER_ID': { 'type' : 'INTEGER', 'default' : 0}
+		'USER_ID': { 'type' : 'INTEGER', 'default' : 0},
+		'LANGUAGE': { 'type' : 'STRING', 'default' : null }
 	},primaryKey  : 'ID'
 };
 
@@ -21,7 +22,7 @@ function Author ( config ) {
 				throw 'ENTITY NOT FOUND';
 			});
 		},
-		getAuthor: function getAuthorId (authorId) {
+		getAuthor: function getAuthor (authorId) {
 			return dbUtility.list([authorId])
 			.then ((data) => {
 				if (data) {
