@@ -73,7 +73,7 @@ app.delete("/auth/accessToken", function(req, res){
 	if (accessToken != null) {
 	 		cacheUtility.delete( accessToken )
 	 		.then(function(){
-	 			console.log("successfully deleted access token from cache "+err);
+	 			console.log("successfully deleted access token from cache ");
 	 			res.status(200).send(JSON.stringify({"message":"Successfully deleted"}));
 	 		})
 	 		.catch((err) => {
