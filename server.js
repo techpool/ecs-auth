@@ -158,7 +158,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		resourceType = "AUTHOR";
 	} 
 	
-	if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/follows") {
+	if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/follows" || resource == "/userauthor/follow/list" ||  resource == "/userauthor/follow") {
 		resourceIds = "0";
 	}
 	
@@ -371,7 +371,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 					}
 				}
 			}
-		} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/follows") {
+		} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/follows" || resource == "/userauthor/follow/list" ||  resource == "/userauthor/follow") {
 			data[0] = new resourceResponse(200,0,true);
 		}
 	});
