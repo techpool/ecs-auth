@@ -35,7 +35,7 @@ const cacheUtility = require('./lib/CacheUtility.js')({
 });
 
 
-var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/search/search','/search/trending_search'];
+var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/search/search','/search/trending_search','/follows'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 var Role = UserAccessList.Role;
 var AEES = UserAccessList.AEES;
@@ -158,7 +158,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		resourceType = "AUTHOR";
 	} 
 	
-	if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search") {
+	if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/follows") {
 		resourceIds = "0";
 	}
 	
@@ -371,7 +371,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 					}
 				}
 			}
-		} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search") {
+		} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/follows") {
 			data[0] = new resourceResponse(200,0,true);
 		}
 	});
