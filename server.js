@@ -35,7 +35,7 @@ const cacheUtility = require('./lib/CacheUtility.js')({
 });
 
 
-var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/search/search','/search/trending_search','/follows'];
+var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/search/search','/search/trending_search','/follows','/userauthor/follow/list', '/userauthor/follow'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 var Role = UserAccessList.Role;
 var AEES = UserAccessList.AEES;
