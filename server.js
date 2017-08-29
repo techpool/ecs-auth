@@ -408,6 +408,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 		if (req.query.originalMethod != null && req.query.originalMethod != "") {
 			method = req.query.originalMethod;
 		}
+		console.log(data);
+		console.log(resource+" "+method);
 		res.status(200).send(JSON.stringify(new isAuthorizedResponse(resource,method,data)));
 	});
 
