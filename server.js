@@ -107,10 +107,10 @@ app.use((request, response, next) => {
     		resource = "/follows";
     	}
     	
-    	if (isPathMapped) {
-    		request.query.originalResource = request.query.resource;
-    		request.query.resource = resource;
-    		
+		request.query.originalResource = request.query.resource;
+		request.query.resource = resource;
+		
+    	if (isPathMapped) {	
     		if (request.query.method == 'POST') {
     			request.query.method = 'PATCH';
     			request.query.originalMethod = 'POST';
@@ -155,8 +155,6 @@ app.get("/auth/isAuthorized", function (req, res) {
 	var state = req.query.state;
 	var resourceType = null;
 	
-	console.log(resource);
-	
 	if (authorId != null) {
 		resourceIds = authorId;
 		resourceType = "AUTHOR";
@@ -173,7 +171,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		return;
 	}
 	
-	if (method != 'POST' || (resource == "/pratilipis" && resourceType == "AUTHOR")){
+	if (method != 'POST' || (resource == "/pratilipis" && resourceType == "AUTHOR") || (resource == "/follows")){
 		resourceIds = resourceIds.split(',').map(Number);
 	}
 
@@ -389,11 +387,11 @@ app.get("/auth/isAuthorized", function (req, res) {
 			        	data[0] = new resourceResponse(200,author.ID,false);
 			        }
 				} else {
-					data[0] = new resourceResponse(403, 0, false);
+					data[0] = new resourceResponse(403, resourceIds[0], false);
 				}
 				
 			} else {
-				data[0] = new resourceResponse(200,0,true);
+				data[0] = new resourceResponse(200,resourceIds[0],true);
 			}
 		
 		} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" ) {
