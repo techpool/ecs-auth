@@ -160,7 +160,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		resourceType = "AUTHOR";
 	} 
 	
-	if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search") {
+	if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || (resource == "/follows" && method != "POST")) {
 		resourceIds = "0";
 	}
 	
