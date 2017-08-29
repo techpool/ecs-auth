@@ -183,7 +183,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		.then((user) => {
 			if( user !== null ) {
 	 			userId = user.id;
-	 			console.log('Got user-id from cache');
+	 			console.log('Got user-id from cache '+userId);
 	 			res.setHeader('User-Id', userId);
 	 			return userId;
 	 		} else {
@@ -375,10 +375,12 @@ app.get("/auth/isAuthorized", function (req, res) {
 				}
 			}
 		} else if (resource == "/follows") { 
-			
+			console.log("In follows");
 			if (method == "POST") {
+				console.log("In post method check");
 				//var authorId = resourceIds;
 				var hasAccess = AEES.hasUserAccess(userId, language, AccessType.USER_AUTHOR_FOLLOWING);
+				console.log("User hasAccess "+hasAccess);
 				if (hasAccess) {
 					var author = resources[0];
 					if (author.USER_ID == userId) {
