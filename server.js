@@ -103,6 +103,8 @@ app.use((request, response, next) => {
     			|| resource == "/authors/*") {
     		resource = "/authors";
     		isPathMapped = true;
+    	} else if (resource == "/userauthor/follow/list" || resource == "/userauthor/follow") {
+    		resource = "/follows";
     	}
     	
     	if (isPathMapped) {
@@ -153,17 +155,19 @@ app.get("/auth/isAuthorized", function (req, res) {
 	var state = req.query.state;
 	var resourceType = null;
 	
+	console.log(resource);
+	
 	if (authorId != null) {
 		resourceIds = authorId;
 		resourceType = "AUTHOR";
 	} 
 	
-	if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/follows" || resource == "/userauthor/follow/list" ||  resource == "/userauthor/follow") {
+	if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search") {
 		resourceIds = "0";
 	}
 	
 	// Validate query parameters
-	if (!validResources.includes(resource) || !validMethods.includes(method)  || (method != 'POST' && resourceIds == null) || (method == 'POST' && language == null)) {
+	if (!validResources.includes(resource) || !validMethods.includes(method)  || (method != 'POST' && resourceIds == null) || ((resource == "/pratilipis" || resource == "/authors") && method == 'POST' && language == null)) {
 		res.setHeader('content-type', 'application/json');
 		res.status(400).send( JSON.stringify(new errorResponse("Invalid parameters")));
 		return;
@@ -228,7 +232,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 		 		console.log(err);
 		 		return;
 		 	});
-		} else if ((resource == "/authors" && method != "POST") || (resource == "/pratilipis" && resourceType == "AUTHOR")) {
+		} else if ((resource == "/authors" && method != "POST") || (resource == "/pratilipis" && resourceType == "AUTHOR")
+				|| (resource == "/follows" && method == "POST" )) {
 			return AuthorService
 			.getAuthors(resourceIds)
 			.then ((authors) => {
@@ -371,7 +376,27 @@ app.get("/auth/isAuthorized", function (req, res) {
 					}
 				}
 			}
-		} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/follows" || resource == "/userauthor/follow/list" ||  resource == "/userauthor/follow") {
+		} else if (resource == "/follows") { 
+			
+			if (method == "POST") {
+				//var authorId = resourceIds;
+				var hasAccess = AEES.hasUserAccess(userId, language, AccessType.USER_AUTHOR_FOLLOWING);
+				if (hasAccess) {
+					var author = resources[0];
+					if (author.USER_ID == userId) {
+			        	data[0] = new resourceResponse(403,author.ID,true);
+			        } else {
+			        	data[0] = new resourceResponse(200,author.ID,false);
+			        }
+				} else {
+					data[0] = new resourceResponse(403, 0, false);
+				}
+				
+			} else {
+				data[0] = new resourceResponse(200,0,true);
+			}
+		
+		} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" ) {
 			data[0] = new resourceResponse(200,0,true);
 		}
 	});
