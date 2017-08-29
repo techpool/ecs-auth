@@ -35,7 +35,7 @@ const cacheUtility = require('./lib/CacheUtility.js')({
 });
 
 
-var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/search/search','/search/trending_search'];
+var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/search/search','/search/trending_search','/follows','/userauthor/follow/list', '/userauthor/follow'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 var Role = UserAccessList.Role;
 var AEES = UserAccessList.AEES;
@@ -103,12 +103,14 @@ app.use((request, response, next) => {
     			|| resource == "/authors/*") {
     		resource = "/authors";
     		isPathMapped = true;
+    	} else if (resource == "/userauthor/follow/list" || resource == "/userauthor/follow") {
+    		resource = "/follows";
     	}
     	
-    	if (isPathMapped) {
-    		request.query.originalResource = request.query.resource;
-    		request.query.resource = resource;
-    		
+		request.query.originalResource = request.query.resource;
+		request.query.resource = resource;
+		
+    	if (isPathMapped) {	
     		if (request.query.method == 'POST') {
     			request.query.method = 'PATCH';
     			request.query.originalMethod = 'POST';
@@ -163,13 +165,13 @@ app.get("/auth/isAuthorized", function (req, res) {
 	}
 	
 	// Validate query parameters
-	if (!validResources.includes(resource) || !validMethods.includes(method)  || (method != 'POST' && resourceIds == null) || (method == 'POST' && language == null)) {
+	if (!validResources.includes(resource) || !validMethods.includes(method)  || (method != 'POST' && resourceIds == null) || ((resource == "/pratilipis" || resource == "/authors") && method == 'POST' && language == null)) {
 		res.setHeader('content-type', 'application/json');
 		res.status(400).send( JSON.stringify(new errorResponse("Invalid parameters")));
 		return;
 	}
 	
-	if (method != 'POST' || (resource == "/pratilipis" && resourceType == "AUTHOR")){
+	if (method != 'POST' || (resource == "/pratilipis" && resourceType == "AUTHOR") || (resource == "/follows")){
 		resourceIds = resourceIds.split(',').map(Number);
 	}
 
@@ -228,7 +230,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 		 		console.log(err);
 		 		return;
 		 	});
-		} else if ((resource == "/authors" && method != "POST") || (resource == "/pratilipis" && resourceType == "AUTHOR")) {
+		} else if ((resource == "/authors" && method != "POST") || (resource == "/pratilipis" && resourceType == "AUTHOR")
+				|| (resource == "/follows" && method == "POST" )) {
 			return AuthorService
 			.getAuthors(resourceIds)
 			.then ((authors) => {
@@ -371,7 +374,27 @@ app.get("/auth/isAuthorized", function (req, res) {
 					}
 				}
 			}
-		} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search") {
+		} else if (resource == "/follows") { 
+			
+			if (method == "POST") {
+				//var authorId = resourceIds;
+				var hasAccess = AEES.hasUserAccess(userId, language, AccessType.USER_AUTHOR_FOLLOWING);
+				if (hasAccess) {
+					var author = resources[0];
+					if (author.USER_ID == userId) {
+			        	data[0] = new resourceResponse(403,author.ID,true);
+			        } else {
+			        	data[0] = new resourceResponse(200,author.ID,false);
+			        }
+				} else {
+					data[0] = new resourceResponse(403, resourceIds[0], false);
+				}
+				
+			} else {
+				data[0] = new resourceResponse(200,resourceIds[0],true);
+			}
+		
+		} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" ) {
 			data[0] = new resourceResponse(200,0,true);
 		}
 	});
