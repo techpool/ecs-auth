@@ -250,7 +250,6 @@ app.get("/auth/isAuthorized", function (req, res) {
 	// Verify authorization
 	var data = [];
 	var authorizePromise = resourcePromise.then (function () {
-		
 		console.log("Verifying the authorization for user on the resource");
 		// Get roles for the user
 		var roles = AEES.getRoles(userId);
@@ -273,7 +272,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 							data[0] = new resourceResponse(403, author.ID, false);
 						}
 					} else {
-						if (AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.AUTHOR_PRATILIPIS_ADD)) {
+						if (AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.AUTHOR_PRATILIPIS_ADD) || AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.PRATILIPI_ADD)) {
 							data[0] = new resourceResponse(200, author.ID, true);
 						} else {
 							data[0] = new resourceResponse(403, author.ID, false);
