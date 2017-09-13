@@ -36,7 +36,11 @@ const cacheUtility = require('./lib/CacheUtility.js')({
 	db : 3
 });
 
-var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/search/search','/search/trending_search','/follows','/userauthor/follow/list', '/userauthor/follow','/reviews','/comments'];
+var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/search/search',
+	'/search/trending_search','/follows','/userauthor/follow/list', '/userauthor/follow',
+	'/reviews','/userpratilipi','/userpratilipi/review','/userpratilipi/review/list',
+	'/comments','/comment','/comment/list',
+	'/vote','/votes'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 var Role = UserAccessList.Role;
 var AEES = UserAccessList.AEES;
@@ -108,6 +112,15 @@ app.use((request, response, next) => {
     		isPathMapped = true;
     	} else if (resource == "/userauthor/follow/list" || resource == "/userauthor/follow") {
     		resource = "/follows";
+    	} else if (resource == "/userpratilipi" || resource == "/userpratilipi/review" || resource == "/userpratilipi/review/list") {
+    		resource = "/reviews";
+    	} else if (resource == "/comment" || resource == "/comment/list") {
+    		resource = "/comments";
+    		if (request.query.method == 'POST' && request.query.id != undefined) {
+    			isPathMapped = true;
+    		}
+    	} else if (resource == "/vote") {
+    		resource = "/votes"
     	}
     	
 		request.query.originalResource = request.query.resource;
@@ -220,8 +233,6 @@ app.get("/auth/isAuthorized", function (req, res) {
 			
 		});
 	}
-	
-	
 	
 	// Get resources by ids
 	var resources;
@@ -450,7 +461,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 					data[0] = new resourceResponse(400,comment.id,false);
 				}
 			}
-		} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" ) {
+		} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/votes") {
 			data[0] = new resourceResponse(200,0,true);
 		}
 	});
