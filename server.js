@@ -437,7 +437,12 @@ app.get("/auth/isAuthorized", function (req, res) {
 		
 		} else if (resource == "/reviews") {
 			if (method == "POST") {
-				data[0] = new resourceResponse(200,null,true);
+				if (userId == 0) {
+					data[0] = new resourceResponse(403,null,false);
+				} else {
+					data[0] = new resourceResponse(200,null,true);
+				}
+			
 			} else if (method == "GET"){
 				data[0] = new resourceResponse(200, resourceIds[0], true);
 			} else {
@@ -445,12 +450,16 @@ app.get("/auth/isAuthorized", function (req, res) {
 				if (review.user!= null && review.user.id == userId) {
 					data[0] = new resourceResponse(200,review.id,true);
 				} else {
-					data[0] = new resourceResponse(400,review.id,false);
+					data[0] = new resourceResponse(403,review.id,false);
 				}
 			}
 		} else if (resource == "/comments") {
 			if (method == "POST") {
-				data[0] = new resourceResponse(200,null,true);
+				if (userId == 0) {
+					data[0] = new resourceResponse(403,null,false);
+				} else {
+					data[0] = new resourceResponse(200,null,true);
+				}
 			} else if (method == "GET"){
 				data[0] = new resourceResponse(200, resourceIds[0], true);
 			} else {
@@ -458,10 +467,20 @@ app.get("/auth/isAuthorized", function (req, res) {
 				if (comment.user!= null && comment.user.id == userId) {
 					data[0] = new resourceResponse(200,comment.id,true);
 				} else {
-					data[0] = new resourceResponse(400,comment.id,false);
+					data[0] = new resourceResponse(403,comment.id,false);
 				}
 			}
-		} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/votes") {
+		} else if (resource == "/votes") {
+			if (method == "POST") {
+				if (userId == 0) {
+					data[0] = new resourceResponse(403,null,false);
+				} else {
+					data[0] = new resourceResponse(200,null,true);
+				}
+			} else {
+				data[0] = new resourceResponse(200,0,true);
+			}
+		} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search") {
 			data[0] = new resourceResponse(200,0,true);
 		}
 	});
