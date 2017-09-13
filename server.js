@@ -14,6 +14,8 @@ app.set('port', config.PORT);
 const AccessTokenService = require('./service/AccessTokenService' )( { projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID} );
 const PratilipiService   = require('./service/PratilipiService')( { projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID} );
 const AuthorService      = require('./service/AuthorService')( { projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID} );
+const ReviewService      = require('./service/ReviewService');
+const CommentService     = require('./service/CommentService');
 const UserAccessList     = require('./config/UserAccessUtil.js');
 const Language           = require('./config/Language.js').Language;
 const AccessType         = require('./config/AccessType.js').AccessType;
@@ -34,12 +36,17 @@ const cacheUtility = require('./lib/CacheUtility.js')({
 	db : 3
 });
 
-
-var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/search/search','/search/trending_search','/follows','/userauthor/follow/list', '/userauthor/follow'];
+var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/search/search',
+	'/search/trending_search','/follows','/userauthor/follow/list', '/userauthor/follow',
+	'/reviews','/userpratilipi','/userpratilipi/review','/userpratilipi/review/list',
+	'/comments','/comment','/comment/list',
+	'/vote','/votes'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 var Role = UserAccessList.Role;
 var AEES = UserAccessList.AEES;
 AEES = new AEES();
+var reviewService = new ReviewService(process.env.STAGE || 'local');
+var commentService = new CommentService(process.env.STAGE || 'local');
 
 const latencyMetric = new Metric( 'int64', 'Latency' );
 
@@ -105,6 +112,15 @@ app.use((request, response, next) => {
     		isPathMapped = true;
     	} else if (resource == "/userauthor/follow/list" || resource == "/userauthor/follow") {
     		resource = "/follows";
+    	} else if (resource == "/userpratilipi" || resource == "/userpratilipi/review" || resource == "/userpratilipi/review/list") {
+    		resource = "/reviews";
+    	} else if (resource == "/comment" || resource == "/comment/list") {
+    		resource = "/comments";
+    		if (request.query.method == 'POST' && request.query.id != undefined) {
+    			isPathMapped = true;
+    		}
+    	} else if (resource == "/vote") {
+    		resource = "/votes"
     	}
     	
 		request.query.originalResource = request.query.resource;
@@ -160,18 +176,26 @@ app.get("/auth/isAuthorized", function (req, res) {
 		resourceType = "AUTHOR";
 	} 
 	
-	if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || (resource == "/follows" && method != "POST")) {
+	if (resource == "/recommendation/pratilipis" 
+		|| resource == "/search/search" 
+		|| resource == "/search/trending_search" 
+		|| (resource == "/follows" && method != "POST")) {
 		resourceIds = "0";
 	}
 	
 	// Validate query parameters
-	if (!validResources.includes(resource) || !validMethods.includes(method)  || (method != 'POST' && resourceIds == null) || ((resource == "/pratilipis" || resource == "/authors") && method == 'POST' && language == null)) {
+	if (!validResources.includes(resource) 
+		|| !validMethods.includes(method)  
+		|| (method != 'POST' && resourceIds == null) 
+		|| ((resource == "/pratilipis" || resource == "/authors") && method == 'POST' && language == null)) {
 		res.setHeader('content-type', 'application/json');
 		res.status(400).send( JSON.stringify(new errorResponse("Invalid parameters")));
 		return;
 	}
 	
-	if (method != 'POST' || (resource == "/pratilipis" && resourceType == "AUTHOR") || (resource == "/follows")){
+	if (method != 'POST' 
+		|| (resource == "/pratilipis" && resourceType == "AUTHOR") 
+		|| (resource == "/follows")){
 		resourceIds = resourceIds.split(',').map(Number);
 	}
 
@@ -210,8 +234,6 @@ app.get("/auth/isAuthorized", function (req, res) {
 		});
 	}
 	
-	
-	
 	// Get resources by ids
 	var resources;
 	var resourcePromise = userIdPromise.then (function () {
@@ -243,6 +265,28 @@ app.get("/auth/isAuthorized", function (req, res) {
 		 		console.log(err);
 		 		return;
 		 	});
+		} else if ((resource == "/reviews" && (method == "PATCH" || method == "DELETE"))) {
+			return reviewService.getReviews(resourceIds, userId)
+			.then((reviews) => {
+				resources = reviews;
+				return;
+			})
+			.catch( ( err ) => {
+		 		var data = 'Error in getting reviews!';
+		 		console.log(err);
+		 		return;
+		 	});
+		} else if ((resource == "/comments" && (method == "PATCH" || method == "DELETE"))) {
+			return commentService.getComments(resourceIds, userId)
+			.then((comments) => {
+				resources = comments;
+				return;
+			})
+			.catch( ( err ) => {
+		 		var data = 'Error in getting comments!';
+		 		console.log(err);
+		 		return;
+		 	});
 		}
 	});
 
@@ -250,7 +294,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	// Verify authorization
 	var data = [];
 	var authorizePromise = resourcePromise.then (function () {
-		console.log("Verifying the authorization for user on the resource");
+		console.log("Verifying the authorization for user on the resource for ");
 		// Get roles for the user
 		var roles = AEES.getRoles(userId);
 		if (resource == "/pratilipis") {
@@ -375,7 +419,6 @@ app.get("/auth/isAuthorized", function (req, res) {
 			}
 		} else if (resource == "/follows") { 
 			if (method == "POST") {
-				//var authorId = resourceIds;
 				var hasAccess = AEES.hasUserAccess(userId, language, AccessType.USER_AUTHOR_FOLLOWING);
 				if (hasAccess) {
 					var author = resources[0];
@@ -392,7 +435,33 @@ app.get("/auth/isAuthorized", function (req, res) {
 				data[0] = new resourceResponse(200,resourceIds[0],true);
 			}
 		
-		} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" ) {
+		} else if (resource == "/reviews") {
+			if (method == "POST") {
+				data[0] = new resourceResponse(200,null,true);
+			} else if (method == "GET"){
+				data[0] = new resourceResponse(200, resourceIds[0], true);
+			} else {
+				var review = resources.data[0];
+				if (review.user!= null && review.user.id == userId) {
+					data[0] = new resourceResponse(200,review.id,true);
+				} else {
+					data[0] = new resourceResponse(400,review.id,false);
+				}
+			}
+		} else if (resource == "/comments") {
+			if (method == "POST") {
+				data[0] = new resourceResponse(200,null,true);
+			} else if (method == "GET"){
+				data[0] = new resourceResponse(200, resourceIds[0], true);
+			} else {
+				var comment = resources.data[0];
+				if (comment.user!= null && comment.user.id == userId) {
+					data[0] = new resourceResponse(200,comment.id,true);
+				} else {
+					data[0] = new resourceResponse(400,comment.id,false);
+				}
+			}
+		} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/votes") {
 			data[0] = new resourceResponse(200,0,true);
 		}
 	});
