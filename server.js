@@ -116,7 +116,7 @@ app.use((request, response, next) => {
     		resource = "/reviews";
     	} else if (resource == "/comment" || resource == "/comment/list") {
     		resource = "/comments";
-    		if (request.query.method == 'POST' && request.query.id != undefined) {
+    		if (request.query.method == 'POST' && request.query.commentId != undefined) {
     			isPathMapped = true;
     		}
     	} else if (resource == "/vote") {
@@ -170,6 +170,18 @@ app.get("/auth/isAuthorized", function (req, res) {
 	var authorId = req.query.authorId;
 	var state = req.query.state;
 	var resourceType = null;
+	
+	if (resource == '/reviews') {
+		resourceIds = req.query.pratilipiId;
+	} else if (resource == '/comments') {
+		if (method == 'PATCH') {
+			resourceIds = req.query.commentId;
+		} else if (method == 'GET') {
+			resourceIds = req.query.parentId;
+		}
+	} else if (resource == '/votes') {
+		resourceIds = req.query.parentId;
+	} 
 	
 	if (authorId != null) {
 		resourceIds = authorId;
@@ -294,7 +306,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	// Verify authorization
 	var data = [];
 	var authorizePromise = resourcePromise.then (function () {
-		console.log("Verifying the authorization for user on the resource for ");
+		console.log("Verifying the authorization for user on the resource");
 		// Get roles for the user
 		var roles = AEES.getRoles(userId);
 		if (resource == "/pratilipis") {
@@ -494,8 +506,6 @@ app.get("/auth/isAuthorized", function (req, res) {
 		if (req.query.originalMethod != null && req.query.originalMethod != "") {
 			method = req.query.originalMethod;
 		}
-		console.log(data);
-		console.log(resource+" "+method);
 		res.status(200).send(JSON.stringify(new isAuthorizedResponse(resource,method,data)));
 	});
 
