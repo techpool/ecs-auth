@@ -2,6 +2,7 @@
 var express = require('express');
 var logger = require('morgan');
 var url = require('url')
+var co  = require('co');
 
 // Load Configurations
 var config = require( './config/main' )[ process.env.STAGE || 'local'];
@@ -207,7 +208,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 	
 	if (method != 'POST' 
 		|| (resource == "/pratilipis" && resourceType == "AUTHOR") 
-		|| (resource == "/follows")){
+		|| (resource == "/follows")
+		|| (resource == "/reviews" && method == "POST")){
 		resourceIds = resourceIds.split(',').map(Number);
 	}
 
@@ -252,7 +254,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		
 		console.log("Fetching resources for "+resourceIds);
 		
-		if (resource == "/pratilipis" && method != "POST" && resourceType == null) {
+		if ((resource == "/pratilipis" && method != "POST" && resourceType == null) || (resource == "/reviews" && method == "POST")) {
 			return PratilipiService
 			.getPratilipis(resourceIds)
 			.then ((pratilipis) => {
@@ -306,197 +308,209 @@ app.get("/auth/isAuthorized", function (req, res) {
 	// Verify authorization
 	var data = [];
 	var authorizePromise = resourcePromise.then (function () {
-		console.log("Verifying the authorization for user on the resource");
-		// Get roles for the user
-		var roles = AEES.getRoles(userId);
-		if (resource == "/pratilipis") {
-			
-			if (resourceType == "AUTHOR") {
-				if (resources != null && resources.length > 0) {
-					var author = resources[0];
-					if (method == "GET") {
-						if (state == "PUBLISHED") {
-							data[0] = new resourceResponse(200, author.ID, true);
-						}
-						else if (state == "DRAFTED") {
-							if (userId == author.USER_ID || AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.AUTHOR_PRATILIPIS_READ)) {
+
+		return co(function * () {
+			console.log("Verifying the authorization for user on the resource");
+			// Get roles for the user
+			var roles = AEES.getRoles(userId);
+			if (resource == "/pratilipis") {
+				
+				if (resourceType == "AUTHOR") {
+					if (resources != null && resources.length > 0) {
+						var author = resources[0];
+						if (method == "GET") {
+							if (state == "PUBLISHED") {
+								data[0] = new resourceResponse(200, author.ID, true);
+							}
+							else if (state == "DRAFTED") {
+								if (userId == author.USER_ID || AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.AUTHOR_PRATILIPIS_READ)) {
+									data[0] = new resourceResponse(200, author.ID, true);
+								} else {
+									data[0] = new resourceResponse(403, author.ID, false);
+								} 
+							} else {
+								data[0] = new resourceResponse(403, author.ID, false);
+							}
+						} else {
+							if (AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.AUTHOR_PRATILIPIS_ADD) || AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.PRATILIPI_ADD)) {
 								data[0] = new resourceResponse(200, author.ID, true);
 							} else {
 								data[0] = new resourceResponse(403, author.ID, false);
-							} 
+							}
+						}
+						
+					} else {
+						data[0] = new resourceResponse(403, resourceIds[0], false);
+					}
+				} else {
+					 if (method == "POST") {
+						var hasAccess = AEES.hasUserAccess(userId, language, AccessType.PRATILIPI_ADD);
+						if (hasAccess) {
+							data[0] = new resourceResponse(200, 0, true)
 						} else {
-							data[0] = new resourceResponse(403, author.ID, false);
+							data[0] = new resourceResponse(403, 0, false);
 						}
 					} else {
-						if (AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.AUTHOR_PRATILIPIS_ADD) || AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.PRATILIPI_ADD)) {
-							data[0] = new resourceResponse(200, author.ID, true);
-						} else {
-							data[0] = new resourceResponse(403, author.ID, false);
+						var ownerPromises = [];
+						for (i = 0; i < resources.length; i++) {
+							var pratilipi = resources[i];
+							if (pratilipi != null) {
+								
+								var accessType=null;
+								if (method == "GET") {
+									accessType = AccessType.PRATILIPI_READ_CONTENT;
+								} else if (method == "PUT" || method == "PATCH" ) {
+									accessType = AccessType.PRATILIPI_UPDATE;
+								} else if (method == "DELETE") {
+									accessType = AccessType.PRATILIPI_DELETE;
+								}
+								
+								language = pratilipi.LANGUAGE;
+								
+								var hasAccess = AEES.hasUserAccess(userId,language,accessType);
+								if (hasAccess) {
+									if (!AEES.isAEE(userId) && (accessType == AccessType.PRATILIPI_UPDATE || accessType == AccessType.PRATILIPI_DELETE)) {
+										ownerPromises.push(isUserAuthorToPratilipi(i,data,userId,pratilipi));
+									} else {
+										data[i] = new resourceResponse(200,pratilipi.ID,true)
+									}
+								} else {
+									data[i] = new resourceResponse(403,pratilipi.ID,false);
+								}
+								
+							} else {
+								data[i] = new resourceResponse(404,resourceIds[i],false);
+							}
 						}
+						return new Promise((resolve,reject)=>{
+							Promise.all(ownerPromises).then (function () {
+								resolve();
+							});
+						});
 					}
-					
-				} else {
-					data[0] = new resourceResponse(403, resourceIds[0], false);
 				}
-			} else {
-				 if (method == "POST") {
-					var hasAccess = AEES.hasUserAccess(userId, language, AccessType.PRATILIPI_ADD);
+			} else if (resource == "/authors") {
+				if (method == "POST") {
+					var hasAccess = AEES.hasUserAccess(userId, language, AccessType.AUTHOR_ADD);
 					if (hasAccess) {
-						data[0] = new resourceResponse(200, 0, true)
+						data[0] = new resourceResponse(200, 0, true);
 					} else {
 						data[0] = new resourceResponse(403, 0, false);
 					}
 				} else {
-					var ownerPromises = [];
 					for (i = 0; i < resources.length; i++) {
-						var pratilipi = resources[i];
-						if (pratilipi != null) {
+						var author = resources[i];
+						if (author != null) {
 							
 							var accessType=null;
 							if (method == "GET") {
-								accessType = AccessType.PRATILIPI_READ_CONTENT;
+								accessType = AccessType.AUTHOR_READ;
 							} else if (method == "PUT" || method == "PATCH" ) {
-								accessType = AccessType.PRATILIPI_UPDATE;
+								accessType = AccessType.AUTHOR_UPDATE;
 							} else if (method == "DELETE") {
-								accessType = AccessType.PRATILIPI_DELETE;
+								accessType = AccessType.AUTHOR_DELETE;
 							}
 							
-							language = pratilipi.LANGUAGE;
+							language = author.LANGUAGE;
 							
 							var hasAccess = AEES.hasUserAccess(userId,language,accessType);
 							if (hasAccess) {
-								if (!AEES.isAEE(userId) && (accessType == AccessType.PRATILIPI_UPDATE || accessType == AccessType.PRATILIPI_DELETE)) {
-									ownerPromises.push(isUserAuthorToPratilipi(i,data,userId,pratilipi));
+								if (!AEES.isAEE(userId) && accessType == AccessType.AUTHOR_UPDATE) {
+									if (author.USER_ID == userId) {
+							        	data[i] = new resourceResponse(200,author.ID,true);
+							        } else {
+							        	data[i] = new resourceResponse(403,author.ID,false);
+							        }
 								} else {
-									data[i] = new resourceResponse(200,pratilipi.ID,true)
+									data[i] = new resourceResponse(200,author.ID,true);
 								}
 							} else {
-								data[i] = new resourceResponse(403,pratilipi.ID,false);
+								data[i] = new resourceResponse(403,author.ID,false);
 							}
 							
 						} else {
 							data[i] = new resourceResponse(404,resourceIds[i],false);
 						}
 					}
-					return new Promise((resolve,reject)=>{
-						Promise.all(ownerPromises).then (function () {
-							resolve();
-						});
-					});
 				}
-			}
-		} else if (resource == "/authors") {
-			if (method == "POST") {
-				var hasAccess = AEES.hasUserAccess(userId, language, AccessType.AUTHOR_ADD);
-				if (hasAccess) {
-					data[0] = new resourceResponse(200, 0, true);
-				} else {
-					data[0] = new resourceResponse(403, 0, false);
-				}
-			} else {
-				for (i = 0; i < resources.length; i++) {
-					var author = resources[i];
-					if (author != null) {
-						
-						var accessType=null;
-						if (method == "GET") {
-							accessType = AccessType.AUTHOR_READ;
-						} else if (method == "PUT" || method == "PATCH" ) {
-							accessType = AccessType.AUTHOR_UPDATE;
-						} else if (method == "DELETE") {
-							accessType = AccessType.AUTHOR_DELETE;
-						}
-						
-						language = author.LANGUAGE;
-						
-						var hasAccess = AEES.hasUserAccess(userId,language,accessType);
-						if (hasAccess) {
-							if (!AEES.isAEE(userId) && accessType == AccessType.AUTHOR_UPDATE) {
-								if (author.USER_ID == userId) {
-						        	data[i] = new resourceResponse(200,author.ID,true);
-						        } else {
-						        	data[i] = new resourceResponse(403,author.ID,false);
-						        }
-							} else {
-								data[i] = new resourceResponse(200,author.ID,true);
-							}
-						} else {
-							data[i] = new resourceResponse(403,author.ID,false);
-						}
-						
+			} else if (resource == "/follows") { 
+				if (method == "POST") {
+					var hasAccess = AEES.hasUserAccess(userId, language, AccessType.USER_AUTHOR_FOLLOWING);
+					if (hasAccess) {
+						var author = resources[0];
+						if (author.USER_ID == userId) {
+				        	data[0] = new resourceResponse(403,author.ID,false);
+				        } else {
+				        	data[0] = new resourceResponse(200,author.ID,true);
+				        }
 					} else {
-						data[i] = new resourceResponse(404,resourceIds[i],false);
+						data[0] = new resourceResponse(403, resourceIds[0], false);
 					}
-				}
-			}
-		} else if (resource == "/follows") { 
-			if (method == "POST") {
-				var hasAccess = AEES.hasUserAccess(userId, language, AccessType.USER_AUTHOR_FOLLOWING);
-				if (hasAccess) {
-					var author = resources[0];
-					if (author.USER_ID == userId) {
-			        	data[0] = new resourceResponse(403,author.ID,false);
-			        } else {
-			        	data[0] = new resourceResponse(200,author.ID,true);
-			        }
+					
 				} else {
-					data[0] = new resourceResponse(403, resourceIds[0], false);
-				}
-				
-			} else {
-				data[0] = new resourceResponse(200,resourceIds[0],true);
-			}
-		
-		} else if (resource == "/reviews") {
-			if (method == "POST") {
-				if (userId == 0) {
-					data[0] = new resourceResponse(403,null,false);
-				} else {
-					data[0] = new resourceResponse(200,null,true);
+					data[0] = new resourceResponse(200,resourceIds[0],true);
 				}
 			
-			} else if (method == "GET"){
-				data[0] = new resourceResponse(200, resourceIds[0], true);
-			} else {
-				var review = resources.data[0];
-				if (review.user!= null && review.user.id == userId) {
-					data[0] = new resourceResponse(200,review.id,true);
+			} else if (resource == "/reviews") {
+				if (method == "POST") {
+					if (userId == 0) {
+						data[0] = new resourceResponse(403,null,false);
+					} else {
+						
+							var pratilipi = resources[0];
+							var author = yield getAuthorByPratilipiId(pratilipi);
+							if (author!= null) {
+								if (author.USER_ID != userId) {
+									data[0] = new resourceResponse(200,null,true);
+								} else {
+									data[0] = new resourceResponse(403,null,false);
+								}
+							} else {
+								data[0] = new resourceResponse(403,null,false);
+							}
+					}
+				} else if (method == "GET"){
+					data[0] = new resourceResponse(200, resourceIds[0], true);
 				} else {
-					data[0] = new resourceResponse(403,review.id,false);
+					var review = resources.data[0];
+					if (review.user!= null && review.user.id == userId) {
+						data[0] = new resourceResponse(200,review.id,true);
+					} else {
+						data[0] = new resourceResponse(403,review.id,false);
+					}
 				}
-			}
-		} else if (resource == "/comments") {
-			if (method == "POST") {
-				if (userId == 0) {
-					data[0] = new resourceResponse(403,null,false);
+			} else if (resource == "/comments") {
+				if (method == "POST") {
+					if (userId == 0) {
+						data[0] = new resourceResponse(403,null,false);
+					} else {
+						data[0] = new resourceResponse(200,null,true);
+					}
+				} else if (method == "GET"){
+					data[0] = new resourceResponse(200, resourceIds[0], true);
 				} else {
-					data[0] = new resourceResponse(200,null,true);
+					var comment = resources.data[0];
+					if (comment.user!= null && comment.user.id == userId) {
+						data[0] = new resourceResponse(200,comment.id,true);
+					} else {
+						data[0] = new resourceResponse(403,comment.id,false);
+					}
 				}
-			} else if (method == "GET"){
-				data[0] = new resourceResponse(200, resourceIds[0], true);
-			} else {
-				var comment = resources.data[0];
-				if (comment.user!= null && comment.user.id == userId) {
-					data[0] = new resourceResponse(200,comment.id,true);
+			} else if (resource == "/votes") {
+				if (method == "POST") {
+					if (userId == 0) {
+						data[0] = new resourceResponse(403,null,false);
+					} else {
+						data[0] = new resourceResponse(200,null,true);
+					}
 				} else {
-					data[0] = new resourceResponse(403,comment.id,false);
+					data[0] = new resourceResponse(200,0,true);
 				}
-			}
-		} else if (resource == "/votes") {
-			if (method == "POST") {
-				if (userId == 0) {
-					data[0] = new resourceResponse(403,null,false);
-				} else {
-					data[0] = new resourceResponse(200,null,true);
-				}
-			} else {
+			} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search") {
 				data[0] = new resourceResponse(200,0,true);
 			}
-		} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search") {
-			data[0] = new resourceResponse(200,0,true);
-		}
+		});
 	});
-	
 	authorizePromise.then (function (){
 		console.log("sending response");
 		res.setHeader('content-type', 'application/json');
@@ -527,6 +541,25 @@ function isUserAuthorToPratilipi(index,data,userId,pratilipi) {
 	        reject();  
 	    });
 	});	
+}
+
+
+function getAuthorByPratilipiId(pratilipi) {
+	return new Promise( function (resolve,reject) {
+		return AuthorService.getAuthor(pratilipi.AUTHOR_ID)
+	    .then ((author) => {
+	        if (author!=null) {
+	        	resolve(author);
+	        } else {
+	        	resolve(null);
+	        }
+	    }).catch( (err) => {
+	    	console.log("Error while fetching authors");
+	        console.log(err);
+	        reject();  
+	        
+	    });
+	});
 }
 
 
