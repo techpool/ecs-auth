@@ -26,10 +26,7 @@ const Logging = require( './lib/LoggingGcp.js' ).init({
   projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID,
   service: config.SERVICE
 });
-const Metric = require( './lib/MetricGcp.js' ).init({
-	projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID,
-	service: config.SERVICE
-});
+
 const cacheUtility = require('./lib/CacheUtility.js')({
  	port : config.REDIS_HOST_PORT,
  	hostIp : config.REDIS_HOST_IP,
@@ -48,9 +45,6 @@ var AEES = UserAccessList.AEES;
 AEES = new AEES();
 var reviewService = new ReviewService(process.env.STAGE || 'local');
 var commentService = new CommentService(process.env.STAGE || 'local');
-
-const latencyMetric = new Metric( 'int64', 'Latency' );
-
 
 app.use(logger('short'));
 
