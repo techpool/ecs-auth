@@ -606,22 +606,22 @@ function deleteFromCache (key) {
 }
 
 function getFromDB(accessToken, res) {
-	return userService
- 	.getUserId( accessToken )
- 	.then( ( id ) => {
- 		console.log("Reading user-id from user service ");
- 		
- 		// add to cache
- 		var user = new User(id);
- 		cacheUtility.insert( accessToken, user );
- 		
- 		res.setHeader('User-Id', id);
- 		return id;
- 	})
- 	.catch( ( err ) => {
- 		console.log(err);
- 		return 0;
- 	});
+	return AccessTokenService
+	.getUserId( accessToken )
+	.then( ( id ) => {
+		console.log("Reading user-id from gcp");
+
+		// add to cache
+		var user = new User(id);
+		cacheUtility.insert( accessToken, user );
+
+		res.setHeader('User-Id', id);
+		return id;
+	})
+	.catch( ( err ) => {
+		console.log(err);
+		return 0;
+	});
 }
 
 
