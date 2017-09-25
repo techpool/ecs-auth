@@ -13,6 +13,7 @@ app.set('port', config.PORT);
 
 // Load Services
 const AccessTokenService = require('./service/AccessTokenService' )( { projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID} );
+const UserService        = require('./service/UserService');
 const PratilipiService   = require('./service/PratilipiService')( { projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID} );
 const AuthorService      = require('./service/AuthorService')( { projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID} );
 const ReviewService      = require('./service/ReviewService');
@@ -26,10 +27,7 @@ const Logging = require( './lib/LoggingGcp.js' ).init({
   projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID,
   service: config.SERVICE
 });
-const Metric = require( './lib/MetricGcp.js' ).init({
-	projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID,
-	service: config.SERVICE
-});
+
 const cacheUtility = require('./lib/CacheUtility.js')({
  	port : config.REDIS_HOST_PORT,
  	hostIp : config.REDIS_HOST_IP,
@@ -48,9 +46,7 @@ var AEES = UserAccessList.AEES;
 AEES = new AEES();
 var reviewService = new ReviewService(process.env.STAGE || 'local');
 var commentService = new CommentService(process.env.STAGE || 'local');
-
-const latencyMetric = new Metric( 'int64', 'Latency' );
-
+var userService    = new UserService(process.env.STAGE || 'local');
 
 app.use(logger('short'));
 
@@ -171,6 +167,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	var authorId = req.query.authorId;
 	var state = req.query.state;
 	var resourceType = null;
+	
 	
 	if (resource == '/reviews') {
 		resourceIds = req.query.pratilipiId;
@@ -609,22 +606,22 @@ function deleteFromCache (key) {
 }
 
 function getFromDB(accessToken, res) {
-	return AccessTokenService
-	 	.getUserId( accessToken )
-	 	.then( ( id ) => {
-	 		console.log("Reading user-id from gcp");
-	 		
-	 		// add to cache
-	 		var user = new User(id);
-	 		cacheUtility.insert( accessToken, user );
-	 		
-	 		res.setHeader('User-Id', id);
-	 		return id;
-	 	})
-	 	.catch( ( err ) => {
-	 		console.log(err);
-	 		return 0;
-	 	});
+	return userService
+ 	.getUserId( accessToken )
+ 	.then( ( id ) => {
+ 		console.log("Reading user-id from user service ");
+ 		
+ 		// add to cache
+ 		var user = new User(id);
+ 		cacheUtility.insert( accessToken, user );
+ 		
+ 		res.setHeader('User-Id', id);
+ 		return id;
+ 	})
+ 	.catch( ( err ) => {
+ 		console.log(err);
+ 		return 0;
+ 	});
 }
 
 
