@@ -218,7 +218,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		.then((user) => {
 			if( user !== null ) {
 	 			userId = user.id;
-	 			console.log('Got user-id from cache: '+userId);
+	 			console.log('Got user-id for '+accessToken+' from cache: '+userId);
 	 			res.setHeader('User-Id', userId);
 	 			return userId;
 	 		} else {
