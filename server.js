@@ -153,6 +153,58 @@ function User (id) {
 	this.id = id;
 }
 
+app.get("/auth/isAdmin", function (req, res) {
+
+	// Read Headers
+	var accessToken = req.headers['access-token'];
+	var userId = req.headers['user-id'];
+	
+	// Get User-Id for accessToken
+	var userIdPromise;
+	if ((userId == undefined || userId == null) && accessToken != null) {
+		userIdPromise = cacheUtility.get(accessToken)
+		.then((user) => {
+			if( user !== null ) {
+	 			userId = user.id;
+	 			console.log('Got user-id from cache');
+	 			res.setHeader('User-Id', userId);
+	 			return userId;
+	 		} else {
+ 				return getFromDB(accessToken,res);
+	 		}
+		})
+		.catch( (err) => {
+			console.log('error while fetching user-id from cache');
+			return getFromDB(accessToken, res);
+		}).then((id) => {
+			userId = id;
+		});
+	} else {
+		// TODO: Check if given User-Id is valid
+		userIdPromise = new Promise((resolve,reject)=>{
+			if (userId == null) {
+				res.setHeader('content-type', 'application/json');
+				res.status(400).send( JSON.stringify(new errorResponse("Access-Token or User-Id are required in request header")));
+				return;
+			} else {
+				resolve();
+			}
+			
+		});
+	}
+	
+	userIdPromise.then(() => {
+		const isUserAnAdmin = AEES.isAEE(userId);
+		const assignedRoles = AEES.getRoles(userId);
+		
+		res.setHeader('content-type', 'application/json');
+		res.status(200).json({
+			isUserAnAdmin: isUserAnAdmin,
+			assignedRoles: assignedRoles
+		});
+	});
+});
+
 app.get("/auth/isAuthorized", function (req, res) {
 	
 	// Read Headers
