@@ -181,7 +181,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		resourceIds = req.query.parentId;
 	} 
 	
-	if (authorId != null) {
+	if (authorId != null && authorId != 'null' ) {
 		resourceIds = authorId;
 		resourceType = "AUTHOR";
 	} 
