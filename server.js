@@ -39,7 +39,7 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
 	'/search/trending_search','/follows','/userauthor/follow/list', '/userauthor/follow',
 	'/reviews','/userpratilipi','/userpratilipi/review','/userpratilipi/review/list',
 	'/comments','/comment','/comment/list',
-	'/vote','/votes'];
+	'/vote','/votes', '/blog-scraper'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 var Role = UserAccessList.Role;
 var AEES = UserAccessList.AEES;
@@ -118,7 +118,14 @@ app.use((request, response, next) => {
     		}
     	} else if (resource == "/vote") {
     		resource = "/votes"
-    	}
+    	} else if (resource == "/blog-scraper"
+		  || resource == "/blog-scraper/*"
+		  || resource == "/blog-scraper/*/create"
+		  || resource == "/blog-scraper/*/publish"
+		  || resource == "/blog-scraper/*/scrape"
+		  || resource == "/blog-scraper/search") {
+		resource = "/blog-scraper";
+	}
     	
 		request.query.originalResource = request.query.resource;
 		request.query.resource = resource;
@@ -189,7 +196,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 	if (resource == "/recommendation/pratilipis" 
 		|| resource == "/search/search" 
 		|| resource == "/search/trending_search" 
-		|| (resource == "/follows" && method != "POST")) {
+		|| (resource == "/follows" && method != "POST")
+	   	|| resource == "/blog-scraper") {
 		resourceIds = "0";
 	}
 	
@@ -505,6 +513,13 @@ app.get("/auth/isAuthorized", function (req, res) {
 				}
 			} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search") {
 				data[0] = new resourceResponse(200,0,true);
+			} else if (resource == "/blog-scraper") {
+				var isAEES = AEES.isAEE(userId);
+				if (isAEES) {
+					data[0] = new resourceResponse(200,null,true);
+				} else {
+					data[0] = new resourceResponse(403,null,false);	
+				}
 			}
 		});
 	});
