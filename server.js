@@ -97,9 +97,11 @@ app.use((request, response, next) => {
     var pathname = urlParts.pathname;
     var isPathMapped = false;
     if (pathname === "/auth/isAuthorized") {
-    	var resource = unescape(request.query.resource).replace(/\/[0-9]+/g, "/*");
+    	var resource = unescape(request.query.resource);
 	if (resource.startsWith("/blog-scraper")) {
 		resource = resource.replace(/^[a-f\d]{24}$/i, "/*");
+	} else {
+		resource = resource.replace(/\/[0-9]+/g, "/*");
 	}
     	if (resource == "/image/pratilipi/cover" || resource == "/image/pratilipi/*/cover" 
     		|| resource == "/pratilipis/*") {
