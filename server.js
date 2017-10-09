@@ -40,7 +40,7 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
 	'/reviews','/userpratilipi','/userpratilipi/review','/userpratilipi/review/list',
 	'/comments','/comment','/comment/list',
 	'/vote','/votes', '/blog-scraper',
-	'/events'];
+	'/events','/devices'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 var Role = UserAccessList.Role;
 var AEES = UserAccessList.AEES;
@@ -539,8 +539,16 @@ app.get("/auth/isAuthorized", function (req, res) {
 				} else {
 					data[0] = new resourceResponse(403,null,false);
 				}
-				 
+			} else if (resource == "/devices") {
+				if (userId == 0 || userId == null) {
+					data[0] = new resourceResponse(403,null,false);
+				} else {
+					data[0] = new resourceResponse(200,null,true);
+				}
+			} else {
+				data[0] = new resourceResponse(403,null,false);
 			}
+			
 		});
 	});
 	authorizePromise.then (function (){
