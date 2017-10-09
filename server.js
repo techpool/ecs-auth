@@ -534,8 +534,10 @@ app.get("/auth/isAuthorized", function (req, res) {
 					} else {
 						data[0] = new resourceResponse(403,null,false);	
 					}
-				} else {
+				} else if (method == "GET"){
 					data[0] = new resourceResponse(200,resourceIds[0],true);
+				} else {
+					data[0] = new resourceResponse(403,null,false);
 				}
 				 
 			}
