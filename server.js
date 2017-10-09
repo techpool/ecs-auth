@@ -39,7 +39,8 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
 	'/search/trending_search','/follows','/userauthor/follow/list', '/userauthor/follow',
 	'/reviews','/userpratilipi','/userpratilipi/review','/userpratilipi/review/list',
 	'/comments','/comment','/comment/list',
-	'/vote','/votes', '/blog-scraper'];
+	'/vote','/votes', '/blog-scraper',
+	'/events','/devices'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 var Role = UserAccessList.Role;
 var AEES = UserAccessList.AEES;
@@ -525,7 +526,29 @@ app.get("/auth/isAuthorized", function (req, res) {
 				} else {
 					data[0] = new resourceResponse(403,null,false);	
 				}
+			} else if (resource == "/events") {
+				if (method == "POST" || method == "PATCH") {
+					var isAEES = AEES.isAEE(userId);
+					if (isAEES) {
+						data[0] = new resourceResponse(200,null,true);
+					} else {
+						data[0] = new resourceResponse(403,null,false);	
+					}
+				} else if (method == "GET"){
+					data[0] = new resourceResponse(200,resourceIds[0],true);
+				} else {
+					data[0] = new resourceResponse(403,null,false);
+				}
+			} else if (resource == "/devices") {
+				if (userId == 0 || userId == null) {
+					data[0] = new resourceResponse(403,null,false);
+				} else {
+					data[0] = new resourceResponse(200,null,true);
+				}
+			} else {
+				data[0] = new resourceResponse(403,null,false);
 			}
+			
 		});
 	});
 	authorizePromise.then (function (){
