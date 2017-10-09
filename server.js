@@ -527,17 +527,22 @@ app.get("/auth/isAuthorized", function (req, res) {
 					data[0] = new resourceResponse(403,null,false);	
 				}
 			} else if (resource == "/events") {
+				var eventId = null;
+				if (method != "POST") {
+					eventId = resourceIds[0];
+				}
+				
 				if (method == "POST" || method == "PATCH") {
 					var isAEES = AEES.isAEE(userId);
 					if (isAEES) {
-						data[0] = new resourceResponse(200,null,true);
+						data[0] = new resourceResponse(200,eventId,true);
 					} else {
-						data[0] = new resourceResponse(403,null,false);	
+						data[0] = new resourceResponse(403,eventId,false);	
 					}
 				} else if (method == "GET"){
-					data[0] = new resourceResponse(200,resourceIds[0],true);
+					data[0] = new resourceResponse(200,eventId,true);
 				} else {
-					data[0] = new resourceResponse(403,null,false);
+					data[0] = new resourceResponse(403,eventId,false);
 				}
 			} else if (resource == "/devices") {
 				if (userId == 0 || userId == null) {
