@@ -203,7 +203,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 		|| resource == "/search/search" 
 		|| resource == "/search/trending_search" 
 		|| (resource == "/follows" && method != "POST")
-	   	|| resource == "/blog-scraper") {
+	   	|| resource == "/blog-scraper"
+	   	|| (resource == "/events" && method == "GET") ) {
 		resourceIds = "0";
 	}
 	
