@@ -39,7 +39,8 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
 	'/search/trending_search','/follows','/userauthor/follow/list', '/userauthor/follow',
 	'/reviews','/userpratilipi','/userpratilipi/review','/userpratilipi/review/list',
 	'/comments','/comment','/comment/list',
-	'/vote','/votes'];
+	'/vote','/votes', '/blog-scraper',
+	'/events','/devices'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 var Role = UserAccessList.Role;
 var AEES = UserAccessList.AEES;
@@ -97,7 +98,12 @@ app.use((request, response, next) => {
     var pathname = urlParts.pathname;
     var isPathMapped = false;
     if (pathname === "/auth/isAuthorized") {
-    	var resource = unescape(request.query.resource).replace(/\/[0-9]+/g, "/*");
+    	var resource = unescape(request.query.resource);
+	if (resource.startsWith("/blog-scraper")) {
+		resource = resource.replace(/\/[a-f\d]{24}/g, "/*");
+	} else {
+		resource = resource.replace(/\/[0-9]+/g, "/*");
+	}
     	if (resource == "/image/pratilipi/cover" || resource == "/image/pratilipi/*/cover" 
     		|| resource == "/pratilipis/*") {
     		resource = "/pratilipis";
@@ -118,7 +124,14 @@ app.use((request, response, next) => {
     		}
     	} else if (resource == "/vote") {
     		resource = "/votes"
-    	}
+    	} else if (resource == "/blog-scraper"
+		  || resource == "/blog-scraper/*"
+		  || resource == "/blog-scraper/*/create"
+		  || resource == "/blog-scraper/*/publish"
+		  || resource == "/blog-scraper/*/scrape"
+		  || resource == "/blog-scraper/search") {
+		resource = "/blog-scraper";
+	}
     	
 		request.query.originalResource = request.query.resource;
 		request.query.resource = resource;
@@ -189,7 +202,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 	if (resource == "/recommendation/pratilipis" 
 		|| resource == "/search/search" 
 		|| resource == "/search/trending_search" 
-		|| (resource == "/follows" && method != "POST")) {
+		|| (resource == "/follows" && method != "POST")
+	   	|| resource == "/blog-scraper") {
 		resourceIds = "0";
 	}
 	
@@ -505,7 +519,41 @@ app.get("/auth/isAuthorized", function (req, res) {
 				}
 			} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search") {
 				data[0] = new resourceResponse(200,0,true);
+			} else if (resource == "/blog-scraper") {
+				var isAEES = AEES.isAEE(userId);
+				if (isAEES) {
+					data[0] = new resourceResponse(200,null,true);
+				} else {
+					data[0] = new resourceResponse(403,null,false);	
+				}
+			} else if (resource == "/events") {
+				var eventId = null;
+				if (method != "POST") {
+					eventId = resourceIds[0];
+				}
+				
+				if (method == "POST" || method == "PATCH") {
+					var isAEES = AEES.isAEE(userId);
+					if (isAEES) {
+						data[0] = new resourceResponse(200,eventId,true);
+					} else {
+						data[0] = new resourceResponse(403,eventId,false);	
+					}
+				} else if (method == "GET"){
+					data[0] = new resourceResponse(200,eventId,true);
+				} else {
+					data[0] = new resourceResponse(403,eventId,false);
+				}
+			} else if (resource == "/devices") {
+				if (userId == 0 || userId == null) {
+					data[0] = new resourceResponse(403,null,false);
+				} else {
+					data[0] = new resourceResponse(200,null,true);
+				}
+			} else {
+				data[0] = new resourceResponse(403,null,false);
 			}
+			
 		});
 	});
 	authorizePromise.then (function (){
