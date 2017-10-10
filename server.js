@@ -40,7 +40,7 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
 	'/reviews','/userpratilipi','/userpratilipi/review','/userpratilipi/review/list',
 	'/comments','/comment','/comment/list',
 	'/vote','/votes', '/blog-scraper',
-	'/event','/event/list','/events','/devices'];
+	'/event','/event/list','/events','/devices','userpratilipi/library','userpratilipi/library/list'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 var Role = UserAccessList.Role;
 var AEES = UserAccessList.AEES;
@@ -116,6 +116,8 @@ app.use((request, response, next) => {
 			isPathMapped = true;
 		} else if (resource == "/userauthor/follow/list" || resource == "/userauthor/follow") {
 			resource = "/follows";
+		} else if (resource == "/userpratilipi/library/list" || resource == "/userpratilipi/library") {
+			resource = "/library";
 		} else if (resource == "/userpratilipi" || resource == "/userpratilipi/review" || resource == "/userpratilipi/review/list") {
 			resource = "/reviews";
 		} else if (resource == "/comment" || resource == "/comment/list") {
@@ -554,6 +556,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 				} else {
 					data[0] = new resourceResponse(200,null,true);
 				}
+			} else if (resource == "/library") {
+				data[0] = new resourceResponse(200,null,true);
 			} else {
 				data[0] = new resourceResponse(403,null,false);
 			}
