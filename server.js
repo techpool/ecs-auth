@@ -210,7 +210,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		|| (resource == "/follows" && method != "POST")
 	   	|| resource == "/blog-scraper" 
 	   	|| (resource == "/events" && method == "GET" && resourceIds == null)
-	   	|| ( resource == "/library" && method == "GET" ) ) {
+	   	|| ( resource == "/library" ) ) {
 		resourceIds = "0";
 	}
 	
@@ -558,7 +558,11 @@ app.get("/auth/isAuthorized", function (req, res) {
 					data[0] = new resourceResponse(200,null,true);
 				}
 			} else if (resource == "/library") {
-				data[0] = new resourceResponse(200,null,true);
+				if (userId == 0 || userId == null) {
+					data[0] = new resourceResponse(403,null,false);
+				} else {
+					data[0] = new resourceResponse(200,null,true);
+				}
 			} else {
 				data[0] = new resourceResponse(403,null,false);
 			}
