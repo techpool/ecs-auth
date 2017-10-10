@@ -40,7 +40,7 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
 	'/reviews','/userpratilipi','/userpratilipi/review','/userpratilipi/review/list',
 	'/comments','/comment','/comment/list',
 	'/vote','/votes', '/blog-scraper',
-	'/events','/devices'];
+	'/event','/event/list','/events','/devices'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 var Role = UserAccessList.Role;
 var AEES = UserAccessList.AEES;
@@ -99,39 +99,42 @@ app.use((request, response, next) => {
     var isPathMapped = false;
     if (pathname === "/auth/isAuthorized") {
     	var resource = unescape(request.query.resource);
-	if (resource.startsWith("/blog-scraper")) {
-		resource = resource.replace(/\/[a-f\d]{24}/g, "/*");
-	} else {
-		resource = resource.replace(/\/[0-9]+/g, "/*");
-	}
-    	if (resource == "/image/pratilipi/cover" || resource == "/image/pratilipi/*/cover" 
-    		|| resource == "/pratilipis/*") {
-    		resource = "/pratilipis";
-    		isPathMapped = true;
-    	} else if (resource == "/image/author/cover" || resource == "/image/author/*/cover"
-    		|| resource == "/image/author/profile" || resource == "/image/author/*/profile"
-    			|| resource == "/authors/*") {
-    		resource = "/authors";
-    		isPathMapped = true;
-    	} else if (resource == "/userauthor/follow/list" || resource == "/userauthor/follow") {
-    		resource = "/follows";
-    	} else if (resource == "/userpratilipi" || resource == "/userpratilipi/review" || resource == "/userpratilipi/review/list") {
-    		resource = "/reviews";
-    	} else if (resource == "/comment" || resource == "/comment/list") {
-    		resource = "/comments";
-    		if (request.query.method == 'POST' && request.query.commentId != undefined) {
-    			isPathMapped = true;
-    		}
-    	} else if (resource == "/vote") {
-    		resource = "/votes"
-    	} else if (resource == "/blog-scraper"
+		if (resource.startsWith("/blog-scraper")) {
+			resource = resource.replace(/\/[a-f\d]{24}/g, "/*");
+		} else {
+			resource = resource.replace(/\/[0-9]+/g, "/*");
+		}
+		
+		if (resource == "/image/pratilipi/cover" || resource == "/image/pratilipi/*/cover" 
+			|| resource == "/pratilipis/*") {
+			resource = "/pratilipis";
+			isPathMapped = true;
+		} else if (resource == "/image/author/cover" || resource == "/image/author/*/cover"
+			|| resource == "/image/author/profile" || resource == "/image/author/*/profile"
+				|| resource == "/authors/*") {
+			resource = "/authors";
+			isPathMapped = true;
+		} else if (resource == "/userauthor/follow/list" || resource == "/userauthor/follow") {
+			resource = "/follows";
+		} else if (resource == "/userpratilipi" || resource == "/userpratilipi/review" || resource == "/userpratilipi/review/list") {
+			resource = "/reviews";
+		} else if (resource == "/comment" || resource == "/comment/list") {
+			resource = "/comments";
+			if (request.query.method == 'POST' && request.query.commentId != undefined) {
+				isPathMapped = true;
+			}
+		} else if (resource == "/vote") {
+			resource = "/votes"
+		} else if (resource == "/blog-scraper"
 		  || resource == "/blog-scraper/*"
 		  || resource == "/blog-scraper/*/create"
 		  || resource == "/blog-scraper/*/publish"
 		  || resource == "/blog-scraper/*/scrape"
 		  || resource == "/blog-scraper/search") {
-		resource = "/blog-scraper";
-	}
+			resource = "/blog-scraper";
+		} else if (resource == "/event" || resource == "/event/list") {
+			resource = "/events";
+		}
     	
 		request.query.originalResource = request.query.resource;
 		request.query.resource = resource;
@@ -203,8 +206,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 		|| resource == "/search/search" 
 		|| resource == "/search/trending_search" 
 		|| (resource == "/follows" && method != "POST")
-	   	|| resource == "/blog-scraper"
-	   	|| (resource == "/events" && method == "GET") ) {
+	   	|| resource == "/blog-scraper" 
+	   	|| (resource == "/events" && method == "GET" && resourceIds == null)) {
 		resourceIds = "0";
 	}
 	
