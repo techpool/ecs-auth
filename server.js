@@ -40,7 +40,7 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
 	'/reviews','/userpratilipi','/userpratilipi/review','/userpratilipi/review/list',
 	'/comments','/comment','/comment/list',
 	'/vote','/votes', '/blog-scraper',
-	'/event','/event/list','/events','/devices'];
+	'/event','/event/list','/events','/devices','/userpratilipi/library','/userpratilipi/library/list','/library'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 var Role = UserAccessList.Role;
 var AEES = UserAccessList.AEES;
@@ -116,6 +116,8 @@ app.use((request, response, next) => {
 			isPathMapped = true;
 		} else if (resource == "/userauthor/follow/list" || resource == "/userauthor/follow") {
 			resource = "/follows";
+		} else if (resource == "/userpratilipi/library/list" || resource == "/userpratilipi/library") {
+			resource = "/library";
 		} else if (resource == "/userpratilipi" || resource == "/userpratilipi/review" || resource == "/userpratilipi/review/list") {
 			resource = "/reviews";
 		} else if (resource == "/comment" || resource == "/comment/list") {
@@ -207,7 +209,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 		|| resource == "/search/trending_search" 
 		|| (resource == "/follows" && method != "POST")
 	   	|| resource == "/blog-scraper" 
-	   	|| (resource == "/events" && method == "GET" && resourceIds == null)) {
+	   	|| (resource == "/events" && method == "GET" && resourceIds == null)
+	   	|| ( resource == "/library" ) ) {
 		resourceIds = "0";
 	}
 	
@@ -549,6 +552,12 @@ app.get("/auth/isAuthorized", function (req, res) {
 					data[0] = new resourceResponse(403,eventId,false);
 				}
 			} else if (resource == "/devices") {
+				if (userId == 0 || userId == null) {
+					data[0] = new resourceResponse(403,null,false);
+				} else {
+					data[0] = new resourceResponse(200,null,true);
+				}
+			} else if (resource == "/library") {
 				if (userId == 0 || userId == null) {
 					data[0] = new resourceResponse(403,null,false);
 				} else {
