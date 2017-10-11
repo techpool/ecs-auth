@@ -40,7 +40,7 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
 	'/reviews','/userpratilipi','/userpratilipi/review','/userpratilipi/review/list',
 	'/comments','/comment','/comment/list',
 	'/vote','/votes', '/blog-scraper',
-	'/event','/event/list','/events','/devices','/userpratilipi/library','/userpratilipi/library/list','/library'];
+	'/event','/event/list','/events','/event/pratilipi','/devices','/userpratilipi/library','/userpratilipi/library/list','/library'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 var Role = UserAccessList.Role;
 var AEES = UserAccessList.AEES;
@@ -134,7 +134,7 @@ app.use((request, response, next) => {
 		  || resource == "/blog-scraper/*/scrape"
 		  || resource == "/blog-scraper/search") {
 			resource = "/blog-scraper";
-		} else if (resource == "/event" || resource == "/event/list") {
+		} else if (resource == "/event" || resource == "/event/list" || resource == "/event/pratilipi") {
 			resource = "/events";
 		}
     	
