@@ -145,6 +145,9 @@ app.use((request, response, next) => {
     		if (request.query.method == 'POST') {
     			request.query.method = 'PATCH';
     			request.query.originalMethod = 'POST';
+    		} else if (request.query.method == 'DELETE') {
+    			request.query.method = 'PATCH';
+    			request.query.originalMethod = 'DELETE';
     		}
     	} 
     }
