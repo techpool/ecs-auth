@@ -180,8 +180,6 @@ app.get("/auth/isAuthorized", function (req, res) {
 	var accessToken = req.headers['access-token'];
 	var userId = req.headers['user-id'];
 	
-	console.log("The accessToken and userId are ",accessToken, userId);
-	
 	// Read query parameters
 	var resource = unescape(req.query.resource);
 	var method = req.query.method;
@@ -244,7 +242,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		.then((user) => {
 			if( user !== null ) {
 	 			userId = user.id;
-	 			console.log('Got user-id from cache', userId);
+	 			console.log('Got user-id from cache');
 	 			res.setHeader('User-Id', userId);
 	 			return userId;
 	 		} else {
@@ -256,7 +254,6 @@ app.get("/auth/isAuthorized", function (req, res) {
 			return getFromDB(accessToken, res);
 		}).then((id) => {
 			userId = id;
-			console.log('In the then userId', userId, id);
 		});
 	} else {
 		// TODO: Check if given User-Id is valid
@@ -584,8 +581,6 @@ app.get("/auth/isAuthorized", function (req, res) {
 		if (req.query.originalMethod != null && req.query.originalMethod != "") {
 			method = req.query.originalMethod;
 		}
-		
-		console.log('before returning the response the user id is ',userId);
 		res.status(200).send(JSON.stringify(new isAuthorizedResponse(resource,method,data)));
 	});
 
@@ -683,7 +678,6 @@ function getFromDB(accessToken, res) {
  		// add to cache
  		var user = new User(id);
  		cacheUtility.insert( accessToken, user );
- 		console.log('User id got from database', id, user);
  		res.setHeader('User-Id', id);
  		return id;
  	})
