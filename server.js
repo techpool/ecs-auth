@@ -670,7 +670,7 @@ function getFromDB(accessToken, res) {
 	return userService
  	.getUserId( accessToken )
  	.then( ( id ) => {
- 		console.log("Reading user-id from user service ");
+ 		console.log("Reading user-id from user service ",accessToken,id);
  		
  		// add to cache
  		var user = new User(id);
