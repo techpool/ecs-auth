@@ -58,7 +58,7 @@ app.get("/health", function (req, res) {
 	var message = {"message":"Auth service is running healthy."};
 	res.status("200").send(message);
 	req.log.push(message);
-	console.log(JSON.stringify(req.log,null,4));
+	console.log(JSON.stringify(req.log));
 });
 
 
@@ -77,19 +77,19 @@ app.delete("/auth/accessToken", function(req, res){
 	 			req.log.push("successfully deleted access token from cache ");
 	 			res.status(200).send(JSON.stringify({"message":"Successfully deleted"}));
 	 			req.log.push({"message":"Successfully deleted"});
-				console.log(JSON.stringify(req.log,null,4));
+				console.log(JSON.stringify(req.log));
 	 		})
 	 		.catch((err) => {
 	 			req.log.push("Error while deleting access token from cache " + JSON.stringify(err,null,4));
 	 			res.status(500).send(JSON.stringify(new errorResponse('Some exception occured at the server.')));
 	 			req.log.push({"message":"Some exception occured at the server."});
-				console.log(JSON.stringify(req.log,null,4));
+				console.log(JSON.stringify(req.log));
 	 		});
 	 		
 	} else {
 		res.status(400).send( JSON.stringify(new errorResponse("Invalid parameters")));
 		req.log.push({"message":"Invalid parameters."});
-		console.log(JSON.stringify(req.log,null,4));
+		console.log(JSON.stringify(req.log));
 	}
 });
 
