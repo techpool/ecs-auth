@@ -22,12 +22,6 @@ const UserAccessList     = require('./config/UserAccessUtil.js');
 const Language           = require('./config/Language.js').Language;
 const AccessType         = require('./config/AccessType.js').AccessType;
 
-// Initialize utilities
-const Logging = require( './lib/LoggingGcp.js' ).init({
-  projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID,
-  service: config.SERVICE
-});
-
 const cacheUtility = require('./lib/CacheUtility.js')({
  	port : config.REDIS_HOST_PORT,
  	hostIp : config.REDIS_HOST_IP,
@@ -53,41 +47,49 @@ app.use(logger('short'));
 
 // for initializing log object
 app.use((request, response, next) => {
-  var log = request.log = new Logging( request );
-  request.startTimestamp = Date.now();
+  request.log = [];
   next();
 });
 
 //Request Handlers
 // API to check health
 app.get("/health", function (req, res) {
-	console.log("Request reached health");
+	req.log.push("Request reached health");
 	var message = {"message":"Auth service is running healthy."};
 	res.status("200").send(message);
+	req.log.push(message);
+	console.log(JSON.stringify(req.log,null,4));
 });
 
 
 // API to delete accessToken - userId from cache
 app.delete("/auth/accessToken", function(req, res){
-	console.log("Request to delete access token from cache");
+	req.log.push("Request to delete access token from cache");
 	
 	// read headers
 	var accessToken = req.headers['access-token'];
+	req.log.push(`access-token=${accessToken}`);
 	res.setHeader('content-type', 'application/json');
 	
 	if (accessToken != null) {
 	 		cacheUtility.delete( accessToken )
 	 		.then(function(){
-	 			console.log("successfully deleted access token from cache ");
+	 			req.log.push("successfully deleted access token from cache ");
 	 			res.status(200).send(JSON.stringify({"message":"Successfully deleted"}));
+	 			req.log.push({"message":"Successfully deleted"});
+				console.log(JSON.stringify(req.log,null,4));
 	 		})
 	 		.catch((err) => {
-	 			console.log("Error while deleting access token from cache "+err);
-	 			res.status(500).send();
+	 			req.log.push("Error while deleting access token from cache " + JSON.stringify(err,null,4));
+	 			res.status(500).send(JSON.stringify(new errorResponse('Some exception occured at the server.')));
+	 			req.log.push({"message":"Some exception occured at the server."});
+				console.log(JSON.stringify(req.log,null,4));
 	 		});
 	 		
 	} else {
 		res.status(400).send( JSON.stringify(new errorResponse("Invalid parameters")));
+		req.log.push({"message":"Invalid parameters."});
+		console.log(JSON.stringify(req.log,null,4));
 	}
 });
 
@@ -242,7 +244,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		.then((user) => {
 			if( user !== null ) {
 	 			userId = user.id;
-	 			console.log('Got user-id from cache');
+	 			console.log('Got user-id from cache',JSON.stringify(user));
 	 			res.setHeader('User-Id', userId);
 	 			return userId;
 	 		} else {
@@ -673,7 +675,7 @@ function getFromDB(accessToken, res) {
 	return userService
  	.getUserId( accessToken )
  	.then( ( id ) => {
- 		console.log("Reading user-id from user service ");
+ 		console.log("Reading user-id from user service ",accessToken,id);
  		
  		// add to cache
  		var user = new User(id);
