@@ -123,12 +123,10 @@ app.use((request, response, next) => {
 		} else if (resource == "/userpratilipi" || resource == "/userpratilipi/review" || resource == "/userpratilipi/review/list") {
 			resource = "/userpratilipi/reviews";
 		} else if (resource == "/comment" || resource == "/comment/list") {
-			resource = "/comments";
+			resource = "/comment";
 			if (request.query.method == 'POST' && request.query.commentId != undefined) {
 				isPathMapped = true;
 			}
-		} else if (resource == "/vote") {
-			resource = "/votes"
 		} else if (resource == "/blog-scraper"
 		  || resource == "/blog-scraper/*"
 		  || resource == "/blog-scraper/*/create"
@@ -198,13 +196,13 @@ app.get("/auth/isAuthorized", function (req, res) {
 		if (method == 'POST') {
 			resourceIds = req.query.pratilipiId;
 		}
-	} else if (resource == '/comments') {
+	} else if (resource == '/comments' || resource == "/comment") {
 		if (method == 'PATCH') {
 			resourceIds = req.query.commentId;
 		} else if (method == 'GET') {
 			resourceIds = req.query.parentId;
 		}
-	} else if (resource == '/votes') {
+	} else if (resource == '/votes' || resource == "/vote") {
 		resourceIds = req.query.parentId;
 	} 
 	
@@ -317,7 +315,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		 		console.log(err);
 		 		return;
 		 	});
-		} else if ((resource == "/comments" && (method == "PATCH" || method == "DELETE"))) {
+		} else if (((resource == "/comments" || resource == "/comment") && (method == "PATCH" || method == "DELETE"))) {
 			return commentService.getComments(resourceIds, userId)
 			.then((comments) => {
 				resources = comments;
@@ -505,7 +503,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 						data[0] = new resourceResponse(403,review.id,false);
 					}
 				}
-			} else if (resource == "/comments") {
+			} else if (resource == "/comments" || resource == "/comment") {
 				if (method == "POST") {
 					if (userId == 0) {
 						data[0] = new resourceResponse(403,null,false);
@@ -522,7 +520,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 						data[0] = new resourceResponse(403,comment.id,false);
 					}
 				}
-			} else if (resource == "/votes") {
+			} else if (resource == "/votes" || resource == "/vote") {
 				if (method == "POST") {
 					if (userId == 0) {
 						data[0] = new resourceResponse(403,null,false);
