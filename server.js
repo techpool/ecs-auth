@@ -12,14 +12,12 @@ const app = express();
 app.set('port', config.PORT);
 
 // Load Services
-const AccessTokenService = require('./service/AccessTokenService' )( { projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID} );
 const UserService        = require('./service/UserService');
 const PratilipiService   = require('./service/PratilipiService')( { projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID} );
 const AuthorService      = require('./service/AuthorService')( { projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID} );
 const ReviewService      = require('./service/ReviewService');
 const CommentService     = require('./service/CommentService');
 const UserAccessList     = require('./config/UserAccessUtil.js');
-const Language           = require('./config/Language.js').Language;
 const AccessType         = require('./config/AccessType.js').AccessType;
 
 const cacheUtility = require('./lib/CacheUtility.js')({
@@ -36,7 +34,7 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
 	'/vote','/votes', '/blog-scraper',
 	'/event','/event/list','/events','/event/pratilipi','/devices','/userpratilipi/library','/userpratilipi/library/list','/library'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
-var Role = UserAccessList.Role;
+
 var AEES = UserAccessList.AEES;
 AEES = new AEES();
 var reviewService = new ReviewService(process.env.STAGE || 'local');
