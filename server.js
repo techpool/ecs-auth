@@ -121,7 +121,7 @@ app.use((request, response, next) => {
 		} else if (resource == "/userpratilipi/library/list" || resource == "/userpratilipi/library") {
 			resource = "/library";
 		} else if (resource == "/userpratilipi" || resource == "/userpratilipi/review" || resource == "/userpratilipi/review/list") {
-			resource = "/reviews";
+			resource = "/userpratilipi/reviews";
 		} else if (resource == "/comment" || resource == "/comment/list") {
 			resource = "/comments";
 			if (request.query.method == 'POST' && request.query.commentId != undefined) {
@@ -192,8 +192,12 @@ app.get("/auth/isAuthorized", function (req, res) {
 	var resourceType = null;
 	
 	
-	if (resource == '/reviews') {
+	if (resource == '/userpratilipi/reviews') {
 		resourceIds = req.query.pratilipiId;
+	} else if (resource == '/reviews') {
+		if (method == 'POST') {
+			resourceIds = req.query.pratilipiId;
+		}
 	} else if (resource == '/comments') {
 		if (method == 'PATCH') {
 			resourceIds = req.query.commentId;
@@ -232,7 +236,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	if (method != 'POST' 
 		|| (resource == "/pratilipis" && resourceType == "AUTHOR") 
 		|| (resource == "/follows")
-		|| (resource == "/reviews" && method == "POST")){
+		|| ((resource == "/userpratilipi/reviews" || resource == "/reviews") && method == "POST")){
 		resourceIds = resourceIds.split(',').map(Number);
 	}
 
@@ -277,7 +281,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		
 		console.log("Fetching resources for "+resourceIds);
 		
-		if ((resource == "/pratilipis" && method != "POST" && resourceType == null) || (resource == "/reviews" && method == "POST")) {
+		if ((resource == "/pratilipis" && method != "POST" && resourceType == null) || ((resource == "/reviews" || resource == "/userpratilipi/reviews") && method == "POST")) {
 			return PratilipiService
 			.getPratilipis(resourceIds)
 			.then ((pratilipis) => {
@@ -302,7 +306,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		 		console.log(err);
 		 		return;
 		 	});
-		} else if ((resource == "/reviews" && (method == "PATCH" || method == "DELETE"))) {
+		} else if (((resource == "/reviews" || resource == "/userpratilipi/reviews") && (method == "PATCH" || method == "DELETE"))) {
 			return reviewService.getReviews(resourceIds, userId)
 			.then((reviews) => {
 				resources = reviews;
@@ -474,12 +478,11 @@ app.get("/auth/isAuthorized", function (req, res) {
 					data[0] = new resourceResponse(200,resourceIds[0],true);
 				}
 			
-			} else if (resource == "/reviews") {
+			} else if (resource == "/reviews" || resource == "/userpratilipi/reviews") {
 				if (method == "POST") {
 					if (userId == 0) {
 						data[0] = new resourceResponse(403,null,false);
 					} else {
-						
 							var pratilipi = resources[0];
 							var author = yield getAuthorByPratilipiId(pratilipi);
 							if (author!= null) {
