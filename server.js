@@ -192,12 +192,16 @@ app.get("/auth/isAuthorized", function (req, res) {
 		resourceIds = req.query.pratilipiId;
 	} else if (resource == '/reviews') {
 		if (method == 'POST') {
-			resourceIds = req.query.pratilipiId;
+			resourceIds = req.query.parentId;
 		}
-	} else if (resource == '/comments' || resource == "/comment") {
+	} else if (resource == "/comment") {
 		if (method == 'PATCH') {
 			resourceIds = req.query.commentId;
 		} else if (method == 'GET') {
+			resourceIds = req.query.parentId;
+		}
+	} else if (resource == "/comments") { 
+		if (method == 'POST') {
 			resourceIds = req.query.parentId;
 		}
 	} else if (resource == '/votes' || resource == "/vote") {
