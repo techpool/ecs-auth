@@ -29,7 +29,7 @@ const cacheUtility = require('./lib/CacheUtility.js')({
 
 var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/search/search',
 	'/search/trending_search','/follows','/userauthor/follow/list', '/userauthor/follow',
-	'/reviews','/userpratilipi','/userpratilipi/review','/userpratilipi/review/list',
+	'/reviews','/userpratilipi','/userpratilipi/review','/userpratilipi/review/list','/userpratilipi/reviews'
 	'/comments','/comment','/comment/list',
 	'/vote','/votes', '/blog-scraper',
 	'/event','/event/list','/events','/event/pratilipi','/devices','/userpratilipi/library','/userpratilipi/library/list','/library'];
