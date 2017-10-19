@@ -254,12 +254,12 @@ app.get("/auth/isAuthorized", function (req, res) {
 	 			res.setHeader('User-Id', userId);
 	 			return userId;
 	 		} else {
- 				return getFromDB(accessToken,res);
+ 				return getFromDB(accessToken,res, req);
 	 		}
 		})
 		.catch( (err) => {
 			req.log.push('error while fetching user-id from cache');
-			return getFromDB(accessToken, res);
+			return getFromDB(accessToken, res, req);
 		}).then((id) => {
 			userId = id;
 		});
@@ -401,7 +401,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 								var hasAccess = AEES.hasUserAccess(userId,language,accessType);
 								if (hasAccess) {
 									if (!AEES.isAEE(userId) && (accessType == AccessType.PRATILIPI_UPDATE || accessType == AccessType.PRATILIPI_DELETE)) {
-										ownerPromises.push(isUserAuthorToPratilipi(i,data,userId,pratilipi));
+										ownerPromises.push(isUserAuthorToPratilipi(i,data,userId,pratilipi, req));
 									} else {
 										data[i] = new resourceResponse(200,pratilipi.ID,true)
 									}
@@ -488,7 +488,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 						data[0] = new resourceResponse(403,null,false);
 					} else {
 							var pratilipi = resources[0];
-							var author = yield getAuthorByPratilipiId(pratilipi);
+							var author = yield getAuthorByPratilipiId(pratilipi, req);
 							if (author!= null) {
 								if (author.USER_ID != userId) {
 									data[0] = new resourceResponse(200,null,true);
@@ -597,7 +597,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 
 });
 
-function isUserAuthorToPratilipi(index,data,userId,pratilipi) {
+function isUserAuthorToPratilipi(index,data,userId,pratilipi,req) {
 	return new Promise( function (resolve,reject) {
 		AuthorService.getAuthor(pratilipi.AUTHOR_ID)
 	    .then ((author) => {
@@ -616,7 +616,7 @@ function isUserAuthorToPratilipi(index,data,userId,pratilipi) {
 }
 
 
-function getAuthorByPratilipiId(pratilipi) {
+function getAuthorByPratilipiId(pratilipi,req) {
 	return new Promise( function (resolve,reject) {
 		return AuthorService.getAuthor(pratilipi.AUTHOR_ID)
 	    .then ((author) => {
@@ -635,7 +635,7 @@ function getAuthorByPratilipiId(pratilipi) {
 }
 
 
-function addToCache(key, value) {
+function addToCache(key, value,req) {
 	return new Promise (function (resolve,reject) {
 	 	cacheUtility.insert( key, value )
 	 	.then(function(){
@@ -650,7 +650,7 @@ function addToCache(key, value) {
 	});
 }
 
-function getFromCache (key) {
+function getFromCache (key,req) {
 	return new Promise (function (resolve,reject) {
 	 	cacheUtility.get( key )
 	 	.then( (data) => {
@@ -665,7 +665,7 @@ function getFromCache (key) {
 	});
 }
 
-function deleteFromCache (key) {
+function deleteFromCache (key,req) {
 	return new Promise (function (resolve,reject) {
 	 	cacheUtility.delete( key )
 	 	.then( function(){
@@ -680,7 +680,7 @@ function deleteFromCache (key) {
 	});
 }
 
-function getFromDB(accessToken, res) {
+function getFromDB(accessToken, res,req) {
 	return userService
  	.getUserId( accessToken )
  	.then( ( id ) => {
