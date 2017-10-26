@@ -378,7 +378,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 						}
 						
 					} else {
-						data[0] = new resourceResponse(403, resourceIds[0], false);
+						data[0] = new resourceResponse(403, null, false);
 					}
 				} else {
 					 if (method == "POST") {
@@ -495,7 +495,10 @@ app.get("/auth/isAuthorized", function (req, res) {
 						data[0] = new resourceResponse(403,null,false);
 					} else {
 							var pratilipi = resources[0];
-							var author = yield getAuthorByPratilipiId(pratilipi, req);
+							var author = yield getAuthorByPratilipiId(pratilipi, req)
+							.catch(error => {
+								return null;
+							});
 							if (author!= null) {
 								if (author.USER_ID != userId) {
 									data[0] = new resourceResponse(200,null,true);
