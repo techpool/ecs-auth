@@ -116,7 +116,7 @@ app.use((request, response, next) => {
 			isPathMapped = true;
 		} else if (resource == "/userauthor/follow/list" || resource == "/userauthor/follow") {
 			resource = "/follows";
-		} else if (resource == "/userpratilipi/library/list" || resource == "/userpratilipi/library") {
+		} else if (resource == "/userpratilipi/library/list" || resource == "/userpratilipi/library" || resource.startsWith("/library")) {
 			resource = "/library";
 		} else if (resource == "/userpratilipi" || resource == "/userpratilipi/review" || resource == "/userpratilipi/review/list") {
 			resource = "/userpratilipi/reviews";
