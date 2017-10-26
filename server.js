@@ -32,7 +32,7 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
 	'/reviews','/userpratilipi','/userpratilipi/review','/userpratilipi/review/list','/userpratilipi/reviews',
 	'/comments','/comment','/comment/list',
 	'/vote','/votes', '/blog-scraper',
-	'/event','/event/list','/events','/event/pratilipi','/devices','/userpratilipi/library','/userpratilipi/library/list','/library'];
+	'/event','/event/list','/events','/event/pratilipi','/devices','/userpratilipi/library','/userpratilipi/library/list','/library', '/social-connect'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 
 var AEES = UserAccessList.AEES;
@@ -116,7 +116,7 @@ app.use((request, response, next) => {
 			isPathMapped = true;
 		} else if (resource == "/userauthor/follow/list" || resource == "/userauthor/follow") {
 			resource = "/follows";
-		} else if (resource == "/userpratilipi/library/list" || resource == "/userpratilipi/library") {
+		} else if (resource == "/userpratilipi/library/list" || resource == "/userpratilipi/library" || resource.startsWith("/library")) {
 			resource = "/library";
 		} else if (resource == "/userpratilipi" || resource == "/userpratilipi/review" || resource == "/userpratilipi/review/list") {
 			resource = "/userpratilipi/reviews";
@@ -134,6 +134,12 @@ app.use((request, response, next) => {
 			resource = "/blog-scraper";
 		} else if (resource == "/event" || resource == "/event/list" || resource == "/event/pratilipi") {
 			resource = "/events";
+		} else if (resource == '/social-connect/access_token' 
+		|| resource == '/social-connect/contacts' 
+		|| resource == '/social-connect/access_token/unlink' 
+		|| resource == '/social-connect/access_token/remind_me_later' 
+		|| resource == '/social-connect/contacts/invite') {
+			resource = '/social-connect'	
 		}
     	
 		request.query.originalResource = request.query.resource;
@@ -219,7 +225,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 		|| (resource == "/follows" && method != "POST")
 	   	|| resource == "/blog-scraper" 
 	   	|| (resource == "/events" && method == "GET" && resourceIds == null)
-	   	|| ( resource == "/library" ) ) {
+	   	|| ( resource == "/library" )
+	   	|| ( resource == '/social-connect' )) {
 		resourceIds = "0";
 	}
 	
@@ -371,7 +378,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 						}
 						
 					} else {
-						data[0] = new resourceResponse(403, resourceIds[0], false);
+						data[0] = new resourceResponse(403, null, false);
 					}
 				} else {
 					 if (method == "POST") {
@@ -488,7 +495,10 @@ app.get("/auth/isAuthorized", function (req, res) {
 						data[0] = new resourceResponse(403,null,false);
 					} else {
 							var pratilipi = resources[0];
-							var author = yield getAuthorByPratilipiId(pratilipi, req);
+							var author = yield getAuthorByPratilipiId(pratilipi, req)
+							.catch(error => {
+								return null;
+							});
 							if (author!= null) {
 								if (author.USER_ID != userId) {
 									data[0] = new resourceResponse(200,null,true);
@@ -536,7 +546,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 				} else {
 					data[0] = new resourceResponse(200,0,true);
 				}
-			} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search") {
+			} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/social-connect") {
 				data[0] = new resourceResponse(200,0,true);
 			} else if (resource == "/blog-scraper") {
 				var isAEES = AEES.isAEE(userId);
