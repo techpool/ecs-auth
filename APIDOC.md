@@ -14,7 +14,6 @@
    /auth/isAuthorized?resource=%2Fauthors&method=GET&id=23452353245235,1234236547865,69785476456746
    ```
    
-
 * **Method:**
   GET
 
