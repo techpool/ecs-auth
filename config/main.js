@@ -2,31 +2,30 @@ var config = {};
 
 config.devo = {
   'PORT': 80,
-  'SERVICE': 'ecs-auth-devo',
   'REDIS_HOST_IP': 'devo-ecs.e6ocw5.0001.apse1.cache.amazonaws.com',
   'REDIS_HOST_PORT': '8080',
-  'REDIS_KIND':'AUTH'
+  'REDIS_KIND':'AUTH',
+  'GCP_PROJ_ID' : process.env.GCP_PROJ_ID
 };
 
 config.gamma = {
   'PORT': 80,
-  'SERVICE': 'ecs-auth-gamma',
   'REDIS_HOST_IP': 'prod-ecs.cpzshl.ng.0001.apse1.cache.amazonaws.com',
   'REDIS_HOST_PORT': '8080',
-  'REDIS_KIND':'AUTH'
+  'REDIS_KIND':'AUTH',
+  'GCP_PROJ_ID' : process.env.GCP_PROJ_ID
 };
 
 
 config.prod = {
   'PORT': 80,
-  'SERVICE': 'ecs-auth-prod',
   'REDIS_HOST_IP': 'prod-ecs.cpzshl.ng.0001.apse1.cache.amazonaws.com',
   'REDIS_HOST_PORT': '8080',
-  'REDIS_KIND':'AUTH'
+  'REDIS_KIND':'AUTH',
+  'GCP_PROJ_ID' : process.env.GCP_PROJ_ID
 };
 
 config.local = {
-  'LOGGING_METRIC_SERVICE_NAME': 'auth-local',
   'PORT' : 8080,
   'REDIS_HOST_IP': '127.0.0.1',
   'REDIS_HOST_PORT': '6379',

@@ -12,21 +12,13 @@ const app = express();
 app.set('port', config.PORT);
 
 // Load Services
-const AccessTokenService = require('./service/AccessTokenService' )( { projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID} );
 const UserService        = require('./service/UserService');
-const PratilipiService   = require('./service/PratilipiService')( { projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID} );
-const AuthorService      = require('./service/AuthorService')( { projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID} );
+const PratilipiService   = require('./service/PratilipiService')( { projectId: config.GCP_PROJ_ID} );
+const AuthorService      = require('./service/AuthorService')( { projectId: config.GCP_PROJ_ID} );
 const ReviewService      = require('./service/ReviewService');
 const CommentService     = require('./service/CommentService');
 const UserAccessList     = require('./config/UserAccessUtil.js');
-const Language           = require('./config/Language.js').Language;
 const AccessType         = require('./config/AccessType.js').AccessType;
-
-// Initialize utilities
-const Logging = require( './lib/LoggingGcp.js' ).init({
-  projectId: process.env.GCP_PROJ_ID || config.GCP_PROJ_ID,
-  service: config.SERVICE
-});
 
 const cacheUtility = require('./lib/CacheUtility.js')({
  	port : config.REDIS_HOST_PORT,
@@ -37,12 +29,12 @@ const cacheUtility = require('./lib/CacheUtility.js')({
 
 var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/search/search',
 	'/search/trending_search','/follows','/userauthor/follow/list', '/userauthor/follow',
-	'/reviews','/userpratilipi','/userpratilipi/review','/userpratilipi/review/list',
+	'/reviews','/userpratilipi','/userpratilipi/review','/userpratilipi/review/list','/userpratilipi/reviews',
 	'/comments','/comment','/comment/list',
 	'/vote','/votes', '/blog-scraper',
 	'/event','/event/list','/events','/event/pratilipi','/devices','/userpratilipi/library','/userpratilipi/library/list','/library'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
-var Role = UserAccessList.Role;
+
 var AEES = UserAccessList.AEES;
 AEES = new AEES();
 var reviewService = new ReviewService(process.env.STAGE || 'local');
@@ -53,41 +45,49 @@ app.use(logger('short'));
 
 // for initializing log object
 app.use((request, response, next) => {
-  var log = request.log = new Logging( request );
-  request.startTimestamp = Date.now();
+  request.log = [];
   next();
 });
 
 //Request Handlers
 // API to check health
 app.get("/health", function (req, res) {
-	console.log("Request reached health");
+	req.log.push("Request reached health");
 	var message = {"message":"Auth service is running healthy."};
 	res.status("200").send(message);
+	req.log.push(message);
+	console.log(JSON.stringify({"log":req.log}));
 });
 
 
 // API to delete accessToken - userId from cache
 app.delete("/auth/accessToken", function(req, res){
-	console.log("Request to delete access token from cache");
+	req.log.push("Request to delete access token from cache");
 	
 	// read headers
 	var accessToken = req.headers['access-token'];
+	req.log.push(`access-token=${accessToken}`);
 	res.setHeader('content-type', 'application/json');
 	
 	if (accessToken != null) {
 	 		cacheUtility.delete( accessToken )
 	 		.then(function(){
-	 			console.log("successfully deleted access token from cache ");
+	 			req.log.push("successfully deleted access token from cache ");
 	 			res.status(200).send(JSON.stringify({"message":"Successfully deleted"}));
+	 			req.log.push({"message":"Successfully deleted"});
+				console.log(JSON.stringify({"log":req.log}));
 	 		})
 	 		.catch((err) => {
-	 			console.log("Error while deleting access token from cache "+err);
-	 			res.status(500).send();
+	 			req.log.push("Error while deleting access token from cache " + JSON.stringify(err,null,4));
+	 			res.status(500).send(JSON.stringify(new errorResponse('Some exception occured at the server.')));
+	 			req.log.push({"message":"Some exception occured at the server."});
+				console.log(JSON.stringify({"log":req.log}));
 	 		});
 	 		
 	} else {
 		res.status(400).send( JSON.stringify(new errorResponse("Invalid parameters")));
+		req.log.push({"message":"Invalid parameters."});
+		console.log(JSON.stringify({"log":req.log}));
 	}
 });
 
@@ -119,14 +119,12 @@ app.use((request, response, next) => {
 		} else if (resource == "/userpratilipi/library/list" || resource == "/userpratilipi/library") {
 			resource = "/library";
 		} else if (resource == "/userpratilipi" || resource == "/userpratilipi/review" || resource == "/userpratilipi/review/list") {
-			resource = "/reviews";
+			resource = "/userpratilipi/reviews";
 		} else if (resource == "/comment" || resource == "/comment/list") {
-			resource = "/comments";
+			resource = "/comment";
 			if (request.query.method == 'POST' && request.query.commentId != undefined) {
 				isPathMapped = true;
 			}
-		} else if (resource == "/vote") {
-			resource = "/votes"
 		} else if (resource == "/blog-scraper"
 		  || resource == "/blog-scraper/*"
 		  || resource == "/blog-scraper/*/create"
@@ -145,6 +143,9 @@ app.use((request, response, next) => {
     		if (request.query.method == 'POST') {
     			request.query.method = 'PATCH';
     			request.query.originalMethod = 'POST';
+    		} else if (request.query.method == 'DELETE') {
+    			request.query.method = 'PATCH';
+    			request.query.originalMethod = 'DELETE';
     		}
     	} 
     }
@@ -187,15 +188,23 @@ app.get("/auth/isAuthorized", function (req, res) {
 	var resourceType = null;
 	
 	
-	if (resource == '/reviews') {
+	if (resource == '/userpratilipi/reviews') {
 		resourceIds = req.query.pratilipiId;
-	} else if (resource == '/comments') {
+	} else if (resource == '/reviews') {
+		if (method == 'POST') {
+			resourceIds = req.query.parentId;
+		}
+	} else if (resource == "/comment") {
 		if (method == 'PATCH') {
 			resourceIds = req.query.commentId;
 		} else if (method == 'GET') {
 			resourceIds = req.query.parentId;
 		}
-	} else if (resource == '/votes') {
+	} else if (resource == "/comments") { 
+		if (method == 'POST') {
+			resourceIds = req.query.parentId;
+		}
+	} else if (resource == '/votes' || resource == "/vote") {
 		resourceIds = req.query.parentId;
 	} 
 	
@@ -221,13 +230,15 @@ app.get("/auth/isAuthorized", function (req, res) {
 		|| ((resource == "/pratilipis" || resource == "/authors") && method == 'POST' && language == null)) {
 		res.setHeader('content-type', 'application/json');
 		res.status(400).send( JSON.stringify(new errorResponse("Invalid parameters")));
+		req.log.push({"message":"Invalid parameters"});
+		console.log(JSON.stringify({"log":req.log}));
 		return;
 	}
 	
 	if (method != 'POST' 
 		|| (resource == "/pratilipis" && resourceType == "AUTHOR") 
 		|| (resource == "/follows")
-		|| (resource == "/reviews" && method == "POST")){
+		|| ((resource == "/userpratilipi/reviews" || resource == "/reviews") && method == "POST")){
 		resourceIds = resourceIds.split(',').map(Number);
 	}
 
@@ -239,16 +250,16 @@ app.get("/auth/isAuthorized", function (req, res) {
 		.then((user) => {
 			if( user !== null ) {
 	 			userId = user.id;
-	 			console.log('Got user-id from cache');
+	 			req.log.push('Got user-id from cache' + JSON.stringify(user));
 	 			res.setHeader('User-Id', userId);
 	 			return userId;
 	 		} else {
- 				return getFromDB(accessToken,res);
+ 				return getFromDB(accessToken,res, req);
 	 		}
 		})
 		.catch( (err) => {
-			console.log('error while fetching user-id from cache');
-			return getFromDB(accessToken, res);
+			req.log.push('error while fetching user-id from cache');
+			return getFromDB(accessToken, res, req);
 		}).then((id) => {
 			userId = id;
 		});
@@ -258,6 +269,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 			if (userId == null) {
 				res.setHeader('content-type', 'application/json');
 				res.status(400).send( JSON.stringify(new errorResponse("Access-Token or User-Id are required in request header")));
+				req.log.push({"message":"Access-Token or User-Id are required in request header"});
+				console.log(JSON.stringify({"log":req.log}));
 				return;
 			} else {
 				resolve();
@@ -270,9 +283,9 @@ app.get("/auth/isAuthorized", function (req, res) {
 	var resources;
 	var resourcePromise = userIdPromise.then (function () {
 		
-		console.log("Fetching resources for "+resourceIds);
+		req.log.push("Fetching resources for "+resourceIds);
 		
-		if ((resource == "/pratilipis" && method != "POST" && resourceType == null) || (resource == "/reviews" && method == "POST")) {
+		if ((resource == "/pratilipis" && method != "POST" && resourceType == null) || ((resource == "/reviews" || resource == "/userpratilipi/reviews") && method == "POST")) {
 			return PratilipiService
 			.getPratilipis(resourceIds)
 			.then ((pratilipis) => {
@@ -281,7 +294,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 			})
 			.catch( ( err ) => {
 		 		var data = 'Error in getting pratilipi!';
-		 		console.log(err);
+		 		req.log.push(err);
 		 		return;
 		 	});
 		} else if ((resource == "/authors" && method != "POST") || (resource == "/pratilipis" && resourceType == "AUTHOR")
@@ -294,10 +307,10 @@ app.get("/auth/isAuthorized", function (req, res) {
 			})
 			.catch( ( err ) => {
 		 		var data = 'Error in getting authors!';
-		 		console.log(err);
+		 		req.log.push(err);
 		 		return;
 		 	});
-		} else if ((resource == "/reviews" && (method == "PATCH" || method == "DELETE"))) {
+		} else if (((resource == "/reviews" || resource == "/userpratilipi/reviews") && (method == "PATCH" || method == "DELETE"))) {
 			return reviewService.getReviews(resourceIds, userId)
 			.then((reviews) => {
 				resources = reviews;
@@ -305,10 +318,10 @@ app.get("/auth/isAuthorized", function (req, res) {
 			})
 			.catch( ( err ) => {
 		 		var data = 'Error in getting reviews!';
-		 		console.log(err);
+		 		req.log.push(err);
 		 		return;
 		 	});
-		} else if ((resource == "/comments" && (method == "PATCH" || method == "DELETE"))) {
+		} else if (((resource == "/comments" || resource == "/comment") && (method == "PATCH" || method == "DELETE"))) {
 			return commentService.getComments(resourceIds, userId)
 			.then((comments) => {
 				resources = comments;
@@ -316,7 +329,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 			})
 			.catch( ( err ) => {
 		 		var data = 'Error in getting comments!';
-		 		console.log(err);
+		 		req.log.push(err);
 		 		return;
 		 	});
 		}
@@ -328,7 +341,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	var authorizePromise = resourcePromise.then (function () {
 
 		return co(function * () {
-			console.log("Verifying the authorization for user on the resource");
+			req.log.push("Verifying the authorization for user on the resource");
 			// Get roles for the user
 			var roles = AEES.getRoles(userId);
 			if (resource == "/pratilipis") {
@@ -388,7 +401,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 								var hasAccess = AEES.hasUserAccess(userId,language,accessType);
 								if (hasAccess) {
 									if (!AEES.isAEE(userId) && (accessType == AccessType.PRATILIPI_UPDATE || accessType == AccessType.PRATILIPI_DELETE)) {
-										ownerPromises.push(isUserAuthorToPratilipi(i,data,userId,pratilipi));
+										ownerPromises.push(isUserAuthorToPratilipi(i,data,userId,pratilipi, req));
 									} else {
 										data[i] = new resourceResponse(200,pratilipi.ID,true)
 									}
@@ -469,14 +482,13 @@ app.get("/auth/isAuthorized", function (req, res) {
 					data[0] = new resourceResponse(200,resourceIds[0],true);
 				}
 			
-			} else if (resource == "/reviews") {
+			} else if (resource == "/reviews" || resource == "/userpratilipi/reviews") {
 				if (method == "POST") {
 					if (userId == 0) {
 						data[0] = new resourceResponse(403,null,false);
 					} else {
-						
 							var pratilipi = resources[0];
-							var author = yield getAuthorByPratilipiId(pratilipi);
+							var author = yield getAuthorByPratilipiId(pratilipi, req);
 							if (author!= null) {
 								if (author.USER_ID != userId) {
 									data[0] = new resourceResponse(200,null,true);
@@ -497,7 +509,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 						data[0] = new resourceResponse(403,review.id,false);
 					}
 				}
-			} else if (resource == "/comments") {
+			} else if (resource == "/comments" || resource == "/comment") {
 				if (method == "POST") {
 					if (userId == 0) {
 						data[0] = new resourceResponse(403,null,false);
@@ -514,7 +526,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 						data[0] = new resourceResponse(403,comment.id,false);
 					}
 				}
-			} else if (resource == "/votes") {
+			} else if (resource == "/votes" || resource == "/vote") {
 				if (method == "POST") {
 					if (userId == 0) {
 						data[0] = new resourceResponse(403,null,false);
@@ -570,7 +582,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		});
 	});
 	authorizePromise.then (function (){
-		console.log("sending response");
+		req.log.push("sending response");
 		res.setHeader('content-type', 'application/json');
 		if (req.query.originalResource != null && req.query.originalResource != "") {
 			resource = req.query.originalResource;
@@ -579,11 +591,13 @@ app.get("/auth/isAuthorized", function (req, res) {
 			method = req.query.originalMethod;
 		}
 		res.status(200).send(JSON.stringify(new isAuthorizedResponse(resource,method,data)));
+		req.log.push(new isAuthorizedResponse(resource,method,data));
+		console.log(JSON.stringify({"log":req.log}));
 	});
 
 });
 
-function isUserAuthorToPratilipi(index,data,userId,pratilipi) {
+function isUserAuthorToPratilipi(index,data,userId,pratilipi,req) {
 	return new Promise( function (resolve,reject) {
 		AuthorService.getAuthor(pratilipi.AUTHOR_ID)
 	    .then ((author) => {
@@ -594,15 +608,15 @@ function isUserAuthorToPratilipi(index,data,userId,pratilipi) {
 	        }
 	        resolve();
 	    }).catch( (err) => {
-	    	console.log("Error while fetching authors");
-	        console.log(err);
+	    	req.log.push("Error while fetching authors");
+	        req.log.push(err);
 	        reject();  
 	    });
 	});	
 }
 
 
-function getAuthorByPratilipiId(pratilipi) {
+function getAuthorByPratilipiId(pratilipi,req) {
 	return new Promise( function (resolve,reject) {
 		return AuthorService.getAuthor(pratilipi.AUTHOR_ID)
 	    .then ((author) => {
@@ -612,8 +626,8 @@ function getAuthorByPratilipiId(pratilipi) {
 	        	resolve(null);
 	        }
 	    }).catch( (err) => {
-	    	console.log("Error while fetching authors");
-	        console.log(err);
+	    	req.log.push("Error while fetching authors");
+	        req.log.push(err);
 	        reject();  
 	        
 	    });
@@ -621,22 +635,22 @@ function getAuthorByPratilipiId(pratilipi) {
 }
 
 
-function addToCache(key, value) {
+function addToCache(key, value,req) {
 	return new Promise (function (resolve,reject) {
 	 	cacheUtility.insert( key, value )
 	 	.then(function(){
-	 		console.log("Successfully added to cache!!!");
+	 		req.log.push("Successfully added to cache!!!");
 	 		resolve();
 	 	})
 	 	.catch ((err) => {
-	 		console.log("Error while adding to cache");
-	        console.log(err);
+	 		req.log.push("Error while adding to cache");
+	        req.log.push(err);
 	        reject();  
 	 	});
 	});
 }
 
-function getFromCache (key) {
+function getFromCache (key,req) {
 	return new Promise (function (resolve,reject) {
 	 	cacheUtility.get( key )
 	 	.then( (data) => {
@@ -644,43 +658,42 @@ function getFromCache (key) {
 	 		//resolve();
 	 	})
 	 	.catch ((err) => {
-	 		console.log("Error while getting from cache");
-	        console.log(err);
+	 		req.log.push("Error while getting from cache");
+	        req.log.push(err);
 	        reject();  
 	 	});
 	});
 }
 
-function deleteFromCache (key) {
+function deleteFromCache (key,req) {
 	return new Promise (function (resolve,reject) {
 	 	cacheUtility.delete( key )
 	 	.then( function(){
-	 		console.log("Successfully delete from cache!!!");
+	 		req.log.push("Successfully delete from cache!!!");
 	 		resolve();
 	 	})
 	 	.catch ((err) => {
-	 		console.log("Error while deleting from cache");
-	        console.log(err);
+	 		req.log.push("Error while deleting from cache");
+	        req.log.push(err);
 	        reject();  
 	 	});
 	});
 }
 
-function getFromDB(accessToken, res) {
+function getFromDB(accessToken, res,req) {
 	return userService
  	.getUserId( accessToken )
  	.then( ( id ) => {
- 		console.log("Reading user-id from user service ");
+ 		req.log.push("Reading user-id from user service " + accessToken + " " + id);
  		
  		// add to cache
  		var user = new User(id);
  		cacheUtility.insert( accessToken, user );
- 		
  		res.setHeader('User-Id', id);
  		return id;
  	})
  	.catch( ( err ) => {
- 		console.log(err);
+ 		req.log.push(err);
  		return 0;
  	});
 }
