@@ -628,19 +628,26 @@ function isUserAuthorToPratilipi(index,data,userId,pratilipi,req) {
 
 function getAuthorByPratilipiId(pratilipi,req) {
 	return new Promise( function (resolve,reject) {
-		return AuthorService.getAuthor(pratilipi.AUTHOR_ID)
-	    .then ((author) => {
-	        if (author!=null) {
-	        	resolve(author);
-	        } else {
-	        	resolve(null);
-	        }
-	    }).catch( (err) => {
-	    	req.log.push("Error while fetching authors");
-	        req.log.push(err);
-	        reject();  
-	        
-	    });
+		try{
+			return AuthorService.getAuthor(pratilipi.AUTHOR_ID)
+			.then ((author) => {
+			    if (author!=null) {
+			    	resolve(author);
+			    } else {
+			    	resolve(null);
+			    }
+			}).catch( (err) => {
+				req.log.push("Error while fetching authors");
+			    req.log.push(err);
+			    reject();  
+			    
+			});
+		} catch( error ) {
+			req.log.push("Error while fetching authors");
+			req.log.push(error);
+			reject();
+		}
+		
 	});
 }
 
