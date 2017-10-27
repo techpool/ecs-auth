@@ -494,20 +494,20 @@ app.get("/auth/isAuthorized", function (req, res) {
 					if (userId == 0) {
 						data[0] = new resourceResponse(403,null,false);
 					} else {
-							var pratilipi = resources[0];
-							var author = yield getAuthorByPratilipiId(pratilipi, req)
-							.catch(error => {
-								return null;
-							});
-							if (author!= null) {
-								if (author.USER_ID != userId) {
-									data[0] = new resourceResponse(200,null,true);
-								} else {
-									data[0] = new resourceResponse(403,null,false);
-								}
+						var pratilipi = resources[0];
+						var author = null;
+						if(pratilipi != null) {
+							author = yield getAuthorByPratilipiId(pratilipi, req)
+						}
+						if (author!= null) {
+							if (author.USER_ID != userId) {
+								data[0] = new resourceResponse(200,null,true);
 							} else {
 								data[0] = new resourceResponse(403,null,false);
 							}
+						} else {
+							data[0] = new resourceResponse(403,null,false);
+						}
 					}
 				} else if (method == "GET"){
 					data[0] = new resourceResponse(200, resourceIds[0], true);
