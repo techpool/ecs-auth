@@ -32,7 +32,7 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
 	'/reviews','/userpratilipi','/userpratilipi/review','/userpratilipi/review/list','/userpratilipi/reviews',
 	'/comments','/comment','/comment/list',
 	'/vote','/votes', '/blog-scraper',
-	'/event','/event/list','/events','/event/pratilipi','/devices', '/notifications'
+	'/event','/event/list','/events','/event/pratilipi','/devices', '/notifications',
         '/userpratilipi/library','/userpratilipi/library/list','/library', '/social-connect'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 
