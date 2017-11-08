@@ -32,7 +32,8 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
 	'/reviews','/userpratilipi','/userpratilipi/review','/userpratilipi/review/list','/userpratilipi/reviews',
 	'/comments','/comment','/comment/list',
 	'/vote','/votes', '/blog-scraper',
-	'/event','/event/list','/events','/event/pratilipi','/devices','/userpratilipi/library','/userpratilipi/library/list','/library', '/social-connect'];
+	'/event','/event/list','/events','/event/pratilipi','/devices', '/notifications',
+        '/userpratilipi/library','/userpratilipi/library/list','/library', '/social-connect'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 
 var AEES = UserAccessList.AEES;
@@ -132,7 +133,7 @@ app.use((request, response, next) => {
 		  || resource == "/blog-scraper/*/scrape"
 		  || resource == "/blog-scraper/search") {
 			resource = "/blog-scraper";
-		} else if (resource == "/event" || resource == "/event/list" || resource == "/event/pratilipi") {
+		} else if (resource == "/event" || resource == "/event/list" || resource == "/event/pratilipi" || resource == "/image/event/banner") {
 			resource = "/events";
 		} else if (resource == '/social-connect/access_token' 
 		|| resource == '/social-connect/contacts' 
@@ -574,6 +575,12 @@ app.get("/auth/isAuthorized", function (req, res) {
 					data[0] = new resourceResponse(403,eventId,false);
 				}
 			} else if (resource == "/devices") {
+				if (userId == 0 || userId == null) {
+					data[0] = new resourceResponse(403,null,false);
+				} else {
+					data[0] = new resourceResponse(200,null,true);
+				}
+			} else if (resource == "/notifications") {
 				if (userId == 0 || userId == null) {
 					data[0] = new resourceResponse(403,null,false);
 				} else {
