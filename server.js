@@ -133,7 +133,7 @@ app.use((request, response, next) => {
 		  || resource == "/blog-scraper/*/scrape"
 		  || resource == "/blog-scraper/search") {
 			resource = "/blog-scraper";
-		} else if (resource == "/event" || resource == "/event/list" || resource == "/event/pratilipi") {
+		} else if (resource == "/event" || resource == "/event/list" || resource == "/event/pratilipi" || resource == "/image/event/banner") {
 			resource = "/events";
 		} else if (resource == '/social-connect/access_token' 
 		|| resource == '/social-connect/contacts' 
