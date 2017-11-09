@@ -258,7 +258,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		.then((user) => {
 			if( user !== null ) {
 	 			userId = user.id;
-	 			req.log.push('Got user-id from cache' + JSON.stringify(user));
+	 			req.log.push('Got user-id from cache ' + userId);
 	 			res.setHeader('User-Id', userId);
 	 			return userId;
 	 		} else {
@@ -610,6 +610,10 @@ app.get("/auth/isAuthorized", function (req, res) {
 		res.status(200).send(JSON.stringify(new isAuthorizedResponse(resource,method,data)));
 		req.log.push(new isAuthorizedResponse(resource,method,data));
 		console.log(JSON.stringify({"log":req.log}));
+	})
+	.catch( function( error ) {
+		console.log(error);
+		console.log(req.log);
 	});
 
 });
