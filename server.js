@@ -107,7 +107,7 @@ app.use((request, response, next) => {
 		}
 		
 		if (resource == "/image/pratilipi/cover" || resource == "/image/pratilipi/*/cover" 
-			|| resource == "/pratilipis/*") {
+			|| resource == "/pratilipis/*" || resource == "/image/pratilipi/content") {
 			resource = "/pratilipis";
 			isPathMapped = true;
 		} else if (resource == "/image/author/cover" || resource == "/image/author/*/cover"
