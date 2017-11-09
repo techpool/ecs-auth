@@ -47,30 +47,6 @@ User.prototype.getUserId = function (accessToken) {
 	});
 }
 
-User.prototype.getUserById = function (id) {
-	var that = this;
-	return new Promise(function (resolve, reject) {
-		var url = that.url+"/v2.0/me";
-        var options = {
-          method: 'GET',
-          uri: url,
-          agent : agent,
-          headers: {
-        	  'User-Id': id
-          },
-          json: true
-        };
-        httpPromise(options)
-        .then(data => {
-          resolve(data);
-        })
-        .catch(err => {
-          console.log(err);
-          reject(err);
-        })
-        ;
-	});
-}
 
 module.exports = User;
 
