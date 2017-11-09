@@ -361,19 +361,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		 		req.log.push(err);
 		 		return;
 		 	});
-		} else if (resource == "/user" && method == "PATCH") {
-			
-			return userService.getUserById(resourceIds[0])
-			.then((user) => {
-				resources = user;
-				return;
-			})
-			.catch( ( err ) => {
-		 		var data = 'Error in getting user!';
-		 		req.log.push(err);
-		 		return;
-		 	});
-		} 
+		}
 	});
 
 	
@@ -643,15 +631,10 @@ app.get("/auth/isAuthorized", function (req, res) {
 				} else if (method == "GET") {
 						data[0] = new resourceResponse(200,null,true);
 				} else if (method == "PATCH") {
-					var user = resources;
-					if (user == undefined) {
+					if (userId != resourceIds) {
 						data[0] = new resourceResponse(403,null,false);
 					} else {
-						if (userId != user.id) {
-							data[0] = new resourceResponse(403,null,false);
-						} else {
-							data[0] = new resourceResponse(200,null,true);
-						}
+						data[0] = new resourceResponse(200,null,true);
 					}
 				}
 			} else {
