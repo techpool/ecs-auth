@@ -47,5 +47,6 @@ User.prototype.getUserId = function (accessToken) {
 	});
 }
 
+
 module.exports = User;
 
