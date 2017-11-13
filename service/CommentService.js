@@ -40,7 +40,6 @@ Comment.prototype.getComments = function (ids, userId) {
           resolve(data);
         })
         .catch(err => {
-          console.log(err);
           reject(err);
         })
         ;
