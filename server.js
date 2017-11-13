@@ -721,7 +721,8 @@ function getFromDB(accessToken, res,req) {
  		return id;
  	})
  	.catch( ( err ) => {
- 		req.log.push(err);
+ 		req.log.push(err.message);
+ 		req.log.push(err.stack);
  		return 0;
  	});
 }

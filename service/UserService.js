@@ -40,7 +40,6 @@ User.prototype.getUserId = function (accessToken) {
           resolve(data.userId);
         })
         .catch(err => {
-          console.log(err);
           reject(err);
         })
         ;
