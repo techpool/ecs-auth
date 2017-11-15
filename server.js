@@ -33,7 +33,9 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
 	'/comments','/comment','/comment/list',
 	'/vote','/votes', '/blog-scraper',
 	'/event','/event/list','/events','/event/pratilipi','/devices', '/notifications',
-        '/userpratilipi/library','/userpratilipi/library/list','/library', '/social-connect'];
+        '/userpratilipi/library','/userpratilipi/library/list','/library', '/social-connect',
+        '/user/register','/user/login','/user/login/facebook','/user/login/google','/user/verification',
+        '/user/email','/user/passwordupdate','/user','/user/logout'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 
 var AEES = UserAccessList.AEES;
@@ -98,6 +100,7 @@ app.use((request, response, next) => {
 	var urlParts = url.parse(request.url, true);
     var pathname = urlParts.pathname;
     var isPathMapped = false;
+    var validationType = null;
     if (pathname === "/auth/isAuthorized") {
     	var resource = unescape(request.query.resource);
 		if (resource.startsWith("/blog-scraper")) {
@@ -141,8 +144,21 @@ app.use((request, response, next) => {
 		|| resource == '/social-connect/access_token/remind_me_later' 
 		|| resource == '/social-connect/contacts/invite') {
 			resource = '/social-connect'	
+		} else if (resource == '/user/register' || resource == '/user/login' 
+			|| resource == '/user/login/facebook' || resource == '/user/login/google') {
+			resource = '/user'
+			request.query.validationType = "PRELOGIN"
+		} else if (resource == '/user/email' || resource == '/user/passwordupdate' || resource == '/user/verification') {
+			resource = '/user'
+			request.query.validationType = "NONE";
+		} else if (resource == '/user' || resource == '/user/logout') {
+			resource = '/user'
+			request.query.validationType = "POSTLOGIN";
+			if (request.query.userId != undefined && request.query.userId != 0) {
+				isPathMapped = true;
+			}
 		}
-    	
+		
 		request.query.originalResource = request.query.resource;
 		request.query.resource = resource;
 		
@@ -193,7 +209,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	var authorId = req.query.authorId;
 	var state = req.query.state;
 	var resourceType = null;
-	
+	var validationType = req.query.validationType;
 	
 	if (resource == '/userpratilipi/reviews') {
 		resourceIds = req.query.pratilipiId;
@@ -213,7 +229,11 @@ app.get("/auth/isAuthorized", function (req, res) {
 		}
 	} else if (resource == '/votes' || resource == "/vote") {
 		resourceIds = req.query.parentId;
-	} 
+	} else if (resource == '/user') {
+		if (method == "PATCH") {
+			resourceIds = req.query.userId;
+		}
+	}
 	
 	if (authorId != null && authorId != 'null' ) {
 		resourceIds = authorId;
@@ -227,7 +247,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 	   	|| resource == "/blog-scraper" 
 	   	|| (resource == "/events" && method == "GET" && resourceIds == null)
 	   	|| ( resource == "/library" )
-	   	|| ( resource == '/social-connect' )) {
+	   	|| ( resource == '/social-connect' )
+	   	|| ( resource == '/user' && method == "GET" && resourceIds == null)) {
 		resourceIds = "0";
 	}
 	
@@ -349,7 +370,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	var authorizePromise = resourcePromise.then (function () {
 
 		return co(function * () {
-			req.log.push("Verifying the authorization for user on the resource");
+			req.log.push("Verifying the authorization for user on the resource",resource);
 			// Get roles for the user
 			var roles = AEES.getRoles(userId);
 			if (resource == "/pratilipis") {
@@ -591,6 +612,30 @@ app.get("/auth/isAuthorized", function (req, res) {
 					data[0] = new resourceResponse(403,null,false);
 				} else {
 					data[0] = new resourceResponse(200,null,true);
+				}
+			} else if (resource == "/user") {
+				if (method == "POST") {
+					
+					if (validationType == "PRELOGIN" && userId != 0) {
+						data[0] = new resourceResponse(403,null,false);
+					} else if (validationType == "POSTLOGIN") {
+						var isAEES = AEES.isAEE(userId);
+						if (isAEES) {
+							data[0] = new resourceResponse(200,null,true);
+						} else {
+							data[0] = new resourceResponse(403,null,false);	
+						}
+					}  else {
+						data[0] = new resourceResponse(200,null,true);
+					}
+				} else if (method == "GET") {
+						data[0] = new resourceResponse(200,null,true);
+				} else if (method == "PATCH") {
+					if (userId != resourceIds) {
+						data[0] = new resourceResponse(403,null,false);
+					} else {
+						data[0] = new resourceResponse(200,null,true);
+					}
 				}
 			} else {
 				data[0] = new resourceResponse(403,null,false);
