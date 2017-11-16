@@ -273,6 +273,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 
 	
 	// Get User-Id for accessToken
+	// TODO: remove accepting user-id from internal services. accept only accesstoken
 	var userIdPromise;
 	if ((userId == undefined || userId == null) && accessToken != null) {
 		userIdPromise = cacheUtility.get(accessToken)
@@ -617,7 +618,9 @@ app.get("/auth/isAuthorized", function (req, res) {
 				if (method == "POST") {
 					
 					if (validationType == "PRELOGIN" && userId != 0) {
-						data[0] = new resourceResponse(403,null,false);
+						// It has to return 'new resourceResponse(403,null,false);' 
+						// but sending true to support for v1.
+						data[0] = new resourceResponse(200,null,true);
 					} else if (validationType == "POSTLOGIN") {
 						var isAEES = AEES.isAEE(userId);
 						if (isAEES) {
