@@ -273,6 +273,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 
 	
 	// Get User-Id for accessToken
+	// TODO: remove accepting user-id from internal services. accept only accesstoken
 	var userIdPromise;
 	if ((userId == undefined || userId == null) && accessToken != null) {
 		userIdPromise = cacheUtility.get(accessToken)
