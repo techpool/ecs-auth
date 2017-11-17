@@ -639,7 +639,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 						data[0] = new resourceResponse(200,null,true);
 					}
 				} else if (method == "GET") {
-						if (resourceIds != null) {
+						if (resourceIds != null && resourceIds != 0) {
 							var isAEES = AEES.isAEE(userId);
 							if (isAEES) {
 								data[0] = new resourceResponse(200,null,true);
