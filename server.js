@@ -230,7 +230,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	} else if (resource == '/votes' || resource == "/vote") {
 		resourceIds = req.query.parentId;
 	} else if (resource == '/user') {
-		if (method == "PATCH") {
+		if (method == "PATCH" || (method == "GET" && req.query.userId != null)) {
 			resourceIds = req.query.userId;
 		}
 	}
@@ -639,7 +639,17 @@ app.get("/auth/isAuthorized", function (req, res) {
 						data[0] = new resourceResponse(200,null,true);
 					}
 				} else if (method == "GET") {
-						data[0] = new resourceResponse(200,null,true);
+						if (resourceIds != null) {
+							var isAEES = AEES.isAEE(userId);
+							if (isAEES) {
+								data[0] = new resourceResponse(200,null,true);
+							} else {
+								data[0] = new resourceResponse(403,null,false);
+							}
+						} else {
+							data[0] = new resourceResponse(200,null,true);
+						}
+						
 				} else if (method == "PATCH") {
 					if (userId != resourceIds) {
 						data[0] = new resourceResponse(403,null,false);
