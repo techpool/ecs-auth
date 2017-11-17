@@ -23,6 +23,7 @@ function Author (stage) {
 
 // get Author
 Author.prototype.getAuthors = function (ids) {
+	console.log('Getting authors for: ',ids);
 	var that = this;
 	return new Promise(function (resolve, reject) {
 		var authorIds = ids.join();
