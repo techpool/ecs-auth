@@ -14,7 +14,7 @@ app.set('port', config.PORT);
 // Load Services
 const UserService        = require('./service/UserService');
 const PratilipiService   = require('./service/PratilipiService')( { projectId: config.GCP_PROJ_ID} );
-const AuthorService      = require('./service/AuthorService')( { projectId: config.GCP_PROJ_ID} );
+const AuthorService      = require('./service/AuthorService');
 const ReviewService      = require('./service/ReviewService');
 const CommentService     = require('./service/CommentService');
 const UserAccessList     = require('./config/UserAccessUtil.js');
@@ -43,6 +43,7 @@ AEES = new AEES();
 var reviewService = new ReviewService(process.env.STAGE || 'local');
 var commentService = new CommentService(process.env.STAGE || 'local');
 var userService    = new UserService(process.env.STAGE || 'local');
+var authorService = new AuthorService(process.env.STAGE || 'local');
 
 app.use(logger('short'));
 
@@ -329,7 +330,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		 	});
 		} else if ((resource == "/authors" && method != "POST") || (resource == "/pratilipis" && resourceType == "AUTHOR")
 				|| (resource == "/follows" && method == "POST" )) {
-			return AuthorService
+			return authorService
 			.getAuthors(resourceIds)
 			.then ((authors) => {
 				resources = authors;
