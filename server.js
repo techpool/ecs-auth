@@ -269,6 +269,13 @@ app.get("/auth/isAuthorized", function (req, res) {
 		|| (resource == "/pratilipis" && resourceType == "AUTHOR") 
 		|| (resource == "/follows")
 		|| ((resource == "/userpratilipi/reviews" || resource == "/reviews") && method == "POST")){
+		if( resourceIds == undefined ) {
+			res.setHeader('content-type', 'application/json');
+			res.status( 400 ).send( JSON.stringify( new errorResponse( "Invalid parameters" ) ) );
+			req.log.push({"message":"Invalid parameters"});
+			console.log(JSON.stringify({"log":req.log}));
+			return;
+		}
 		resourceIds = resourceIds.split(',').map(Number);
 	}
 
