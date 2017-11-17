@@ -26,6 +26,7 @@ Author.prototype.getAuthors = function (ids) {
 	var that = this;
 	return new Promise(function (resolve, reject) {
 		var authorIds = ids.join();
+		console.log("The author ids are ", authorIds);
 		var url = that.url+"?id="+authorIds;
         var options = {
           method: 'GET',
