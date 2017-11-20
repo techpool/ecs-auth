@@ -200,6 +200,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	// Read Headers
 	var accessToken = req.headers['access-token'];
 	var userId = req.headers['user-id'];
+	console.log("debugging",accessToken);
 	
 	// Read query parameters
 	var resource = unescape(req.query.resource);
