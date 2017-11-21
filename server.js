@@ -44,22 +44,21 @@ var reviewService = new ReviewService(process.env.STAGE || 'local');
 var commentService = new CommentService(process.env.STAGE || 'local');
 var userService    = new UserService(process.env.STAGE || 'local');
 
+
+
+//Request Handlers
+// API to check health
+app.get("/health", function (req, res) {
+	var message = {"message":"Auth service is running healthy."};
+	res.status("200").send(message);
+});
+
 app.use(logger('short'));
 
 // for initializing log object
 app.use((request, response, next) => {
   request.log = [];
   next();
-});
-
-//Request Handlers
-// API to check health
-app.get("/health", function (req, res) {
-	req.log.push("Request reached health");
-	var message = {"message":"Auth service is running healthy."};
-	res.status("200").send(message);
-	req.log.push(message);
-	console.log(JSON.stringify({"log":req.log}));
 });
 
 
