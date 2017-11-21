@@ -35,7 +35,7 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
 	'/event','/event/list','/events','/event/pratilipi','/devices', '/notifications',
         '/userpratilipi/library','/userpratilipi/library/list','/library', '/social-connect',
         '/user/register','/user/login','/user/login/facebook','/user/login/google','/user/verification',
-        '/user/email','/user/passwordupdate','/user','/user/logout'];
+        '/user/email','/user/passwordupdate','/user','/user/logout','/authors/recommendation'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 
 var AEES = UserAccessList.AEES;
@@ -230,7 +230,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	} else if (resource == '/votes' || resource == "/vote") {
 		resourceIds = req.query.parentId;
 	} else if (resource == '/user') {
-		if (method == "PATCH") {
+		if (method == "PATCH" || (method == "GET" && req.query.userId != null)) {
 			resourceIds = req.query.userId;
 		}
 	}
@@ -248,9 +248,13 @@ app.get("/auth/isAuthorized", function (req, res) {
 	   	|| (resource == "/events" && method == "GET" && resourceIds == null)
 	   	|| ( resource == "/library" )
 	   	|| ( resource == '/social-connect' )
-	   	|| ( resource == '/user' && method == "GET" && resourceIds == null)) {
+	   	|| ( resource == '/user' && method == "GET" && resourceIds == null)
+	   	|| resource == '/authors/recommendation') {
 		resourceIds = "0";
 	}
+	
+	
+	console.log('resourceIds',resourceIds);
 	
 	// Validate query parameters
 	if (!validResources.includes(resource) 
@@ -543,7 +547,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 					data[0] = new resourceResponse(200, resourceIds[0], true);
 				} else {
 					var review = resources.data[0];
-					if (review.user!= null && review.user.id == userId) {
+					if (review.user!= null && (review.user.id == userId || AEES.isAEE(userId))) {
 						data[0] = new resourceResponse(200,review.id,true);
 					} else {
 						data[0] = new resourceResponse(403,review.id,false);
@@ -576,7 +580,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 				} else {
 					data[0] = new resourceResponse(200,0,true);
 				}
-			} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/social-connect") {
+			} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/social-connect" || resource == "/authors/recommendation") {
 				data[0] = new resourceResponse(200,0,true);
 			} else if (resource == "/blog-scraper") {
 				var isAEES = AEES.isAEE(userId);
@@ -639,7 +643,17 @@ app.get("/auth/isAuthorized", function (req, res) {
 						data[0] = new resourceResponse(200,null,true);
 					}
 				} else if (method == "GET") {
-						data[0] = new resourceResponse(200,null,true);
+						if (resourceIds != null && resourceIds != 0) {
+							var isAEES = AEES.isAEE(userId);
+							if (isAEES) {
+								data[0] = new resourceResponse(200,null,true);
+							} else {
+								data[0] = new resourceResponse(403,null,false);
+							}
+						} else {
+							data[0] = new resourceResponse(200,null,true);
+						}
+						
 				} else if (method == "PATCH") {
 					if (userId != resourceIds) {
 						data[0] = new resourceResponse(403,null,false);
