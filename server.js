@@ -248,7 +248,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 	   	|| ( resource == "/library" )
 	   	|| ( resource == '/social-connect' )
 	   	|| ( resource == '/user' && method == "GET" && resourceIds == null)
-	   	|| resource == '/authors/recommendation') {
+	   	|| resource == '/authors/recommendation'
+	   	|| ( resource == '/notifications' && method == 'GET' && resourceIds == null ) ) {
 		resourceIds = "0";
 	}
 	
