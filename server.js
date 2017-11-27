@@ -35,7 +35,9 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
 	'/event','/event/list','/events','/event/pratilipi','/devices', '/notifications',
         '/userpratilipi/library','/userpratilipi/library/list','/library', '/social-connect',
         '/user/register','/user/login','/user/login/facebook','/user/login/google','/user/verification',
-        '/user/email','/user/passwordupdate','/user','/user/logout','/authors/recommendation'];
+        '/user/email','/user/passwordupdate','/user','/user/logout','/authors/recommendation',
+	'/pratilipi/content/batch','/pratilipi/content/chapter/add','/pratilipi/content/chapter/delete',
+	'/pratilipi/content/index','/pratilipi/content'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 
 var AEES = UserAccessList.AEES;
@@ -109,7 +111,10 @@ app.use((request, response, next) => {
 		}
 		
 		if (resource == "/image/pratilipi/cover" || resource == "/image/pratilipi/*/cover" 
-			|| resource == "/pratilipis/*" || resource == "/image/pratilipi/content") {
+			|| resource == "/pratilipis/*" || resource == "/image/pratilipi/content"
+		        || resource == '/pratilipi/content/batch' || resource == '/pratilipi/content/chapter/add'
+			|| resource == '/pratilipi/content/chapter/delete' || resource == '/pratilipi/content/index'
+			|| resource == '/pratilipi/content') {
 			resource = "/pratilipis";
 			isPathMapped = true;
 		} else if (resource == "/image/author/cover" || resource == "/image/author/*/cover"
