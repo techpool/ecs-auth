@@ -37,7 +37,7 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
         '/user/register','/user/login','/user/login/facebook','/user/login/google','/user/verification',
         '/user/email','/user/passwordupdate','/user','/user/logout','/authors/recommendation',
 	'/pratilipi/content/batch','/pratilipi/content/chapter/add','/pratilipi/content/chapter/delete',
-	'/pratilipi/content/index','/pratilipi/content'];
+	'/pratilipi/content/index','/pratilipi/content','/coverimage-recommendation'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 
 var AEES = UserAccessList.AEES;
@@ -162,6 +162,8 @@ app.use((request, response, next) => {
 			if (request.query.userId != undefined && request.query.userId != 0) {
 				isPathMapped = true;
 			}
+		} else if (resource == '/coverimage-recommendation/cover/select' || resource == '/coverimage-recommendation/cover') {
+			resource = '/coverimage-recommendation';
 		}
 		
 		request.query.originalResource = request.query.resource;
@@ -255,7 +257,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 	   	|| ( resource == '/social-connect' )
 	   	|| ( resource == '/user' && method == "GET" && resourceIds == null)
 	   	|| resource == '/authors/recommendation'
-	   	|| ( resource == '/notifications' && method == 'GET' && resourceIds == null ) ) {
+	   	|| ( resource == '/notifications' && method == 'GET' && resourceIds == null ) 
+	   	|| resource == '/coverimage-recommendation') {
 		resourceIds = "0";
 	}
 	
@@ -583,7 +586,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 				} else {
 					data[0] = new resourceResponse(200,0,true);
 				}
-			} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/social-connect" || resource == "/authors/recommendation") {
+			} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/social-connect" || resource == "/authors/recommendation" || resource == '/coverimage-recommendation') {
 				data[0] = new resourceResponse(200,0,true);
 			} else if (resource == "/blog-scraper") {
 				var isAEES = AEES.isAEE(userId);
