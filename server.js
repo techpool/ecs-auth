@@ -127,6 +127,8 @@ app.use((request, response, next) => {
 			resource = "/follows";
 		} else if (resource == "/userpratilipi/library/list" || resource == "/userpratilipi/library" || resource.startsWith("/library")) {
 			resource = "/library";
+		} else if (resource == "/notification/list" || resource == "/notification" ) {
+			resource = "/notifications";
 		} else if (resource == "/userpratilipi" || resource == "/userpratilipi/review" || resource == "/userpratilipi/review/list") {
 			resource = "/userpratilipi/reviews";
 		} else if (resource == "/comment" || resource == "/comment/list") {
