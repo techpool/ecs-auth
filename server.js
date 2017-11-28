@@ -698,7 +698,7 @@ function isUserAuthorToPratilipi(index,data,userId,pratilipi,req) {
 	return new Promise( function (resolve,reject) {
 		authorService.getAuthor(pratilipi.AUTHOR_ID)
 	    .then ((author) => {
-		console.log('Author exists',userId);
+		console.log('Author exists',userId, author.user.userId);
 	        if (author &&  author.user && author.user.userId == userId) {
 			console.log('User is Author');
 	        	data[index] = new resourceResponse(200,pratilipi.ID,true);
