@@ -398,22 +398,22 @@ app.get("/auth/isAuthorized", function (req, res) {
 						var author = resources[0];
 						if (method == "GET") {
 							if (state == "PUBLISHED") {
-								data[0] = new resourceResponse(200, author.ID, true);
+								data[0] = new resourceResponse(200, author.authorId, true);
 							}
 							else if (state == "DRAFTED") {
-								if (userId == author.USER_ID || AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.AUTHOR_PRATILIPIS_READ)) {
-									data[0] = new resourceResponse(200, author.ID, true);
+								if (userId == author.user.userId || AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.AUTHOR_PRATILIPIS_READ)) {
+									data[0] = new resourceResponse(200, author.authorId, true);
 								} else {
-									data[0] = new resourceResponse(403, author.ID, false);
+									data[0] = new resourceResponse(403, author.authorId, false);
 								} 
 							} else {
-								data[0] = new resourceResponse(403, author.ID, false);
+								data[0] = new resourceResponse(403, author.authorId, false);
 							}
 						} else {
 							if (AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.AUTHOR_PRATILIPIS_ADD) || AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.PRATILIPI_ADD)) {
-								data[0] = new resourceResponse(200, author.ID, true);
+								data[0] = new resourceResponse(200, author.authorId, true);
 							} else {
-								data[0] = new resourceResponse(403, author.ID, false);
+								data[0] = new resourceResponse(403, author.authorId, false);
 							}
 						}
 						
@@ -494,16 +494,16 @@ app.get("/auth/isAuthorized", function (req, res) {
 							var hasAccess = AEES.hasUserAccess(userId,language,accessType);
 							if (hasAccess) {
 								if (!AEES.isAEE(userId) && accessType == AccessType.AUTHOR_UPDATE) {
-									if (author.USER_ID == userId) {
-							        	data[i] = new resourceResponse(200,author.ID,true);
+									if (author.user.userId == userId) {
+							        	data[i] = new resourceResponse(200,author.authorId,true);
 							        } else {
-							        	data[i] = new resourceResponse(403,author.ID,false);
+							        	data[i] = new resourceResponse(403,author.authorId,false);
 							        }
 								} else {
-									data[i] = new resourceResponse(200,author.ID,true);
+									data[i] = new resourceResponse(200,author.authorId,true);
 								}
 							} else {
-								data[i] = new resourceResponse(403,author.ID,false);
+								data[i] = new resourceResponse(403,author.authorId,false);
 							}
 							
 						} else {
@@ -516,10 +516,10 @@ app.get("/auth/isAuthorized", function (req, res) {
 					var hasAccess = AEES.hasUserAccess(userId, language, AccessType.USER_AUTHOR_FOLLOWING);
 					if (hasAccess) {
 						var author = resources[0];
-						if (author.USER_ID == userId) {
-				        	data[0] = new resourceResponse(403,author.ID,false);
+						if (author.user.userId == userId) {
+				        	data[0] = new resourceResponse(403,author.authorId,false);
 				        } else {
-				        	data[0] = new resourceResponse(200,author.ID,true);
+				        	data[0] = new resourceResponse(200,author.authorId,true);
 				        }
 					} else {
 						data[0] = new resourceResponse(403, resourceIds[0], false);
@@ -540,7 +540,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 							author = yield getAuthorByPratilipiId(pratilipi, req)
 						}
 						if (author!= null) {
-							if (author.USER_ID != userId) {
+							if (author.user.userId != userId) {
 								data[0] = new resourceResponse(200,null,true);
 							} else {
 								data[0] = new resourceResponse(403,null,false);
@@ -697,7 +697,7 @@ function isUserAuthorToPratilipi(index,data,userId,pratilipi,req) {
 	return new Promise( function (resolve,reject) {
 		authorService.getAuthor(pratilipi.AUTHOR_ID)
 	    .then ((author) => {
-	        if (author!=null &&  author.USER_ID == userId) {
+	        if (author!=null &&  author.user.userId == userId) {
 	        	data[index] = new resourceResponse(200,pratilipi.ID,true);
 	        } else {
 	        	data[index] = new resourceResponse(403,pratilipi.ID,false);
