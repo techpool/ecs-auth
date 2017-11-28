@@ -14,7 +14,7 @@ app.set('port', config.PORT);
 // Load Services
 const UserService        = require('./service/UserService');
 const PratilipiService   = require('./service/PratilipiService')( { projectId: config.GCP_PROJ_ID} );
-const AuthorService      = require('./service/AuthorService')( { projectId: config.GCP_PROJ_ID} );
+const AuthorService      = require('./service/AuthorService')
 const ReviewService      = require('./service/ReviewService');
 const CommentService     = require('./service/CommentService');
 const UserAccessList     = require('./config/UserAccessUtil.js');
@@ -45,6 +45,7 @@ AEES = new AEES();
 var reviewService = new ReviewService(process.env.STAGE || 'local');
 var commentService = new CommentService(process.env.STAGE || 'local');
 var userService    = new UserService(process.env.STAGE || 'local');
+var authorService  = new AuthorService(process.env.STAGE || 'local');
 
 
 
@@ -345,7 +346,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		 	});
 		} else if ((resource == "/authors" && method != "POST") || (resource == "/pratilipis" && resourceType == "AUTHOR")
 				|| (resource == "/follows" && method == "POST" )) {
-			return AuthorService
+			return authorService
 			.getAuthors(resourceIds)
 			.then ((authors) => {
 				resources = authors;
@@ -694,7 +695,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 
 function isUserAuthorToPratilipi(index,data,userId,pratilipi,req) {
 	return new Promise( function (resolve,reject) {
-		AuthorService.getAuthor(pratilipi.AUTHOR_ID)
+		authorService.getAuthor(pratilipi.AUTHOR_ID)
 	    .then ((author) => {
 	        if (author!=null &&  author.USER_ID == userId) {
 	        	data[index] = new resourceResponse(200,pratilipi.ID,true);
@@ -714,7 +715,7 @@ function isUserAuthorToPratilipi(index,data,userId,pratilipi,req) {
 function getAuthorByPratilipiId(pratilipi,req) {
 	return new Promise( function (resolve,reject) {
 		try{
-			return AuthorService.getAuthor(pratilipi.AUTHOR_ID)
+			return authorService.getAuthor(pratilipi.AUTHOR_ID)
 			.then ((author) => {
 			    if (author!=null) {
 			    	resolve(author);
