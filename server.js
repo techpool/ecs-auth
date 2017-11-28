@@ -259,9 +259,6 @@ app.get("/auth/isAuthorized", function (req, res) {
 		resourceIds = "0";
 	}
 	
-	
-	console.log('resourceIds',resourceIds);
-	
 	// Validate query parameters
 	if (!validResources.includes(resource) 
 		|| !validMethods.includes(method)  
@@ -698,13 +695,9 @@ function isUserAuthorToPratilipi(index,data,userId,pratilipi,req) {
 	return new Promise( function (resolve,reject) {
 		authorService.getAuthor(pratilipi.AUTHOR_ID)
 	    .then ((author) => {
-			console.log(author);
-		console.log('Author exists',userId);
 	        if (author &&  author.user && author.user.userId == userId) {
-			console.log('User is Author');
 	        	data[index] = new resourceResponse(200,pratilipi.ID,true);
 	        } else {
-			console.log('User is not Author');
 	        	data[index] = new resourceResponse(403,pratilipi.ID,false);
 	        }
 	        resolve();
