@@ -69,6 +69,5 @@ Author.prototype.getAuthor = function (id) {
 	});
 }
 
-
 module.exports = Author;
 
