@@ -36,8 +36,7 @@ Author.prototype.getAuthors = function (ids) {
         };
         httpPromise(options)
         .then(data => {
-		console.log('Got authors',data);
-          resolve(data);
+          resolve(JSON.parse(data));
         })
         .catch(err => {
 		console.log('Error while getting authors',err);
@@ -59,8 +58,7 @@ Author.prototype.getAuthor = function (id) {
         };
         httpPromise(options)
         .then(data => {
-		console.log('Got author',data);
-          resolve(data[0]);
+          resolve(JSON.parse(data[0]));
         })
         .catch(err => {
 		console.log('Error while getting author',err);
