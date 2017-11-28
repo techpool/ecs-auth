@@ -32,11 +32,12 @@ Author.prototype.getAuthors = function (ids) {
         var options = {
           method: 'GET',
           uri: url,
-          agent : agent
+          agent : agent,
+          json : true
         };
         httpPromise(options)
         .then(data => {
-          resolve(JSON.parse(data));
+          resolve(data);
         })
         .catch(err => {
 		console.log('Error while getting authors',err);
@@ -54,11 +55,12 @@ Author.prototype.getAuthor = function (id) {
         var options = {
           method: 'GET',
           uri: url,
-          agent : agent
+          agent : agent,
+          json : true
         };
         httpPromise(options)
         .then(data => {
-          resolve(JSON.parse(data[0]));
+          resolve(data[0]);
         })
         .catch(err => {
 		console.log('Error while getting author',err);
