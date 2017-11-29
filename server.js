@@ -37,7 +37,8 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
         '/user/register','/user/login','/user/login/facebook','/user/login/google','/user/verification',
         '/user/email','/user/passwordupdate','/user','/user/logout','/authors/recommendation',
 	'/pratilipi/content/batch','/pratilipi/content/chapter/add','/pratilipi/content/chapter/delete',
-	'/pratilipi/content/index','/pratilipi/content','/coverimage-recommendation'];
+	'/pratilipi/content/index','/pratilipi/content','/coverimage-recommendation',
+	'/report'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 
 var AEES = UserAccessList.AEES;
@@ -260,6 +261,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 	   	|| ( resource == '/user' && method == "GET" && resourceIds == null)
 	   	|| resource == '/authors/recommendation'
 	   	|| ( resource == '/notifications' && method == 'GET' && resourceIds == null ) 
+	   	|| ( resource == '/report' && method == 'POST' && resourceIds == null )
+	   	|| ( resource == '/authors' && method == 'GET' && resourceIds == null ) 
 	   	|| resource == '/coverimage-recommendation') {
 		resourceIds = "0";
 	}
@@ -346,7 +349,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		 		req.log.push(err);
 		 		return;
 		 	});
-		} else if ((resource == "/authors" && method != "POST") || (resource == "/pratilipis" && resourceType == "AUTHOR")
+		} else if (resourceIds != 0 && (resource == "/authors" && method != "POST") || (resource == "/pratilipis" && resourceType == "AUTHOR")
 				|| (resource == "/follows" && method == "POST" )) {
 			return authorService
 			.getAuthors(resourceIds)
@@ -477,15 +480,15 @@ app.get("/auth/isAuthorized", function (req, res) {
 					} else {
 						data[0] = new resourceResponse(403, 0, false);
 					}
+				} else if (method == "GET") {
+					data[i] = new resourceResponse(200,resourceIds,true);
 				} else {
 					for (i = 0; i < resources.length; i++) {
 						var author = resources[i];
 						if (author != null) {
 							
 							var accessType=null;
-							if (method == "GET") {
-								accessType = AccessType.AUTHOR_READ;
-							} else if (method == "PUT" || method == "PATCH" ) {
+							if (method == "PUT" || method == "PATCH" ) {
 								accessType = AccessType.AUTHOR_UPDATE;
 							} else if (method == "DELETE") {
 								accessType = AccessType.AUTHOR_DELETE;
@@ -627,6 +630,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 				} else {
 					data[0] = new resourceResponse(200,null,true);
 				}
+			} else if (resource == "/report") {
+				data[0] = new resourceResponse(200,null,true);
 			} else if (resource == "/library") {
 				if (userId == 0 || userId == null) {
 					data[0] = new resourceResponse(403,null,false);
