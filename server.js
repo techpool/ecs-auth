@@ -265,6 +265,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	   	|| ( resource == '/authors' && method == 'GET' && resourceIds == null ) 
 	   	|| resource == '/coverimage-recommendation') {
 		resourceIds = "0";
+		resources = [];
 	}
 	
 	// Validate query parameters
@@ -481,7 +482,9 @@ app.get("/auth/isAuthorized", function (req, res) {
 						data[0] = new resourceResponse(403, 0, false);
 					}
 				} else if (method == "GET") {
-					data[i] = new resourceResponse(200,resourceIds,true);
+					for (i = 0; i <= resources.length; i++) {
+						data[i] = new resourceResponse(200,resourceIds[i],true);
+					}
 				} else {
 					for (i = 0; i < resources.length; i++) {
 						var author = resources[i];
