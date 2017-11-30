@@ -20,12 +20,15 @@ const CommentService     = require('./service/CommentService');
 const UserAccessList     = require('./config/UserAccessUtil.js');
 const AccessType         = require('./config/AccessType.js').AccessType;
 
-const cacheUtility = require('./lib/CacheUtility.js')({
- 	port : config.REDIS_HOST_PORT,
- 	hostIp : config.REDIS_HOST_IP,
- 	resource : config.REDIS_KIND,
-	db : 3
-});
+//const cacheUtility = require('./lib/CacheUtility.js')({
+// 	port : config.REDIS_HOST_PORT,
+// 	hostIp : config.REDIS_HOST_IP,
+// 	resource : config.REDIS_KIND,
+//	db : 3
+//});
+
+const cacheUtility = require('./util/cacheUtil');
+const sqsUtility   = require('./util/sqs');
 
 var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/search/search',
 	'/search/trending_search','/follows','/userauthor/follow/list', '/userauthor/follow',
@@ -49,6 +52,8 @@ var userService    = new UserService(process.env.STAGE || 'local');
 var authorService  = new AuthorService(process.env.STAGE || 'local');
 
 
+// Initialize sqs
+new sqsUtility().init();
 
 //Request Handlers
 // API to check health
@@ -66,40 +71,8 @@ app.use((request, response, next) => {
 });
 
 
-// API to delete accessToken - userId from cache
-app.delete("/auth/accessToken", function(req, res){
-	req.log.push("Request to delete access token from cache");
-	
-	// read headers
-	var accessToken = req.headers['access-token'];
-	req.log.push(`access-token=${accessToken}`);
-	res.setHeader('content-type', 'application/json');
-	
-	if (accessToken != null) {
-	 		cacheUtility.delete( accessToken )
-	 		.then(function(){
-	 			req.log.push("successfully deleted access token from cache ");
-	 			res.status(200).send(JSON.stringify({"message":"Successfully deleted"}));
-	 			req.log.push({"message":"Successfully deleted"});
-				console.log(JSON.stringify({"log":req.log}));
-	 		})
-	 		.catch((err) => {
-	 			req.log.push("Error while deleting access token from cache " + JSON.stringify(err,null,4));
-	 			res.status(500).send(JSON.stringify(new errorResponse('Some exception occured at the server.')));
-	 			req.log.push({"message":"Some exception occured at the server."});
-				console.log(JSON.stringify({"log":req.log}));
-	 		});
-	 		
-	} else {
-		res.status(400).send( JSON.stringify(new errorResponse("Invalid parameters")));
-		req.log.push({"message":"Invalid parameters."});
-		console.log(JSON.stringify({"log":req.log}));
-	}
-});
-
 //apis to resources mapping
 app.use((request, response, next) => {
-
 	var urlParts = url.parse(request.url, true);
     var pathname = urlParts.pathname;
     var isPathMapped = false;
@@ -204,6 +177,37 @@ function errorResponse (message) {
 function User (id) {
 	this.id = id;
 }
+
+//API to delete accessToken - userId from cache
+app.delete("/auth/accessToken", function(req, res){
+	req.log.push("Request to delete access token from cache");
+	
+	// read headers
+	var accessToken = req.headers['access-token'];
+	req.log.push(`access-token=${accessToken}`);
+	res.setHeader('content-type', 'application/json');
+	
+	if (accessToken != null) {
+	 		cacheUtility.deleteFromCache( accessToken, req )
+	 		.then(function(){
+	 			req.log.push("successfully deleted access token from cache ");
+	 			res.status(200).send(JSON.stringify({"message":"Successfully deleted"}));
+	 			req.log.push({"message":"Successfully deleted"});
+				console.log(JSON.stringify({"log":req.log}));
+	 		})
+	 		.catch((err) => {
+	 			req.log.push("Error while deleting access token from cache " + JSON.stringify(err,null,4));
+	 			res.status(500).send(JSON.stringify(new errorResponse('Some exception occured at the server.')));
+	 			req.log.push({"message":"Some exception occured at the server."});
+				console.log(JSON.stringify({"log":req.log}));
+	 		});
+	 		
+	} else {
+		res.status(400).send( JSON.stringify(new errorResponse("Invalid parameters")));
+		req.log.push({"message":"Invalid parameters."});
+		console.log(JSON.stringify({"log":req.log}));
+	}
+});
 
 app.get("/auth/isAuthorized", function (req, res) {
 	
@@ -768,51 +772,6 @@ function getAuthorByPratilipiId(pratilipi,req) {
 }
 
 
-function addToCache(key, value,req) {
-	return new Promise (function (resolve,reject) {
-	 	cacheUtility.insert( key, value )
-	 	.then(function(){
-	 		req.log.push("Successfully added to cache!!!");
-	 		resolve();
-	 	})
-	 	.catch ((err) => {
-	 		req.log.push("Error while adding to cache");
-	        req.log.push(err);
-	        reject();  
-	 	});
-	});
-}
-
-function getFromCache (key,req) {
-	return new Promise (function (resolve,reject) {
-	 	cacheUtility.get( key )
-	 	.then( (data) => {
-	 		return data;
-	 		//resolve();
-	 	})
-	 	.catch ((err) => {
-	 		req.log.push("Error while getting from cache");
-	        req.log.push(err);
-	        reject();  
-	 	});
-	});
-}
-
-function deleteFromCache (key,req) {
-	return new Promise (function (resolve,reject) {
-	 	cacheUtility.delete( key )
-	 	.then( function(){
-	 		req.log.push("Successfully delete from cache!!!");
-	 		resolve();
-	 	})
-	 	.catch ((err) => {
-	 		req.log.push("Error while deleting from cache");
-	        req.log.push(err);
-	        reject();  
-	 	});
-	});
-}
-
 function getFromDB(accessToken, res,req) {
 	return userService
  	.getUserId( accessToken )
@@ -836,6 +795,9 @@ function getFromDB(accessToken, res,req) {
 
 // Initialize server
 var server = app.listen(app.get('port'), function () {
+	
+	
+	
    var host = server.address().address
    var port = server.address().port
    console.log("The service running on "+host+":"+port);
