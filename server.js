@@ -651,8 +651,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 						data[0] = new resourceResponse(200,null,true);
 					} else if (validationType == "POSTLOGIN") {
 						if (req.query.userId) {
-							var isAEES = AEES.isAEE(userId);
-							if (isAEES) {
+							if (AEES.isAEE(userId) || userId == req.query.userId) {
 								data[0] = new resourceResponse(200,req.query.userId,true);
 							} else {
 								data[0] = new resourceResponse(403,req.query.userId,false);	
@@ -683,8 +682,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 						
 				} else if (method == "PATCH") {
 					if (req.query.userId) {
-						var isAEES = AEES.isAEE(userId);
-						if (isAEES) {
+						if (AEES.isAEE(userId) || userId == req.query.userId) {
 							data[0] = new resourceResponse(200,req.query.userId,true);
 						} else {
 							data[0] = new resourceResponse(403,req.query.userId,false);	
