@@ -14,7 +14,7 @@ app.set('port', config.PORT);
 // Load Services
 const UserService        = require('./service/UserService');
 const PratilipiService   = require('./service/PratilipiService')( { projectId: config.GCP_PROJ_ID} );
-const AuthorService      = require('./service/AuthorService')( { projectId: config.GCP_PROJ_ID} );
+const AuthorService      = require('./service/AuthorService')
 const ReviewService      = require('./service/ReviewService');
 const CommentService     = require('./service/CommentService');
 const UserAccessList     = require('./config/UserAccessUtil.js');
@@ -35,7 +35,10 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
 	'/event','/event/list','/events','/event/pratilipi','/devices', '/notifications',
         '/userpratilipi/library','/userpratilipi/library/list','/library', '/social-connect',
         '/user/register','/user/login','/user/login/facebook','/user/login/google','/user/verification',
-        '/user/email','/user/passwordupdate','/user','/user/logout','/authors/recommendation'];
+        '/user/email','/user/passwordupdate','/user','/user/logout','/authors/recommendation',
+	'/pratilipi/content/batch','/pratilipi/content/chapter/add','/pratilipi/content/chapter/delete',
+	'/pratilipi/content/index','/pratilipi/content','/coverimage-recommendation',
+	'/report'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 
 var AEES = UserAccessList.AEES;
@@ -43,6 +46,7 @@ AEES = new AEES();
 var reviewService = new ReviewService(process.env.STAGE || 'local');
 var commentService = new CommentService(process.env.STAGE || 'local');
 var userService    = new UserService(process.env.STAGE || 'local');
+var authorService  = new AuthorService(process.env.STAGE || 'local');
 
 
 
@@ -109,7 +113,10 @@ app.use((request, response, next) => {
 		}
 		
 		if (resource == "/image/pratilipi/cover" || resource == "/image/pratilipi/*/cover" 
-			|| resource == "/pratilipis/*" || resource == "/image/pratilipi/content") {
+			|| resource == "/pratilipis/*" || resource == "/image/pratilipi/content"
+		        || resource == '/pratilipi/content/batch' || resource == '/pratilipi/content/chapter/add'
+			|| resource == '/pratilipi/content/chapter/delete' || resource == '/pratilipi/content/index'
+			|| resource == '/pratilipi/content') {
 			resource = "/pratilipis";
 			isPathMapped = true;
 		} else if (resource == "/image/author/cover" || resource == "/image/author/*/cover"
@@ -158,6 +165,8 @@ app.use((request, response, next) => {
 			if (request.query.userId != undefined && request.query.userId != 0) {
 				isPathMapped = true;
 			}
+		} else if (resource == '/coverimage-recommendation/cover/select' || resource == '/coverimage-recommendation/cover') {
+			resource = '/coverimage-recommendation';
 		}
 		
 		request.query.originalResource = request.query.resource;
@@ -251,12 +260,13 @@ app.get("/auth/isAuthorized", function (req, res) {
 	   	|| ( resource == '/social-connect' )
 	   	|| ( resource == '/user' && method == "GET" && resourceIds == null)
 	   	|| resource == '/authors/recommendation'
-	   	|| ( resource == '/notifications' && method == 'GET' && resourceIds == null ) ) {
+	   	|| ( resource == '/notifications' && method == 'GET' && resourceIds == null ) 
+	   	|| ( resource == '/report' && method == 'POST' && resourceIds == null )
+	   	|| ( resource == '/authors' && method == 'GET' && resourceIds == null ) 
+	   	|| resource == '/coverimage-recommendation') {
 		resourceIds = "0";
+		resources = [];
 	}
-	
-	
-	console.log('resourceIds',resourceIds);
 	
 	// Validate query parameters
 	if (!validResources.includes(resource) 
@@ -340,9 +350,9 @@ app.get("/auth/isAuthorized", function (req, res) {
 		 		req.log.push(err);
 		 		return;
 		 	});
-		} else if ((resource == "/authors" && method != "POST") || (resource == "/pratilipis" && resourceType == "AUTHOR")
+		} else if (resourceIds != 0 && (resource == "/authors" && method != "POST") || (resource == "/pratilipis" && resourceType == "AUTHOR")
 				|| (resource == "/follows" && method == "POST" )) {
-			return AuthorService
+			return authorService
 			.getAuthors(resourceIds)
 			.then ((authors) => {
 				resources = authors;
@@ -394,22 +404,22 @@ app.get("/auth/isAuthorized", function (req, res) {
 						var author = resources[0];
 						if (method == "GET") {
 							if (state == "PUBLISHED") {
-								data[0] = new resourceResponse(200, author.ID, true);
+								data[0] = new resourceResponse(200, author.authorId, true);
 							}
 							else if (state == "DRAFTED") {
-								if (userId == author.USER_ID || AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.AUTHOR_PRATILIPIS_READ)) {
-									data[0] = new resourceResponse(200, author.ID, true);
+								if ((author && author.user && userId == author.user.userId) || AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.AUTHOR_PRATILIPIS_READ)) {
+									data[0] = new resourceResponse(200, author.authorId, true);
 								} else {
-									data[0] = new resourceResponse(403, author.ID, false);
+									data[0] = new resourceResponse(403, author.authorId, false);
 								} 
 							} else {
-								data[0] = new resourceResponse(403, author.ID, false);
+								data[0] = new resourceResponse(403, author.authorId, false);
 							}
 						} else {
 							if (AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.AUTHOR_PRATILIPIS_ADD) || AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.PRATILIPI_ADD)) {
-								data[0] = new resourceResponse(200, author.ID, true);
+								data[0] = new resourceResponse(200, author.authorId, true);
 							} else {
-								data[0] = new resourceResponse(403, author.ID, false);
+								data[0] = new resourceResponse(403, author.authorId, false);
 							}
 						}
 						
@@ -471,15 +481,17 @@ app.get("/auth/isAuthorized", function (req, res) {
 					} else {
 						data[0] = new resourceResponse(403, 0, false);
 					}
+				} else if (method == "GET") {
+					for (i = 0; i <= resources.length; i++) {
+						data[i] = new resourceResponse(200,resourceIds[i],true);
+					}
 				} else {
 					for (i = 0; i < resources.length; i++) {
 						var author = resources[i];
 						if (author != null) {
 							
 							var accessType=null;
-							if (method == "GET") {
-								accessType = AccessType.AUTHOR_READ;
-							} else if (method == "PUT" || method == "PATCH" ) {
+							if (method == "PUT" || method == "PATCH" ) {
 								accessType = AccessType.AUTHOR_UPDATE;
 							} else if (method == "DELETE") {
 								accessType = AccessType.AUTHOR_DELETE;
@@ -490,16 +502,16 @@ app.get("/auth/isAuthorized", function (req, res) {
 							var hasAccess = AEES.hasUserAccess(userId,language,accessType);
 							if (hasAccess) {
 								if (!AEES.isAEE(userId) && accessType == AccessType.AUTHOR_UPDATE) {
-									if (author.USER_ID == userId) {
-							        	data[i] = new resourceResponse(200,author.ID,true);
+									if (author && author.user && userId == author.user.userId) {
+							        	data[i] = new resourceResponse(200,author.authorId,true);
 							        } else {
-							        	data[i] = new resourceResponse(403,author.ID,false);
+							        	data[i] = new resourceResponse(403,author.authorId,false);
 							        }
 								} else {
-									data[i] = new resourceResponse(200,author.ID,true);
+									data[i] = new resourceResponse(200,author.authorId,true);
 								}
 							} else {
-								data[i] = new resourceResponse(403,author.ID,false);
+								data[i] = new resourceResponse(403,author.authorId,false);
 							}
 							
 						} else {
@@ -512,10 +524,10 @@ app.get("/auth/isAuthorized", function (req, res) {
 					var hasAccess = AEES.hasUserAccess(userId, language, AccessType.USER_AUTHOR_FOLLOWING);
 					if (hasAccess) {
 						var author = resources[0];
-						if (author.USER_ID == userId) {
-				        	data[0] = new resourceResponse(403,author.ID,false);
+						if (author && author.user && userId == author.user.userId) {
+				        	data[0] = new resourceResponse(403,author.authorId,false);
 				        } else {
-				        	data[0] = new resourceResponse(200,author.ID,true);
+				        	data[0] = new resourceResponse(200,author.authorId,true);
 				        }
 					} else {
 						data[0] = new resourceResponse(403, resourceIds[0], false);
@@ -536,7 +548,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 							author = yield getAuthorByPratilipiId(pratilipi, req)
 						}
 						if (author!= null) {
-							if (author.USER_ID != userId) {
+							if (author && author.user && userId != author.user.userId) {
 								data[0] = new resourceResponse(200,null,true);
 							} else {
 								data[0] = new resourceResponse(403,null,false);
@@ -582,7 +594,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 				} else {
 					data[0] = new resourceResponse(200,0,true);
 				}
-			} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/social-connect" || resource == "/authors/recommendation") {
+			} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/social-connect" || resource == "/authors/recommendation" || resource == '/coverimage-recommendation') {
 				data[0] = new resourceResponse(200,0,true);
 			} else if (resource == "/blog-scraper") {
 				var isAEES = AEES.isAEE(userId);
@@ -621,6 +633,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 				} else {
 					data[0] = new resourceResponse(200,null,true);
 				}
+			} else if (resource == "/report") {
+				data[0] = new resourceResponse(200,null,true);
 			} else if (resource == "/library") {
 				if (userId == 0 || userId == null) {
 					data[0] = new resourceResponse(403,null,false);
@@ -628,6 +642,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 					data[0] = new resourceResponse(200,null,true);
 				}
 			} else if (resource == "/user") {
+				//console.log(method,validationType,userId,req.query.userId);
 				if (method == "POST") {
 					
 					if (validationType == "PRELOGIN" && userId != 0) {
@@ -635,12 +650,17 @@ app.get("/auth/isAuthorized", function (req, res) {
 						// but sending true to support for v1.
 						data[0] = new resourceResponse(200,null,true);
 					} else if (validationType == "POSTLOGIN") {
-						var isAEES = AEES.isAEE(userId);
-						if (isAEES) {
-							data[0] = new resourceResponse(200,null,true);
+						if (req.query.userId) {
+							var isAEES = AEES.isAEE(userId);
+							if (isAEES) {
+								data[0] = new resourceResponse(200,req.query.userId,true);
+							} else {
+								data[0] = new resourceResponse(403,req.query.userId,false);	
+							}
 						} else {
-							data[0] = new resourceResponse(403,null,false);	
+							data[0] = new resourceResponse(200,userId,true);
 						}
+						
 					}  else {
 						data[0] = new resourceResponse(200,null,true);
 					}
@@ -657,10 +677,15 @@ app.get("/auth/isAuthorized", function (req, res) {
 						}
 						
 				} else if (method == "PATCH") {
-					if (userId != resourceIds) {
-						data[0] = new resourceResponse(403,null,false);
+					if (req.query.userId) {
+						var isAEES = AEES.isAEE(userId);
+						if (isAEES) {
+							data[0] = new resourceResponse(200,req.query.userId,true);
+						} else {
+							data[0] = new resourceResponse(403,req.query.userId,false);	
+						}
 					} else {
-						data[0] = new resourceResponse(200,null,true);
+						data[0] = new resourceResponse(200,userId,true);
 					}
 				}
 			} else {
@@ -690,10 +715,11 @@ app.get("/auth/isAuthorized", function (req, res) {
 });
 
 function isUserAuthorToPratilipi(index,data,userId,pratilipi,req) {
+	console.log('Checking if user author to pratilipi');
 	return new Promise( function (resolve,reject) {
-		AuthorService.getAuthor(pratilipi.AUTHOR_ID)
+		authorService.getAuthor(pratilipi.AUTHOR_ID)
 	    .then ((author) => {
-	        if (author!=null &&  author.USER_ID == userId) {
+	        if (author &&  author.user && author.user.userId == userId) {
 	        	data[index] = new resourceResponse(200,pratilipi.ID,true);
 	        } else {
 	        	data[index] = new resourceResponse(403,pratilipi.ID,false);
@@ -711,7 +737,7 @@ function isUserAuthorToPratilipi(index,data,userId,pratilipi,req) {
 function getAuthorByPratilipiId(pratilipi,req) {
 	return new Promise( function (resolve,reject) {
 		try{
-			return AuthorService.getAuthor(pratilipi.AUTHOR_ID)
+			return authorService.getAuthor(pratilipi.AUTHOR_ID)
 			.then ((author) => {
 			    if (author!=null) {
 			    	resolve(author);
