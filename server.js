@@ -642,6 +642,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 					data[0] = new resourceResponse(200,null,true);
 				}
 			} else if (resource == "/user") {
+				//console.log(method,validationType,userId,req.query.userId);
 				if (method == "POST") {
 					
 					if (validationType == "PRELOGIN" && userId != 0) {
@@ -649,12 +650,17 @@ app.get("/auth/isAuthorized", function (req, res) {
 						// but sending true to support for v1.
 						data[0] = new resourceResponse(200,null,true);
 					} else if (validationType == "POSTLOGIN") {
-						var isAEES = AEES.isAEE(userId);
-						if (isAEES) {
-							data[0] = new resourceResponse(200,null,true);
+						if (req.query.userId) {
+							var isAEES = AEES.isAEE(userId);
+							if (isAEES) {
+								data[0] = new resourceResponse(200,req.query.userId,true);
+							} else {
+								data[0] = new resourceResponse(403,req.query.userId,false);	
+							}
 						} else {
-							data[0] = new resourceResponse(403,null,false);	
+							data[0] = new resourceResponse(200,userId,true);
 						}
+						
 					}  else {
 						data[0] = new resourceResponse(200,null,true);
 					}
@@ -671,10 +677,15 @@ app.get("/auth/isAuthorized", function (req, res) {
 						}
 						
 				} else if (method == "PATCH") {
-					if (userId != resourceIds) {
-						data[0] = new resourceResponse(403,null,false);
+					if (req.query.userId) {
+						var isAEES = AEES.isAEE(userId);
+						if (isAEES) {
+							data[0] = new resourceResponse(200,req.query.userId,true);
+						} else {
+							data[0] = new resourceResponse(403,req.query.userId,false);	
+						}
 					} else {
-						data[0] = new resourceResponse(200,null,true);
+						data[0] = new resourceResponse(200,userId,true);
 					}
 				}
 			} else {
