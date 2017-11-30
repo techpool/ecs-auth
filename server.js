@@ -658,7 +658,12 @@ app.get("/auth/isAuthorized", function (req, res) {
 								data[0] = new resourceResponse(403,req.query.userId,false);	
 							}
 						} else {
-							data[0] = new resourceResponse(200,userId,true);
+							if (userId) {
+								data[0] = new resourceResponse(200,userId,true);
+							} else {
+								data[0] = new resourceResponse(403,null,false);
+							}
+							
 						}
 						
 					}  else {
@@ -685,7 +690,12 @@ app.get("/auth/isAuthorized", function (req, res) {
 							data[0] = new resourceResponse(403,req.query.userId,false);	
 						}
 					} else {
-						data[0] = new resourceResponse(200,userId,true);
+						if (userId) {
+							data[0] = new resourceResponse(200,userId,true);
+						} else {
+							data[0] = new resourceResponse(403,null,false);
+						}
+						
 					}
 				}
 			} else {
