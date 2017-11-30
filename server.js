@@ -28,7 +28,7 @@ const AccessType         = require('./config/AccessType.js').AccessType;
 //});
 
 const cacheUtility = require('./util/cacheUtil');
-//const sqsUtility   = require('./util/sqs');
+
 
 var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/search/search',
 	'/search/trending_search','/follows','/userauthor/follow/list', '/userauthor/follow',
@@ -51,9 +51,6 @@ var commentService = new CommentService(process.env.STAGE || 'local');
 var userService    = new UserService(process.env.STAGE || 'local');
 var authorService  = new AuthorService(process.env.STAGE || 'local');
 
-
-// Initialize sqs
-new sqsUtility().init();
 
 //Request Handlers
 // API to check health
@@ -797,8 +794,6 @@ function getFromDB(accessToken, res,req) {
 
 // Initialize server
 var server = app.listen(app.get('port'), function () {
-	
-	
 	
    var host = server.address().address
    var port = server.address().port
