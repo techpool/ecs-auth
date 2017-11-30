@@ -28,7 +28,7 @@ const AccessType         = require('./config/AccessType.js').AccessType;
 //});
 
 const cacheUtility = require('./util/cacheUtil');
-const sqsUtility   = require('./util/sqs');
+//const sqsUtility   = require('./util/sqs');
 
 var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/search/search',
 	'/search/trending_search','/follows','/userauthor/follow/list', '/userauthor/follow',
