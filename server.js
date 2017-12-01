@@ -402,6 +402,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 			if (resource == "/pratilipis") {
 				
 				if (resourceType == "AUTHOR") {
+					// Debugging pratilipis get
+					console.log("The author details are ", author);
 					if (resources != null && resources.length > 0) {
 						var author = resources[0];
 						if (method == "GET") {
