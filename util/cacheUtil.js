@@ -7,7 +7,7 @@ const cacheUtility = require('./../lib/CacheUtility.js')({
 });
 
 
-function addToCache(key, value) {
+function add(key, value) {
 	return new Promise (function (resolve,reject) {
 	 	cacheUtility.insert( key, value )
 	 	.then(function(){
@@ -22,7 +22,7 @@ function addToCache(key, value) {
 	});
 }
 
-function getFromCache (key) {
+function get (key) {
 	return new Promise (function (resolve,reject) {
 	 	cacheUtility.get( key )
 	 	.then( (data) => {
@@ -37,7 +37,7 @@ function getFromCache (key) {
 	});
 }
 
-function deleteFromCache (key) {
+function del (key) {
 	return new Promise (function (resolve,reject) {
 	 	cacheUtility.delete( key )
 	 	.then( function(){
@@ -54,9 +54,9 @@ function deleteFromCache (key) {
 
 
 module.exports = {
-		addToCache,
-		getFromCache,
-		deleteFromCache
+		add,
+		get,
+		del
 }
 
 

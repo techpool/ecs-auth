@@ -187,7 +187,7 @@ app.delete("/auth/accessToken", function(req, res){
 	res.setHeader('content-type', 'application/json');
 	
 	if (accessToken != null) {
-	 		cacheUtility.deleteFromCache( accessToken, req )
+	 		cacheUtility.del( accessToken, req )
 	 		.then(function(){
 	 			req.log.push("successfully deleted access token from cache ");
 	 			res.status(200).send(JSON.stringify({"message":"Successfully deleted"}));
@@ -786,7 +786,7 @@ function getFromDB(accessToken, res,req) {
  		
  		// add to cache
  		var user = new User(id);
- 		cacheUtility.insert( accessToken, user );
+ 		cacheUtility.add( accessToken, user );
  		res.setHeader('User-Id', id);
  		return id;
  	})
