@@ -409,7 +409,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 								data[0] = new resourceResponse(200, author.authorId, true);
 							}
 							else if (state == "DRAFTED") {
-								if ((author && author.user && userId == author.user.userId) || AEES.hasUserAccess(userId,author.language,AccessType.AUTHOR_PRATILIPIS_READ)) {
+								if ((author && userId == author.userId) || AEES.hasUserAccess(userId,author.language,AccessType.AUTHOR_PRATILIPIS_READ)) {
 									data[0] = new resourceResponse(200, author.authorId, true);
 								} else {
 									data[0] = new resourceResponse(403, author.authorId, false);
@@ -504,7 +504,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 							var hasAccess = AEES.hasUserAccess(userId,language,accessType);
 							if (hasAccess) {
 								if (!AEES.isAEE(userId) && accessType == AccessType.AUTHOR_UPDATE) {
-									if (author && author.user && userId == author.user.userId) {
+									if (author && userId == author.userId) {
 							        	data[i] = new resourceResponse(200,author.authorId,true);
 							        } else {
 							        	data[i] = new resourceResponse(403,author.authorId,false);
@@ -526,7 +526,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 					var hasAccess = AEES.hasUserAccess(userId, language, AccessType.USER_AUTHOR_FOLLOWING);
 					if (hasAccess) {
 						var author = resources[0];
-						if (author && author.user && userId == author.user.userId) {
+						if (author && userId == author.userId) {
 				        	data[0] = new resourceResponse(403,author.authorId,false);
 				        } else {
 				        	data[0] = new resourceResponse(200,author.authorId,true);
@@ -550,7 +550,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 							author = yield getAuthorByPratilipiId(pratilipi, req)
 						}
 						if (author!= null) {
-							if (author && author.user && userId != author.user.userId) {
+							if (author && userId != author.userId) {
 								data[0] = new resourceResponse(200,null,true);
 							} else {
 								data[0] = new resourceResponse(403,null,false);
@@ -729,7 +729,7 @@ function isUserAuthorToPratilipi(index,data,userId,pratilipi,req) {
 	return new Promise( function (resolve,reject) {
 		authorService.getAuthor(pratilipi.AUTHOR_ID)
 	    .then ((author) => {
-	        if (author &&  author.user && author.user.userId == userId) {
+	        if (author && author.userId == userId) {
 	        	data[index] = new resourceResponse(200,pratilipi.ID,true);
 	        } else {
 	        	data[index] = new resourceResponse(403,pratilipi.ID,false);
