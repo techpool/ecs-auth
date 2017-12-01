@@ -339,7 +339,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	var resources;
 	var resourcePromise = userIdPromise.then (function () {
 		
-		req.log.push("Fetching resources for "+resourceIds);
+		req.log.push("Fetching resources for ",resourceIds,resourceType);
 		
 		if ((resource == "/pratilipis" && method != "POST" && resourceType == null) || ((resource == "/reviews" || resource == "/userpratilipi/reviews") && method == "POST")) {
 			return PratilipiService
@@ -410,7 +410,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 								data[0] = new resourceResponse(200, author.authorId, true);
 							}
 							else if (state == "DRAFTED") {
-								if ((author && author.user && userId == author.user.userId) || AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.AUTHOR_PRATILIPIS_READ)) {
+								if ((author && author.user && userId == author.user.userId) || AEES.hasUserAccess(userId,author.language,AccessType.AUTHOR_PRATILIPIS_READ)) {
 									data[0] = new resourceResponse(200, author.authorId, true);
 								} else {
 									data[0] = new resourceResponse(403, author.authorId, false);
@@ -419,7 +419,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 								data[0] = new resourceResponse(403, author.authorId, false);
 							}
 						} else {
-							if (AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.AUTHOR_PRATILIPIS_ADD) || AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.PRATILIPI_ADD)) {
+							if (AEES.hasUserAccess(userId,author.language,AccessType.AUTHOR_PRATILIPIS_ADD) || AEES.hasUserAccess(userId,author.language,AccessType.PRATILIPI_ADD)) {
 								data[0] = new resourceResponse(200, author.authorId, true);
 							} else {
 								data[0] = new resourceResponse(403, author.authorId, false);
@@ -713,7 +713,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		});
 	});
 	authorizePromise.then (function (){
-		req.log.push("sending response");
+		req.log.push("sending response",accessToken,userId);
 		res.setHeader('content-type', 'application/json');
 		if (req.query.originalResource != null && req.query.originalResource != "") {
 			resource = req.query.originalResource;
