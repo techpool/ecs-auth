@@ -406,14 +406,11 @@ app.get("/auth/isAuthorized", function (req, res) {
 					if (resources != null && resources.length > 0) {
 						var author = resources[0];
 						if (method == "GET") {
-							// Debugging pratilipis get
-							req.log.push("The author details are ", author, state);
-							console.log("The author details are ", author, state);
 							if (state == "PUBLISHED") {
 								data[0] = new resourceResponse(200, author.authorId, true);
 							}
 							else if (state == "DRAFTED") {
-								if ((author && author.user && userId == author.user.userId) || AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.AUTHOR_PRATILIPIS_READ)) {
+								if ((author && author.user && userId == author.user.userId) || AEES.hasUserAccess(userId,author.language,AccessType.AUTHOR_PRATILIPIS_READ)) {
 									data[0] = new resourceResponse(200, author.authorId, true);
 								} else {
 									data[0] = new resourceResponse(403, author.authorId, false);
@@ -422,7 +419,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 								data[0] = new resourceResponse(403, author.authorId, false);
 							}
 						} else {
-							if (AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.AUTHOR_PRATILIPIS_ADD) || AEES.hasUserAccess(userId,author.LANGUAGE,AccessType.PRATILIPI_ADD)) {
+							if (AEES.hasUserAccess(userId,author.language,AccessType.AUTHOR_PRATILIPIS_ADD) || AEES.hasUserAccess(userId,author.language,AccessType.PRATILIPI_ADD)) {
 								data[0] = new resourceResponse(200, author.authorId, true);
 							} else {
 								data[0] = new resourceResponse(403, author.authorId, false);
