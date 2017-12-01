@@ -338,7 +338,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	var resources;
 	var resourcePromise = userIdPromise.then (function () {
 		
-		req.log.push("Fetching resources for "+resourceIds);
+		req.log.push("Fetching resources for ",resourceIds,resourceType);
 		
 		if ((resource == "/pratilipis" && method != "POST" && resourceType == null) || ((resource == "/reviews" || resource == "/userpratilipi/reviews") && method == "POST")) {
 			return PratilipiService
@@ -357,6 +357,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 			return authorService
 			.getAuthors(resourceIds)
 			.then ((authors) => {
+				req.log.push("Got authors",authors);
 				resources = authors;
 				return;
 			})
@@ -402,11 +403,12 @@ app.get("/auth/isAuthorized", function (req, res) {
 			if (resource == "/pratilipis") {
 				
 				if (resourceType == "AUTHOR") {
-					// Debugging pratilipis get
-					console.log("The author details are ", author);
 					if (resources != null && resources.length > 0) {
 						var author = resources[0];
 						if (method == "GET") {
+							// Debugging pratilipis get
+							req.log.push("The author details are ", author, state);
+							console.log("The author details are ", author, state);
 							if (state == "PUBLISHED") {
 								data[0] = new resourceResponse(200, author.authorId, true);
 							}
