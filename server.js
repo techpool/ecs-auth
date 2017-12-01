@@ -705,7 +705,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		});
 	});
 	authorizePromise.then (function (){
-		req.log.push("sending response");
+		req.log.push("sending response",accessToken,userId);
 		res.setHeader('content-type', 'application/json');
 		if (req.query.originalResource != null && req.query.originalResource != "") {
 			resource = req.query.originalResource;
