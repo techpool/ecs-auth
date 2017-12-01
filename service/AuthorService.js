@@ -12,6 +12,10 @@ var httpsAgent = new https.Agent({
   keepAlive : true
 });
 
+var serviceHeaders = {
+    'Service-Id':'AUTH',
+    'Service-Version':'v2.0'
+  };
 
 function Author (stage) {
 	if (stage == 'local') {
@@ -28,12 +32,13 @@ Author.prototype.getAuthors = function (ids) {
 	return new Promise(function (resolve, reject) {
 		var authorIds = ids.join();
 		console.log("The author ids are ", authorIds);
-		var url = that.url+"?id="+authorIds;
+		var url = that.url+"/meta_data?id="+authorIds;
         var options = {
           method: 'GET',
           uri: url,
           agent : agent,
-          json : true
+          json : true,
+          headers: serviceHeaders
         };
         httpPromise(options)
         .then(data => {
@@ -51,12 +56,13 @@ Author.prototype.getAuthor = function (id) {
 	console.log('Getting author for: ',id);
 	var that = this;
 	return new Promise(function (resolve, reject) {
-		var url = that.url+"?id="+id;
+		var url = that.url+"/meta_data?id="+id;
         var options = {
           method: 'GET',
           uri: url,
           agent : agent,
-          json : true
+          json : true,
+          headers: serviceHeaders
         };
         httpPromise(options)
         .then(data => {
