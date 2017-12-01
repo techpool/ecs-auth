@@ -357,7 +357,6 @@ app.get("/auth/isAuthorized", function (req, res) {
 			return authorService
 			.getAuthors(resourceIds)
 			.then ((authors) => {
-				req.log.push("Got authors",authors);
 				resources = authors;
 				return;
 			})
