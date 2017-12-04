@@ -353,7 +353,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		 		req.log.push(err);
 		 		return;
 		 	});
-		} else if (resourceIds != 0 && (resource == "/authors" && method != "POST") || (resource == "/pratilipis" && resourceType == "AUTHOR")
+		} else if (resourceIds != 0 && (resource == "/authors" && (method == "PATCH" || method == "DELETE")) || (resource == "/pratilipis" && resourceType == "AUTHOR")
 				|| (resource == "/follows" && method == "POST" )) {
 			return authorService
 			.getAuthors(resourceIds)
@@ -485,8 +485,10 @@ app.get("/auth/isAuthorized", function (req, res) {
 						data[0] = new resourceResponse(403, 0, false);
 					}
 				} else if (method == "GET") {
-					for (i = 0; i <= resources.length; i++) {
-						data[i] = new resourceResponse(200,resourceIds[i],true);
+					for (i = 0; i <= resourceIds.length; i++) {
+						if (resourceIds[i]) {
+							data[i] = new resourceResponse(200,resourceIds[i],true);
+						}
 					}
 				} else {
 					for (i = 0; i < resources.length; i++) {
