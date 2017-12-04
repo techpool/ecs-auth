@@ -38,7 +38,7 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
         '/user/email','/user/passwordupdate','/user','/user/logout','/authors/recommendation',
 	'/pratilipi/content/batch','/pratilipi/content/chapter/add','/pratilipi/content/chapter/delete',
 	'/pratilipi/content/index','/pratilipi/content','/coverimage-recommendation',
-	'/report','/init/v1.0/list','/init/v1.0/init'];
+	'/report','/init/v1.0/list','/init/v1.0/init','/init'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 
 var AEES = UserAccessList.AEES;
