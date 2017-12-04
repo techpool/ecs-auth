@@ -26,8 +26,8 @@ function get (key) {
 	return new Promise (function (resolve,reject) {
 	 	cacheUtility.get( key )
 	 	.then( (data) => {
-	 		return data;
-	 		//resolve();
+	 		//return data;
+	 		resolve(data);
 	 	})
 	 	.catch ((err) => {
 	 		console.log("Error while getting from cache");
