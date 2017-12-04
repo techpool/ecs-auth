@@ -46,9 +46,8 @@ function processMessage(message,receiptHandle) {
     	var accessTokens = message.message.accessToken; 
     	for (var i=0; i < accessTokens.length; i++) {
     		cacheUtil.deleteFromCache(accessTokens[i]);
-    	  	deleteMessage(receiptHandle)
     	}
-    
+    	deleteMessage(receiptHandle);
     }
 }
 
