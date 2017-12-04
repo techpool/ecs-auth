@@ -209,7 +209,7 @@ app.delete("/auth/accessToken", function(req, res){
 });
 
 app.get("/auth/isAuthorized", function (req, res) {
-	
+	console.log("Step: 1");
 	// Read Headers
 	var accessToken = req.headers['access-token'];
 	var userId = req.headers['user-id'];
@@ -297,7 +297,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		resourceIds = resourceIds.split(',').map(Number);
 	}
 
-	
+	console.log("Step: 2");
 	// Get User-Id for accessToken
 	// TODO: remove accepting user-id from internal services. accept only accesstoken
 	var userIdPromise;
@@ -335,6 +335,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		});
 	}
 	
+	console.log("Step: 3");
 	// Get resources by ids
 	var resources;
 	var resourcePromise = userIdPromise.then (function () {
@@ -391,17 +392,18 @@ app.get("/auth/isAuthorized", function (req, res) {
 		}
 	});
 
-	
+	console.log("Step: 4");
 	// Verify authorization
 	var data = [];
 	var authorizePromise = resourcePromise.then (function () {
-
+		console.log("Step: 4.1");
 		return co(function * () {
 			req.log.push("Verifying the authorization for user on the resource",resource);
 			// Get roles for the user
 			var roles = AEES.getRoles(userId);
+			
 			if (resource == "/pratilipis") {
-				
+				console.log("Step: 4.1.1");
 				if (resourceType == "AUTHOR") {
 					if (resources != null && resources.length > 0) {
 						var author = resources[0];
@@ -477,7 +479,9 @@ app.get("/auth/isAuthorized", function (req, res) {
 					}
 				}
 			} else if (resource == "/authors") {
+				console.log("Step: 4.1.2");
 				if (method == "POST") {
+					console.log("Step: 4.1.2.1");
 					var hasAccess = AEES.hasUserAccess(userId, language, AccessType.AUTHOR_ADD);
 					if (hasAccess) {
 						data[0] = new resourceResponse(200, 0, true);
@@ -485,12 +489,14 @@ app.get("/auth/isAuthorized", function (req, res) {
 						data[0] = new resourceResponse(403, 0, false);
 					}
 				} else if (method == "GET") {
+					console.log("Step: 4.1.2.2");
 					for (i = 0; i <= resourceIds.length; i++) {
 						if (resourceIds[i]) {
 							data[i] = new resourceResponse(200,resourceIds[i],true);
 						}
 					}
 				} else {
+					console.log("Step: 4.1.2.3");
 					for (i = 0; i < resources.length; i++) {
 						var author = resources[i];
 						if (author != null) {
@@ -524,7 +530,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 						}
 					}
 				}
-			} else if (resource == "/follows") { 
+			} else if (resource == "/follows") {
+				console.log("Step: 4.1.3");
 				if (method == "POST") {
 					var hasAccess = AEES.hasUserAccess(userId, language, AccessType.USER_AUTHOR_FOLLOWING);
 					if (hasAccess) {
