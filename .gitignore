@@ -4,8 +4,8 @@ keyfile*.json
 node_modules
 package-lock.json
 
-.DS_Store
 .project
 .settings/
 dump.rdb
 lib/
+.DS_Store
