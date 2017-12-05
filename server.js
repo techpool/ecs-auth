@@ -13,7 +13,7 @@ app.set('port', config.PORT);
 
 // Load Services
 const UserService        = require('./service/UserService');
-const PratilipiService   = require('./service/PratilipiService')( { projectId: config.GCP_PROJ_ID} );
+const PratilipiService   = require('./service/PratilipiService');
 const AuthorService      = require('./service/AuthorService')
 const ReviewService      = require('./service/ReviewService');
 const CommentService     = require('./service/CommentService');
@@ -47,7 +47,7 @@ var reviewService = new ReviewService(process.env.STAGE || 'local');
 var commentService = new CommentService(process.env.STAGE || 'local');
 var userService    = new UserService(process.env.STAGE || 'local');
 var authorService  = new AuthorService(process.env.STAGE || 'local');
-
+var pratilipiService = new PratilipiService(process.env.STAGE || 'local');
 
 
 //Request Handlers
@@ -343,6 +343,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		
 		req.log.push("Fetching resources for ",resourceIds,resourceType);
 		
+
 		if (resourceIds != 0 && (resource == "/pratilipis" && method != "POST" && resourceType == null) || ((resource == "/reviews" || resource == "/userpratilipi/reviews") && method == "POST")) {
 			return pratilipiService
 			.getPratilipis(resourceIds,accessToken)
@@ -454,17 +455,17 @@ app.get("/auth/isAuthorized", function (req, res) {
 									accessType = AccessType.PRATILIPI_DELETE;
 								}
 								
-								language = pratilipi.LANGUAGE;
+								language = pratilipi.language;
 								
 								var hasAccess = AEES.hasUserAccess(userId,language,accessType);
 								if (hasAccess) {
 									if (!AEES.isAEE(userId) && (accessType == AccessType.PRATILIPI_UPDATE || accessType == AccessType.PRATILIPI_DELETE)) {
 										ownerPromises.push(isUserAuthorToPratilipi(i,data,userId,pratilipi, req));
 									} else {
-										data[i] = new resourceResponse(200,pratilipi.ID,true)
+										data[i] = new resourceResponse(200,pratilipi.pratilipiId,true)
 									}
 								} else {
-									data[i] = new resourceResponse(403,pratilipi.ID,false);
+									data[i] = new resourceResponse(403,pratilipi.pratilipiId,false);
 								}
 								
 							} else {
@@ -750,12 +751,12 @@ app.get("/auth/isAuthorized", function (req, res) {
 function isUserAuthorToPratilipi(index,data,userId,pratilipi,req) {
 	console.log('Checking if user author to pratilipi');
 	return new Promise( function (resolve,reject) {
-		authorService.getAuthor(pratilipi.AUTHOR_ID)
+		authorService.getAuthor(pratilipi.author.authorId)
 	    .then ((author) => {
 	        if (author && author.userId == userId) {
-	        	data[index] = new resourceResponse(200,pratilipi.ID,true);
+	        	data[index] = new resourceResponse(200,pratilipi.pratilipiId,true);
 	        } else {
-	        	data[index] = new resourceResponse(403,pratilipi.ID,false);
+	        	data[index] = new resourceResponse(403,pratilipi.pratilipiId,false);
 	        }
 	        resolve();
 	    }).catch( (err) => {
@@ -770,7 +771,7 @@ function isUserAuthorToPratilipi(index,data,userId,pratilipi,req) {
 function getAuthorByPratilipiId(pratilipi,req) {
 	return new Promise( function (resolve,reject) {
 		try{
-			return authorService.getAuthor(pratilipi.AUTHOR_ID)
+			return authorService.getAuthor(pratilipi.author.authorId)
 			.then ((author) => {
 			    if (author!=null) {
 			    	resolve(author);
