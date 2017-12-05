@@ -601,8 +601,15 @@ app.get("/auth/isAuthorized", function (req, res) {
 				} else {
 					data[0] = new resourceResponse(200,0,true);
 				}
-			} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/social-connect" || resource == "/authors/recommendation" || resource == '/coverimage-recommendation') {
+			} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/social-connect" || resource == "/authors/recommendation") {
 				data[0] = new resourceResponse(200,0,true);
+			} else if (resource == '/coverimage-recommendation'){
+				var isAEES = AEES.isAEE(userId);
+				if (!isAEES) {
+					data[0] = new resourceResponse(200,null,true);
+				} else {
+					data[0] = new resourceResponse(403,null,false);	
+				}
 			} else if (resource == "/blog-scraper") {
 				var isAEES = AEES.isAEE(userId);
 				if (isAEES) {
