@@ -1,31 +1,57 @@
-module.exports = Pratilipi;
+var http = require('http');
+var https = require('https');
+var httpPromise = require('request-promise');
 
-var dbUtility = require( '../lib/DbUtility.js' );
-var PratilipiSchema = {
-	structure : {
-		'ID'		: { 'type' : 'INTEGER', 'default' : 0 },
-		'LANGUAGE'	: { 'type' : 'STRING', 'default' : null },
-		'AUTHOR_ID'	: { 'type' : 'INTEGER', 'default' : 0 }
-	},primaryKey  : 'ID'
-};
+var externalEndpoints = require('./../config/externalEndpoints');
 
-function Pratilipi ( config ) {
-	// initialize db utility
-	dbUtility = dbUtility( { projectId: config.projectId, kind: 'PRATILIPI', 'schema' : PratilipiSchema} );
-	return {
-		getPratilipis: function getPratilipis (pratilipiIds) {
-			return dbUtility.list(pratilipiIds)
-			.then ((data) => {
-				return data;
-			});
-			throw 'ENTITY NOT FOUND';
-		},
-		getPratilipi: function getPratilipi (pratilipiId) {
-			return dbUtility.get(pratilipiId)
-			.then ((data) => {
-				return data;
-			});
-			throw 'ENTITY NOT FOUND';
-		}
-	};
+var agent = new http.Agent({
+  keepAlive : true
+});
+
+var httpsAgent = new https.Agent({
+  keepAlive : true
+});
+
+
+
+function Pratilipi (stage) {
+	if (stage == 'local') {
+		this.url = 'http://localhost:8095/pratilipis';
+	} else {
+		this.url = `${externalEndpoints.PRATILIPI_ENDPOINT}`;
+	}
 }
+
+
+//get Pratilipis
+Pratilipi.prototype.getPratilipis = function (ids,accessToken) {
+	console.log('Getting pratilipis for: ',ids);
+	var that = this;
+	return new Promise(function (resolve, reject) {
+		var pratilipiIds = ids.join();
+		var serviceHeaders = {
+			    'Service-Id':'AUTH',
+			    'Service-Version':'v2.0',
+			     'access-token':accessToken
+			  };
+		console.log("The pratilipi ids are ", pratilipiIds);
+		var url = that.url+"?id="+pratilipiIds;
+        var options = {
+          method: 'GET',
+          uri: url,
+          agent : agent,
+          json : true,
+          headers: serviceHeaders
+        };
+        httpPromise(options)
+        .then(data => {
+          resolve(data);
+        })
+        .catch(err => {
+		console.log('Error while getting pratilipis',err);
+          reject(err);
+        });
+	});
+}
+
+module.exports = Pratilipi;
