@@ -41,7 +41,7 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
         '/user/email','/user/passwordupdate','/user','/user/logout','/authors/recommendation',
 	'/pratilipi/content/batch','/pratilipi/content/chapter/add','/pratilipi/content/chapter/delete',
 	'/pratilipi/content/index','/pratilipi/content','/coverimage-recommendation',
-	'/report'];
+	'/report','/init/v1.0/list','/init/v1.0/init','/init'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 
 var AEES = UserAccessList.AEES;
@@ -102,6 +102,8 @@ app.use((request, response, next) => {
 			resource = "/report";
 		} else if (resource == "/notification/list" || resource == "/notification" ) {
 			resource = "/notifications";
+		} else if (resource == "/init/v1.0/list" || resource == "/init/v1.0/init" ) {
+			resource = "/init";
 		} else if (resource == "/userpratilipi" || resource == "/userpratilipi/review" || resource == "/userpratilipi/review/list") {
 			resource = "/userpratilipi/reviews";
 		} else if (resource == "/comment" || resource == "/comment/list") {
@@ -262,7 +264,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 	   	|| ( resource == '/social-connect' )
 	   	|| ( resource == '/user' && method == "GET" && resourceIds == null)
 	   	|| resource == '/authors/recommendation'
-	   	|| ( resource == '/notifications' && method == 'GET' && resourceIds == null ) 
+	   	|| ( resource == '/notifications' && method == 'GET' && resourceIds == null )
+	   	|| ( resource == '/init' && method == 'GET' && resourceIds == null ) 
 	   	|| ( resource == '/report' && method == 'POST' && resourceIds == null )
 	   	|| ( resource == '/authors' && method == 'GET' && resourceIds == null ) 
 	   	|| resource == '/coverimage-recommendation') {
@@ -642,6 +645,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 					data[0] = new resourceResponse(200,null,true);
 				}
 			} else if (resource == "/report") {
+				data[0] = new resourceResponse(200,null,true);
+			} else if (resource == "/init") {
 				data[0] = new resourceResponse(200,null,true);
 			} else if (resource == "/library") {
 				if (userId == 0 || userId == null) {
