@@ -515,7 +515,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 								accessType = AccessType.AUTHOR_DELETE;
 							}
 							
-							language = author.LANGUAGE;
+							language = author.language;
 							
 							var hasAccess = AEES.hasUserAccess(userId,language,accessType);
 							if (hasAccess) {
