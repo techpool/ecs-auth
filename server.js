@@ -267,7 +267,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	   	|| ( resource == '/notifications' && method == 'GET' && resourceIds == null )
 	   	|| ( resource == '/init' && method == 'GET' && resourceIds == null ) 
 	   	|| ( resource == '/report' && method == 'POST' && resourceIds == null )
-	   	|| ( resource == '/authors' && method == 'GET' && resourceIds == null ) 
+	   	|| ( (resource == '/authors' || resource == '/pratilipis') && method == 'GET' && resourceIds == null ) 
 	   	|| resource == '/coverimage-recommendation') {
 		resourceIds = "0";
 		resources = [];
@@ -471,6 +471,11 @@ app.get("/auth/isAuthorized", function (req, res) {
 								data[i] = new resourceResponse(404,resourceIds[i],false);
 							}
 						}
+						
+						if (resourceIds == 0) {
+							data[0] = new resourceResponse(200,0,true);
+						}
+						
 						return new Promise((resolve,reject)=>{
 							Promise.all(ownerPromises).then (function () {
 								resolve();
@@ -491,6 +496,10 @@ app.get("/auth/isAuthorized", function (req, res) {
 						if (resourceIds[i]) {
 							data[i] = new resourceResponse(200,resourceIds[i],true);
 						}
+					}
+					
+					if (resourceIds == 0) {
+						data[0] = new resourceResponse(200,0,true);
 					}
 				} else {
 					for (i = 0; i < resources.length; i++) {
