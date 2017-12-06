@@ -342,7 +342,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		
 		req.log.push("Fetching resources for ",resourceIds,resourceType);
 		
-		if ((resource == "/pratilipis" && method != "POST" && resourceType == null) || ((resource == "/reviews" || resource == "/userpratilipi/reviews") && method == "POST")) {
+		if (resourceIds != 0 && (resource == "/pratilipis" && method != "POST" && resourceType == null) || ((resource == "/reviews" || resource == "/userpratilipi/reviews") && method == "POST")) {
 			return pratilipiService
 			.getPratilipis(resourceIds,accessToken)
 			.then ((pratilipis) => {
