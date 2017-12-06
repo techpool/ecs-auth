@@ -38,7 +38,7 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
         '/user/email','/user/passwordupdate','/user','/user/logout','/authors/recommendation',
 	'/pratilipi/content/batch','/pratilipi/content/chapter/add','/pratilipi/content/chapter/delete',
 	'/pratilipi/content/index','/pratilipi/content','/coverimage-recommendation',
-	'/report','/init/v1.0/list','/init/v1.0/init','/init'];
+	'/report','/init/v1.0/list','/init/v1.0/init','/init','/user/firebase-token'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 
 var AEES = UserAccessList.AEES;
@@ -163,7 +163,7 @@ app.use((request, response, next) => {
 		} else if (resource == '/user/email' || resource == '/user/passwordupdate' || resource == '/user/verification') {
 			resource = '/user'
 			request.query.validationType = "NONE";
-		} else if (resource == '/user' || resource == '/user/logout') {
+		} else if (resource == '/user' || resource == '/user/logout' || resource == '/user/firebase-token') {
 			resource = '/user'
 			request.query.validationType = "POSTLOGIN";
 			if (request.query.userId != undefined && request.query.userId != 0) {
@@ -268,7 +268,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 	   	|| ( resource == '/init' && method == 'GET' && resourceIds == null ) 
 	   	|| ( resource == '/report' && method == 'POST' && resourceIds == null )
 	   	|| ( (resource == '/authors' || resource == '/pratilipis') && method == 'GET' && resourceIds == null ) 
-	   	|| resource == '/coverimage-recommendation') {
+	   	|| resource == '/coverimage-recommendation'
+	   	|| (resource == '/user' && method == 'GET' && resourceIds == null )) {
 		resourceIds = "0";
 		resources = [];
 	}
