@@ -9,3 +9,5 @@ package-lock.json
 dump.rdb
 lib/
 .DS_Store
+
+/src
