@@ -13,7 +13,7 @@ app.set('port', config.PORT);
 
 // Load Services
 const UserService        = require('./service/UserService');
-const PratilipiService   = require('./service/PratilipiService')( { projectId: config.GCP_PROJ_ID} );
+const PratilipiService   = require('./service/PratilipiService');
 const AuthorService      = require('./service/AuthorService')
 const ReviewService      = require('./service/ReviewService');
 const CommentService     = require('./service/CommentService');
@@ -38,7 +38,7 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
         '/user/email','/user/passwordupdate','/user','/user/logout','/authors/recommendation',
 	'/pratilipi/content/batch','/pratilipi/content/chapter/add','/pratilipi/content/chapter/delete',
 	'/pratilipi/content/index','/pratilipi/content','/coverimage-recommendation',
-	'/report','/init/v1.0/list','/init/v1.0/init','/init'];
+	'/report','/init/v1.0/list','/init/v1.0/init','/init','/user/firebase-token'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 
 var AEES = UserAccessList.AEES;
@@ -47,7 +47,7 @@ var reviewService = new ReviewService(process.env.STAGE || 'local');
 var commentService = new CommentService(process.env.STAGE || 'local');
 var userService    = new UserService(process.env.STAGE || 'local');
 var authorService  = new AuthorService(process.env.STAGE || 'local');
-
+var pratilipiService = new PratilipiService(process.env.STAGE || 'local');
 
 
 //Request Handlers
@@ -163,7 +163,7 @@ app.use((request, response, next) => {
 		} else if (resource == '/user/email' || resource == '/user/passwordupdate' || resource == '/user/verification') {
 			resource = '/user'
 			request.query.validationType = "NONE";
-		} else if (resource == '/user' || resource == '/user/logout') {
+		} else if (resource == '/user' || resource == '/user/logout' || resource == '/user/firebase-token') {
 			resource = '/user'
 			request.query.validationType = "POSTLOGIN";
 			if (request.query.userId != undefined && request.query.userId != 0) {
@@ -267,8 +267,9 @@ app.get("/auth/isAuthorized", function (req, res) {
 	   	|| ( resource == '/notifications' && method == 'GET' && resourceIds == null )
 	   	|| ( resource == '/init' && method == 'GET' && resourceIds == null ) 
 	   	|| ( resource == '/report' && method == 'POST' && resourceIds == null )
-	   	|| ( resource == '/authors' && method == 'GET' && resourceIds == null ) 
-	   	|| resource == '/coverimage-recommendation') {
+	   	|| ( (resource == '/authors' || resource == '/pratilipis') && method == 'GET' && resourceIds == null ) 
+	   	|| resource == '/coverimage-recommendation'
+	   	|| (resource == '/user' && method == 'GET' && resourceIds == null )) {
 		resourceIds = "0";
 		resources = [];
 	}
@@ -343,9 +344,10 @@ app.get("/auth/isAuthorized", function (req, res) {
 		
 		req.log.push("Fetching resources for ",resourceIds,resourceType);
 		
-		if ((resource == "/pratilipis" && method != "POST" && resourceType == null) || ((resource == "/reviews" || resource == "/userpratilipi/reviews") && method == "POST")) {
-			return PratilipiService
-			.getPratilipis(resourceIds)
+
+		if (resourceIds != 0 && (resource == "/pratilipis" && method != "POST" && resourceType == null) || ((resource == "/reviews" || resource == "/userpratilipi/reviews") && method == "POST")) {
+			return pratilipiService
+			.getPratilipis(resourceIds,accessToken)
 			.then ((pratilipis) => {
 				resources = pratilipis;
 				return;
@@ -454,23 +456,28 @@ app.get("/auth/isAuthorized", function (req, res) {
 									accessType = AccessType.PRATILIPI_DELETE;
 								}
 								
-								language = pratilipi.LANGUAGE;
+								language = pratilipi.language;
 								
 								var hasAccess = AEES.hasUserAccess(userId,language,accessType);
 								if (hasAccess) {
 									if (!AEES.isAEE(userId) && (accessType == AccessType.PRATILIPI_UPDATE || accessType == AccessType.PRATILIPI_DELETE)) {
 										ownerPromises.push(isUserAuthorToPratilipi(i,data,userId,pratilipi, req));
 									} else {
-										data[i] = new resourceResponse(200,pratilipi.ID,true)
+										data[i] = new resourceResponse(200,pratilipi.pratilipiId,true)
 									}
 								} else {
-									data[i] = new resourceResponse(403,pratilipi.ID,false);
+									data[i] = new resourceResponse(403,pratilipi.pratilipiId,false);
 								}
 								
 							} else {
 								data[i] = new resourceResponse(404,resourceIds[i],false);
 							}
 						}
+						
+						if (resourceIds == 0) {
+							data[0] = new resourceResponse(200,0,true);
+						}
+						
 						return new Promise((resolve,reject)=>{
 							Promise.all(ownerPromises).then (function () {
 								resolve();
@@ -492,6 +499,10 @@ app.get("/auth/isAuthorized", function (req, res) {
 							data[i] = new resourceResponse(200,resourceIds[i],true);
 						}
 					}
+					
+					if (resourceIds == 0) {
+						data[0] = new resourceResponse(200,0,true);
+					}
 				} else {
 					for (i = 0; i < resources.length; i++) {
 						var author = resources[i];
@@ -504,7 +515,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 								accessType = AccessType.AUTHOR_DELETE;
 							}
 							
-							language = author.LANGUAGE;
+							language = author.language;
 							
 							var hasAccess = AEES.hasUserAccess(userId,language,accessType);
 							if (hasAccess) {
@@ -601,8 +612,15 @@ app.get("/auth/isAuthorized", function (req, res) {
 				} else {
 					data[0] = new resourceResponse(200,0,true);
 				}
-			} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/social-connect" || resource == "/authors/recommendation" || resource == '/coverimage-recommendation') {
+			} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/social-connect" || resource == "/authors/recommendation") {
 				data[0] = new resourceResponse(200,0,true);
+			} else if (resource == '/coverimage-recommendation'){
+				var isAEES = AEES.isAEE(userId);
+				if (!isAEES) {
+					data[0] = new resourceResponse(200,null,true);
+				} else {
+					data[0] = new resourceResponse(403,null,false);	
+				}
 			} else if (resource == "/blog-scraper") {
 				var isAEES = AEES.isAEE(userId);
 				if (isAEES) {
@@ -734,12 +752,12 @@ app.get("/auth/isAuthorized", function (req, res) {
 function isUserAuthorToPratilipi(index,data,userId,pratilipi,req) {
 	console.log('Checking if user author to pratilipi');
 	return new Promise( function (resolve,reject) {
-		authorService.getAuthor(pratilipi.AUTHOR_ID)
+		authorService.getAuthor(pratilipi.author.authorId)
 	    .then ((author) => {
 	        if (author && author.userId == userId) {
-	        	data[index] = new resourceResponse(200,pratilipi.ID,true);
+	        	data[index] = new resourceResponse(200,pratilipi.pratilipiId,true);
 	        } else {
-	        	data[index] = new resourceResponse(403,pratilipi.ID,false);
+	        	data[index] = new resourceResponse(403,pratilipi.pratilipiId,false);
 	        }
 	        resolve();
 	    }).catch( (err) => {
@@ -754,7 +772,7 @@ function isUserAuthorToPratilipi(index,data,userId,pratilipi,req) {
 function getAuthorByPratilipiId(pratilipi,req) {
 	return new Promise( function (resolve,reject) {
 		try{
-			return authorService.getAuthor(pratilipi.AUTHOR_ID)
+			return authorService.getAuthor(pratilipi.author.authorId)
 			.then ((author) => {
 			    if (author!=null) {
 			    	resolve(author);
