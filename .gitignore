@@ -9,8 +9,4 @@ package-lock.json
 dump.rdb
 lib/
 .DS_Store
-<<<<<<< HEAD
-=======
-
 /src
->>>>>>> gamma
