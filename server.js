@@ -100,7 +100,7 @@ app.use((request, response, next) => {
 			resource = "/library";
 		} else if ( resource == "/report/v1.0/report" ) {
 			resource = "/report";
-		} else if (resource == "/notification/list" || resource == "/notification" ) {
+		} else if (resource == "/notification/list" || resource == "/notification" || resource == "/notification/batch" ) {
 			resource = "/notifications";
 		} else if (resource == "/init/v1.0/list" || resource == "/init/v1.0/init" ) {
 			resource = "/init";
