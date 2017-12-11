@@ -40,7 +40,7 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
         '/user/register','/user/login','/user/login/facebook','/user/login/google','/user/verification',
         '/user/email','/user/passwordupdate','/user','/user/logout','/authors/recommendation',
 	'/pratilipi/content/batch','/pratilipi/content/chapter/add','/pratilipi/content/chapter/delete',
-	'/pratilipi/content/index','/pratilipi/content','/coverimage-recommendation',
+	'/pratilipi/content/index','/pratilipi/content','/coverimage-recommendation','/growthjava',
 	'/report','/init/v1.0/list','/init/v1.0/init','/init'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 
@@ -139,6 +139,8 @@ app.use((request, response, next) => {
 			if (request.query.userId != undefined && request.query.userId != 0) {
 				isPathMapped = true;
 			}
+		} else if (resource == '/growthjava/pratilipis/metadata') {
+			resource = '/growthjava';
 		} else if (resource == '/coverimage-recommendation/cover/select' || resource == '/coverimage-recommendation/cover') {
 			resource = '/coverimage-recommendation';
 		}
@@ -267,7 +269,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 	   	|| ( resource == '/notifications' && method == 'GET' && resourceIds == null )
 	   	|| ( resource == '/init' && method == 'GET' && resourceIds == null ) 
 	   	|| ( resource == '/report' && method == 'POST' && resourceIds == null )
-	   	|| ( (resource == '/authors' || resource == '/pratilipis') && method == 'GET' && resourceIds == null ) 
+	   	|| ( (resource == '/authors' || resource == '/pratilipis') && method == 'GET' && resourceIds == null )
+	    	|| resource == '/growthjava'
 	   	|| resource == '/coverimage-recommendation') {
 		resourceIds = "0";
 		resources = [];
@@ -608,6 +611,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 					data[0] = new resourceResponse(200,0,true);
 				}
 			} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/social-connect" || resource == "/authors/recommendation") {
+				data[0] = new resourceResponse(200,0,true);
+			} else if (resource == '/growthjava') {
 				data[0] = new resourceResponse(200,0,true);
 			} else if (resource == '/coverimage-recommendation'){
 				var isAEES = AEES.isAEE(userId);
