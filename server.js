@@ -41,7 +41,7 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
         '/user/email','/user/passwordupdate','/user','/user/logout','/authors/recommendation',
 	'/pratilipi/content/batch','/pratilipi/content/chapter/add','/pratilipi/content/chapter/delete',
 	'/pratilipi/content/index','/pratilipi/content','/coverimage-recommendation',
-	'/report','/init/v1.0/list','/init/v1.0/init','/init'];
+	'/report','/init','/admins/users/*'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 
 var AEES = UserAccessList.AEES;
@@ -717,6 +717,12 @@ app.get("/auth/isAuthorized", function (req, res) {
 						}
 						
 					}
+				}
+			} else if (resource == "/users/v2.0/admins/users/*") {
+				if (method == "DELETE" && AEES.isAEE(userId)) {
+					data[0] = new resourceResponse(200,userId,true);
+				} else {
+					data[0] = new resourceResponse(403,userId,false);
 				}
 			} else {
 				data[0] = new resourceResponse(403,null,false);
