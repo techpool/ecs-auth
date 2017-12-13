@@ -13,6 +13,7 @@ AccessType = {
 	PRATILIPI_READ_CONTENT 			: "View Pratilipi Content",
 	PRATILIPI_UPDATE_CONTENT 		: "Update Pratilipi Content",
 	PRATILIPI_DELETE 				: "Delete Pratilipi",
+	PRATILIPI_READ_DRAFT_CONTENT    : "View Pratilipi Drafted Data",
 	AUTHOR_LIST 					: "List Author",
 	AUTHOR_ADD 						: "Add Author",
 	AUTHOR_UPDATE 					: "Update Author",

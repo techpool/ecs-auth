@@ -224,6 +224,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	var state = req.query.state;
 	var resourceType = null;
 	var validationType = req.query.validationType;
+	var slug = req.query.slug;
 	
 	if (resource == '/userpratilipi/reviews') {
 		resourceIds = req.query.pratilipiId;
@@ -267,7 +268,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	   	|| ( resource == '/notifications' && method == 'GET' && resourceIds == null )
 	   	|| ( resource == '/init' && method == 'GET' && resourceIds == null ) 
 	   	|| ( resource == '/report' && method == 'POST' && resourceIds == null )
-	   	|| ( (resource == '/authors' || resource == '/pratilipis') && method == 'GET' && resourceIds == null ) 
+	   	|| ( (resource == '/authors' || resource == '/pratilipis') && method == 'GET' && resourceIds == null) 
 	   	|| resource == '/coverimage-recommendation') {
 		resourceIds = "0";
 		resources = [];
@@ -276,10 +277,10 @@ app.get("/auth/isAuthorized", function (req, res) {
 	// Validate query parameters
 	if (!validResources.includes(resource) 
 		|| !validMethods.includes(method)  
-		|| (method != 'POST' && resourceIds == null) 
+		|| (method != 'POST' && resourceIds == null && slug == null) 
 		|| ((resource == "/pratilipis" || resource == "/authors") && method == 'POST' && language == null)) {
 		res.setHeader('content-type', 'application/json');
-		res.status(400).send( JSON.stringify(new errorResponse("Invalid parameters")));
+		res.status(400).send( JSON.stringify(new errorResponse("1 Invalid parameters")));
 		req.log.push({"message":"Invalid parameters"});
 		console.log(JSON.stringify({"log":req.log}));
 		return;
@@ -291,11 +292,12 @@ app.get("/auth/isAuthorized", function (req, res) {
 		|| ((resource == "/userpratilipi/reviews" || resource == "/reviews") && method == "POST")){
 		if( resourceIds == undefined ) {
 			res.setHeader('content-type', 'application/json');
-			res.status( 400 ).send( JSON.stringify( new errorResponse( "Invalid parameters" ) ) );
+			res.status( 400 ).send( JSON.stringify( new errorResponse( "2 Invalid parameters" ) ) );
 			req.log.push({"message":"Invalid parameters"});
 			console.log(JSON.stringify({"log":req.log}));
 			return;
 		}
+		
 		resourceIds = resourceIds.split(',').map(Number);
 	}
 
@@ -342,31 +344,61 @@ app.get("/auth/isAuthorized", function (req, res) {
 		
 		req.log.push("Fetching resources for ",resourceIds,resourceType);
 		
-		if (resourceIds != 0 && (resource == "/pratilipis" && method != "POST" && resourceType == null) || ((resource == "/reviews" || resource == "/userpratilipi/reviews") && method == "POST")) {
-			return pratilipiService
-			.getPratilipis(resourceIds,accessToken)
-			.then ((pratilipis) => {
-				resources = pratilipis;
-				return;
-			})
-			.catch( ( err ) => {
-		 		var data = 'Error in getting pratilipi!';
-		 		req.log.push(err);
-		 		return;
-		 	});
-		} else if (resourceIds != 0 && (resource == "/authors" && (method == "PATCH" || method == "DELETE")) || (resource == "/pratilipis" && resourceType == "AUTHOR")
+		if ((resource == "/pratilipis" && method != "POST" && resourceType == null) || ((resource == "/reviews" || resource == "/userpratilipi/reviews") && method == "POST")) {
+			if (slug) {
+				return pratilipiService
+				.getPratilipisBySlug(slug,accessToken)
+				.then ((pratilipis) => {
+					resources = pratilipis;
+					return;
+				})
+				.catch( ( err ) => {
+			 		var data = 'Error in getting pratilipi!';
+			 		req.log.push(err);
+			 		return;
+			 	});
+			} else if (resourceIds != 0) {
+				return pratilipiService
+				.getPratilipis(resourceIds,accessToken)
+				.then ((pratilipis) => {
+					resources = pratilipis;
+					return;
+				})
+				.catch( ( err ) => {
+			 		var data = 'Error in getting pratilipi!';
+			 		req.log.push(err);
+			 		return;
+			 	});
+			}
+			
+		} else if ((resource == "/authors" && (method == "PATCH" || method == "DELETE")) || (resource == "/pratilipis" && resourceType == "AUTHOR")
 				|| (resource == "/follows" && method == "POST" )) {
-			return authorService
-			.getAuthors(resourceIds)
-			.then ((authors) => {
-				resources = authors;
-				return;
-			})
-			.catch( ( err ) => {
-		 		var data = 'Error in getting authors!';
-		 		req.log.push(err);
-		 		return;
-		 	});
+			if (slug) {
+				return authorService
+				.getAuthorsBySlug(slug)
+				.then ((authors) => {
+					resources = authors;
+					return;
+				})
+				.catch( ( err ) => {
+			 		var data = 'Error in getting authors!';
+			 		req.log.push(err);
+			 		return;
+			 	});
+			} else if (resourceIds != 0) {
+				return authorService
+				.getAuthors(resourceIds)
+				.then ((authors) => {
+					resources = authors;
+					return;
+				})
+				.catch( ( err ) => {
+			 		var data = 'Error in getting authors!';
+			 		req.log.push(err);
+			 		return;
+			 	});
+			}
+			
 		} else if (((resource == "/reviews" || resource == "/userpratilipi/reviews") && (method == "PATCH" || method == "DELETE"))) {
 			return reviewService.getReviews(resourceIds, userId)
 			.then((reviews) => {
@@ -441,10 +473,14 @@ app.get("/auth/isAuthorized", function (req, res) {
 						for (i = 0; i < resources.length; i++) {
 							var pratilipi = resources[i];
 							if (pratilipi != null) {
-								
+
 								var accessType=null;
 								if (method == "GET") {
-									accessType = AccessType.PRATILIPI_READ_CONTENT;
+									if (pratilipi.state == 'DRAFTED') {
+										accessType = AccessType.PRATILIPI_READ_DRAFT_CONTENT;
+									} else {
+										accessType = AccessType.PRATILIPI_READ_CONTENT;
+									}
 								} else if (method == "PUT" || method == "PATCH" ) {
 									accessType = AccessType.PRATILIPI_UPDATE;
 								} else if (method == "DELETE") {
@@ -453,9 +489,11 @@ app.get("/auth/isAuthorized", function (req, res) {
 								
 								language = pratilipi.language;
 								
+								console.log(pratilipi,language,accessType);
+								
 								var hasAccess = AEES.hasUserAccess(userId,language,accessType);
 								if (hasAccess) {
-									if (!AEES.isAEE(userId) && (accessType == AccessType.PRATILIPI_UPDATE || accessType == AccessType.PRATILIPI_DELETE)) {
+									if (!AEES.isAEE(userId) && (accessType == AccessType.PRATILIPI_UPDATE || accessType == AccessType.PRATILIPI_DELETE || accessType == AccessType.PRATILIPI_READ_DRAFT_CONTENT)) {
 										ownerPromises.push(isUserAuthorToPratilipi(i,data,userId,pratilipi, req));
 									} else {
 										data[i] = new resourceResponse(200,pratilipi.pratilipiId,true)
@@ -749,6 +787,7 @@ function isUserAuthorToPratilipi(index,data,userId,pratilipi,req) {
 	return new Promise( function (resolve,reject) {
 		authorService.getAuthor(pratilipi.author.authorId)
 	    .then ((author) => {
+	    	console.log(author,author.userId, userId);
 	        if (author && author.userId == userId) {
 	        	data[index] = new resourceResponse(200,pratilipi.pratilipiId,true);
 	        } else {
