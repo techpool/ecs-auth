@@ -18,6 +18,7 @@ var serviceHeaders = {
   };
 
 function Author (stage) {
+	this.stage = stage;
 	if (stage == 'local') {
 		this.url = 'http://localhost:8095/authors';
 	} else {
@@ -29,50 +30,107 @@ function Author (stage) {
 Author.prototype.getAuthors = function (ids) {
 	console.log('Getting authors for: ',ids);
 	var that = this;
-	return new Promise(function (resolve, reject) {
-		var authorIds = ids.join();
-		console.log("The author ids are ", authorIds);
-		var url = that.url+"/meta_data?id="+authorIds;
-        var options = {
-          method: 'GET',
-          uri: url,
-          agent : agent,
-          json : true,
-          headers: serviceHeaders
-        };
-        httpPromise(options)
-        .then(data => {
-          resolve(data);
-        })
-        .catch(err => {
-		console.log('Error while getting authors',err);
-          reject(err);
-        });
-	});
+	if (this.stage == 'local') {
+		return new Promise(function (resolve, reject) {
+			var authors = [{
+				"authorId": 98765,
+				"userId": 12345,
+				"language": "HINDI"
+			}];
+			resolve(authors);
+		});
+	} else {
+		return new Promise(function (resolve, reject) {
+			var authorIds = ids.join();
+			var url = that.url+"/meta_data?id="+authorIds;
+	        var options = {
+	          method: 'GET',
+	          uri: url,
+	          agent : agent,
+	          json : true,
+	          headers: serviceHeaders
+	        };
+	        httpPromise(options)
+	        .then(data => {
+	          resolve(data);
+	        })
+	        .catch(err => {
+			console.log('Error while getting authors',err);
+	          reject(err);
+	        });
+		});
+	}
 }
 
 // get Author
 Author.prototype.getAuthor = function (id) {
 	console.log('Getting author for: ',id);
 	var that = this;
-	return new Promise(function (resolve, reject) {
-		var url = that.url+"/meta_data?id="+id;
-        var options = {
-          method: 'GET',
-          uri: url,
-          agent : agent,
-          json : true,
-          headers: serviceHeaders
-        };
-        httpPromise(options)
-        .then(data => {
-          resolve(data[0]);
-        })
-        .catch(err => {
-		console.log('Error while getting author',err);
-          reject(err);
-        });
-	});
+	if (this.stage == 'local') {
+		return new Promise(function (resolve, reject) {
+			var authors = {
+				"authorId": 98765,
+				"userId": 12345,
+				"language": "HINDI"
+			};
+			resolve(authors);
+		});
+	} else {
+		return new Promise(function (resolve, reject) {
+			var url = that.url+"/meta_data?id="+id;
+	        var options = {
+	          method: 'GET',
+	          uri: url,
+	          agent : agent,
+	          json : true,
+	          headers: serviceHeaders
+	        };
+	        httpPromise(options)
+	        .then(data => {
+	          resolve(data[0]);
+	        })
+	        .catch(err => {
+			console.log('Error while getting author',err);
+	          reject(err);
+	        });
+		});
+	}
+}
+
+
+// Get author by slug
+Author.prototype.getAuthorsBySlug = function (slug) {
+	console.log('Getting author for: ',slug);
+	var that = this;
+	if (this.stage == 'local') {
+		return new Promise(function (resolve, reject) {
+			var author = {
+				"authorId": 98765,
+				"userId": 12345,
+				"language": "HINDI"
+			};
+			resolve(author);
+		});
+	} else {
+		return new Promise(function (resolve, reject) {
+			var url = that.url+"?slug="+slug;
+	        var options = {
+	          method: 'GET',
+	          uri: url,
+	          agent : agent,
+	          json : true,
+	          headers: serviceHeaders
+	        };
+	        httpPromise(options)
+	        .then(data => {
+	          resolve(data);
+	        })
+	        .catch(err => {
+			console.log('Error while getting author',err);
+	          reject(err);
+	        });
+		});
+	}
 }
 
 module.exports = Author;
