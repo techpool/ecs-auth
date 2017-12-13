@@ -84,20 +84,20 @@ Pratilipi.prototype.getPratilipisBySlug = function (slug,accessToken) {
 	serviceHeaders['access-token'] = accessToken;
 	if (this.stage == 'local') {
 		return new Promise(function (resolve, reject) {
-			var pratilipis = [{
+			var pratilipis = {
 			    "pratilipiId": 12345,
 			    "title": "pratilipi",
 			    "titleEn": "pratilipi",
 			    "language": "HINDI",
 			    "author": {
-			        "authorId": 4567,
+			        "authorId": 98765,
 			        "name": "admin",
 			        "pageUrl": "/ad-min"
 			    },
 			    "pageUrl": "/ad-min/hi-pratilipi",
 			    "state": "DRAFTED",
 			    "listingDateMillis": 1490540595169
-			}];
+			};
 			resolve(pratilipis);
 		});
 	} else {
