@@ -104,12 +104,12 @@ Author.prototype.getAuthorsBySlug = function (slug) {
 	var that = this;
 	if (this.stage == 'local') {
 		return new Promise(function (resolve, reject) {
-			var authors = [{
+			var author = {
 				"authorId": 98765,
 				"userId": 12345,
 				"language": "HINDI"
-			}];
-			resolve(authors);
+			};
+			resolve(author);
 		});
 	} else {
 		return new Promise(function (resolve, reject) {
@@ -123,7 +123,7 @@ Author.prototype.getAuthorsBySlug = function (slug) {
 	        };
 	        httpPromise(options)
 	        .then(data => {
-	          resolve(data[0]);
+	          resolve(data);
 	        })
 	        .catch(err => {
 			console.log('Error while getting author',err);

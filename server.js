@@ -349,10 +349,11 @@ app.get("/auth/isAuthorized", function (req, res) {
 		
 		if ((resource == "/pratilipis" && method != "POST" && resourceType == null) || ((resource == "/reviews" || resource == "/userpratilipi/reviews") && method == "POST")) {
 			if (slug) {
+				resources = [];
 				return pratilipiService
 				.getPratilipisBySlug(slug,accessToken)
-				.then ((pratilipis) => {
-					resources = pratilipis;
+				.then ((pratilipi) => {
+					resources[0] = pratilipi;
 					return;
 				})
 				.catch( ( err ) => {
@@ -377,10 +378,11 @@ app.get("/auth/isAuthorized", function (req, res) {
 		} else if ((resource == "/authors" && (method == "PATCH" || method == "DELETE")) || (resource == "/pratilipis" && resourceType == "AUTHOR")
 				|| (resource == "/follows" && method == "POST" )) {
 			if (slug) {
+				resources = [];
 				return authorService
 				.getAuthorsBySlug(slug)
-				.then ((authors) => {
-					resources = authors;
+				.then ((author) => {
+					resources[0] = author;
 					return;
 				})
 				.catch( ( err ) => {
@@ -491,8 +493,6 @@ app.get("/auth/isAuthorized", function (req, res) {
 								}
 								
 								language = pratilipi.language;
-								
-								console.log(pratilipi,language,accessType);
 								
 								var hasAccess = AEES.hasUserAccess(userId,language,accessType);
 								if (hasAccess) {
@@ -796,7 +796,6 @@ function isUserAuthorToPratilipi(index,data,userId,pratilipi,req) {
 	return new Promise( function (resolve,reject) {
 		authorService.getAuthor(pratilipi.author.authorId)
 	    .then ((author) => {
-	    	console.log(author,author.userId, userId);
 	        if (author && author.userId == userId) {
 	        	data[index] = new resourceResponse(200,pratilipi.pratilipiId,true);
 	        } else {
