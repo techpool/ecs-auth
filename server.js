@@ -41,7 +41,8 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
         '/user/email','/user/passwordupdate','/user','/user/logout','/authors/recommendation',
 	'/pratilipi/content/batch','/pratilipi/content/chapter/add','/pratilipi/content/chapter/delete',
 	'/pratilipi/content/index','/pratilipi/content','/coverimage-recommendation',
-	'/report','/init/v1.0/list','/init/v1.0/init','/init'];
+	'/report','/init',
+	'/users/v2.0/admins/users/*','/admins/users'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 
 var AEES = UserAccessList.AEES;
@@ -100,7 +101,7 @@ app.use((request, response, next) => {
 			resource = "/library";
 		} else if ( resource == "/report/v1.0/report" ) {
 			resource = "/report";
-		} else if (resource == "/notification/list" || resource == "/notification" ) {
+		} else if (resource == "/notification/list" || resource == "/notification" || resource == "/notification/batch" ) {
 			resource = "/notifications";
 		} else if (resource == "/init/v1.0/list" || resource == "/init/v1.0/init" ) {
 			resource = "/init";
@@ -141,6 +142,8 @@ app.use((request, response, next) => {
 			}
 		} else if (resource == '/coverimage-recommendation/cover/select' || resource == '/coverimage-recommendation/cover') {
 			resource = '/coverimage-recommendation';
+		} else if (resource == '/users/v2.0/admins/users/*') {
+			resource = "/admins/users"
 		}
 		
 		request.query.originalResource = request.query.resource;
@@ -755,6 +758,12 @@ app.get("/auth/isAuthorized", function (req, res) {
 						}
 						
 					}
+				}
+			} else if (resource == "/admins/users") {
+				if (method == "DELETE" && AEES.isAEE(userId)) {
+					data[0] = new resourceResponse(200,userId,true);
+				} else {
+					data[0] = new resourceResponse(403,userId,false);
 				}
 			} else {
 				data[0] = new resourceResponse(403,null,false);
