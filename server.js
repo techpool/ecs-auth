@@ -41,7 +41,8 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
         '/user/email','/user/passwordupdate','/user','/user/logout','/authors/recommendation',
 	'/pratilipi/content/batch','/pratilipi/content/chapter/add','/pratilipi/content/chapter/delete',
 	'/pratilipi/content/index','/pratilipi/content','/coverimage-recommendation','/growthjava',
-	'/report','/init/v1.0/list','/init/v1.0/init','/init'];
+	'/report','/init',
+	'/users/v2.0/admins/users/*','/admins/users','/events/v2.0','/user/firebase-token'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 
 var AEES = UserAccessList.AEES;
@@ -118,7 +119,7 @@ app.use((request, response, next) => {
 		  || resource == "/blog-scraper/*/scrape"
 		  || resource == "/blog-scraper/search") {
 			resource = "/blog-scraper";
-		} else if (resource == "/event" || resource == "/event/list" || resource == "/event/pratilipi" || resource == "/image/event/banner") {
+		} else if (resource == "/event" || resource == "/event/list" || resource == "/event/pratilipi" || resource == "/image/event/banner" ||  resource == '/events/v2.0') {
 			resource = "/events";
 		} else if (resource == '/social-connect/access_token' 
 		|| resource == '/social-connect/contacts' 
@@ -133,7 +134,7 @@ app.use((request, response, next) => {
 		} else if (resource == '/user/email' || resource == '/user/passwordupdate' || resource == '/user/verification') {
 			resource = '/user'
 			request.query.validationType = "NONE";
-		} else if (resource == '/user' || resource == '/user/logout') {
+		} else if (resource == '/user' || resource == '/user/logout' || resource == '/user/firebase-token') {
 			resource = '/user'
 			request.query.validationType = "POSTLOGIN";
 			if (request.query.userId != undefined && request.query.userId != 0) {
@@ -143,6 +144,8 @@ app.use((request, response, next) => {
 			resource = '/growthjava';
 		} else if (resource == '/coverimage-recommendation/cover/select' || resource == '/coverimage-recommendation/cover') {
 			resource = '/coverimage-recommendation';
+		} else if (resource == '/users/v2.0/admins/users/*') {
+			resource = "/admins/users"
 		}
 		
 		request.query.originalResource = request.query.resource;
@@ -226,6 +229,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	var state = req.query.state;
 	var resourceType = null;
 	var validationType = req.query.validationType;
+	var slug = req.query.slug;
 	
 	if (resource == '/userpratilipi/reviews') {
 		resourceIds = req.query.pratilipiId;
@@ -261,7 +265,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		|| resource == "/search/trending_search" 
 		|| (resource == "/follows" && method != "POST")
 	   	|| resource == "/blog-scraper" 
-	   	|| (resource == "/events" && method == "GET" && resourceIds == null)
+	   	|| (resource == "/events" && method == "GET" && !resourceIds)
 	   	|| ( resource == "/library" )
 	   	|| ( resource == '/social-connect' )
 	   	|| ( resource == '/user' && method == "GET" && resourceIds == null)
@@ -270,19 +274,22 @@ app.get("/auth/isAuthorized", function (req, res) {
 	   	|| ( resource == '/init' && method == 'GET' && resourceIds == null ) 
 	   	|| ( resource == '/report' && method == 'POST' && resourceIds == null )
 	   	|| ( (resource == '/authors' || resource == '/pratilipis') && method == 'GET' && resourceIds == null )
-	    	|| resource == '/growthjava'
+	    || resource == '/growthjava'
 	   	|| resource == '/coverimage-recommendation') {
+	   	|| (resource == '/user' && method == 'GET' && resourceIds == null )) {
 		resourceIds = "0";
 		resources = [];
 	}
 	
+	console.log(resource,resourceIds,resources);
+	
 	// Validate query parameters
 	if (!validResources.includes(resource) 
 		|| !validMethods.includes(method)  
-		|| (method != 'POST' && resourceIds == null) 
+		|| (method != 'POST' && resourceIds == null && slug == null) 
 		|| ((resource == "/pratilipis" || resource == "/authors") && method == 'POST' && language == null)) {
 		res.setHeader('content-type', 'application/json');
-		res.status(400).send( JSON.stringify(new errorResponse("Invalid parameters")));
+		res.status(400).send( JSON.stringify(new errorResponse("1 Invalid parameters")));
 		req.log.push({"message":"Invalid parameters"});
 		console.log(JSON.stringify({"log":req.log}));
 		return;
@@ -294,11 +301,12 @@ app.get("/auth/isAuthorized", function (req, res) {
 		|| ((resource == "/userpratilipi/reviews" || resource == "/reviews") && method == "POST")){
 		if( resourceIds == undefined ) {
 			res.setHeader('content-type', 'application/json');
-			res.status( 400 ).send( JSON.stringify( new errorResponse( "Invalid parameters" ) ) );
+			res.status( 400 ).send( JSON.stringify( new errorResponse( "2 Invalid parameters" ) ) );
 			req.log.push({"message":"Invalid parameters"});
 			console.log(JSON.stringify({"log":req.log}));
 			return;
 		}
+		
 		resourceIds = resourceIds.split(',').map(Number);
 	}
 
@@ -344,32 +352,63 @@ app.get("/auth/isAuthorized", function (req, res) {
 	var resourcePromise = userIdPromise.then (function () {
 		
 		req.log.push("Fetching resources for ",resourceIds,resourceType);
-		
-		if (resourceIds != 0 && (resource == "/pratilipis" && method != "POST" && resourceType == null) || ((resource == "/reviews" || resource == "/userpratilipi/reviews") && method == "POST")) {
-			return pratilipiService
-			.getPratilipis(resourceIds,accessToken)
-			.then ((pratilipis) => {
-				resources = pratilipis;
-				return;
-			})
-			.catch( ( err ) => {
-		 		var data = 'Error in getting pratilipi!';
-		 		req.log.push(err);
-		 		return;
-		 	});
-		} else if (resourceIds != 0 && (resource == "/authors" && (method == "PATCH" || method == "DELETE")) || (resource == "/pratilipis" && resourceType == "AUTHOR")
+		if ((resource == "/pratilipis" && method != "POST" && resourceType == null) || ((resource == "/reviews" || resource == "/userpratilipi/reviews") && method == "POST")) {
+			if (slug) {
+				resources = [];
+				return pratilipiService
+				.getPratilipisBySlug(slug,accessToken)
+				.then ((pratilipi) => {
+					resources[0] = pratilipi;
+					return;
+				})
+				.catch( ( err ) => {
+			 		var data = 'Error in getting pratilipi!';
+			 		req.log.push(err);
+			 		return;
+			 	});
+			} else if (resourceIds != 0) {
+				return pratilipiService
+				.getPratilipis(resourceIds,accessToken)
+				.then ((pratilipis) => {
+					resources = pratilipis;
+					return;
+				})
+				.catch( ( err ) => {
+			 		var data = 'Error in getting pratilipi!';
+			 		req.log.push(err);
+			 		return;
+			 	});
+			}
+			
+		} else if ((resource == "/authors" && (method == "PATCH" || method == "DELETE")) || (resource == "/pratilipis" && resourceType == "AUTHOR")
 				|| (resource == "/follows" && method == "POST" )) {
-			return authorService
-			.getAuthors(resourceIds)
-			.then ((authors) => {
-				resources = authors;
-				return;
-			})
-			.catch( ( err ) => {
-		 		var data = 'Error in getting authors!';
-		 		req.log.push(err);
-		 		return;
-		 	});
+			if (slug) {
+				resources = [];
+				return authorService
+				.getAuthorsBySlug(slug)
+				.then ((author) => {
+					resources[0] = author;
+					return;
+				})
+				.catch( ( err ) => {
+			 		var data = 'Error in getting authors!';
+			 		req.log.push(err);
+			 		return;
+			 	});
+			} else if (resourceIds != 0) {
+				return authorService
+				.getAuthors(resourceIds)
+				.then ((authors) => {
+					resources = authors;
+					return;
+				})
+				.catch( ( err ) => {
+			 		var data = 'Error in getting authors!';
+			 		req.log.push(err);
+			 		return;
+			 	});
+			}
+			
 		} else if (((resource == "/reviews" || resource == "/userpratilipi/reviews") && (method == "PATCH" || method == "DELETE"))) {
 			return reviewService.getReviews(resourceIds, userId)
 			.then((reviews) => {
@@ -444,10 +483,14 @@ app.get("/auth/isAuthorized", function (req, res) {
 						for (i = 0; i < resources.length; i++) {
 							var pratilipi = resources[i];
 							if (pratilipi != null) {
-								
+
 								var accessType=null;
 								if (method == "GET") {
-									accessType = AccessType.PRATILIPI_READ_CONTENT;
+									if (pratilipi.state == 'DRAFTED') {
+										accessType = AccessType.PRATILIPI_READ_DRAFT_CONTENT;
+									} else {
+										accessType = AccessType.PRATILIPI_READ_CONTENT;
+									}
 								} else if (method == "PUT" || method == "PATCH" ) {
 									accessType = AccessType.PRATILIPI_UPDATE;
 								} else if (method == "DELETE") {
@@ -458,7 +501,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 								
 								var hasAccess = AEES.hasUserAccess(userId,language,accessType);
 								if (hasAccess) {
-									if (!AEES.isAEE(userId) && (accessType == AccessType.PRATILIPI_UPDATE || accessType == AccessType.PRATILIPI_DELETE)) {
+									if (!AEES.isAEE(userId) && (accessType == AccessType.PRATILIPI_UPDATE || accessType == AccessType.PRATILIPI_DELETE || accessType == AccessType.PRATILIPI_READ_DRAFT_CONTENT)) {
 										ownerPromises.push(isUserAuthorToPratilipi(i,data,userId,pratilipi, req));
 									} else {
 										data[i] = new resourceResponse(200,pratilipi.pratilipiId,true)
@@ -513,7 +556,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 								accessType = AccessType.AUTHOR_DELETE;
 							}
 							
-							language = author.LANGUAGE;
+							language = author.language;
 							
 							var hasAccess = AEES.hasUserAccess(userId,language,accessType);
 							if (hasAccess) {
@@ -722,6 +765,12 @@ app.get("/auth/isAuthorized", function (req, res) {
 						}
 						
 					}
+				}
+			} else if (resource == "/admins/users") {
+				if (method == "DELETE" && AEES.isAEE(userId)) {
+					data[0] = new resourceResponse(200,userId,true);
+				} else {
+					data[0] = new resourceResponse(403,userId,false);
 				}
 			} else {
 				data[0] = new resourceResponse(403,null,false);
