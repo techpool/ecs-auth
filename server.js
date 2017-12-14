@@ -42,7 +42,7 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
 	'/pratilipi/content/batch','/pratilipi/content/chapter/add','/pratilipi/content/chapter/delete',
 	'/pratilipi/content/index','/pratilipi/content','/coverimage-recommendation',
 	'/report','/init',
-	'/users/v2.0/admins/users/*','/admins/users'];
+	'/users/v2.0/admins/users/*','/admins/users','/events/v2.0'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 
 var AEES = UserAccessList.AEES;
@@ -119,7 +119,7 @@ app.use((request, response, next) => {
 		  || resource == "/blog-scraper/*/scrape"
 		  || resource == "/blog-scraper/search") {
 			resource = "/blog-scraper";
-		} else if (resource == "/event" || resource == "/event/list" || resource == "/event/pratilipi" || resource == "/image/event/banner") {
+		} else if (resource == "/event" || resource == "/event/list" || resource == "/event/pratilipi" || resource == "/image/event/banner" ||  resource == '/events/v2.0') {
 			resource = "/events";
 		} else if (resource == '/social-connect/access_token' 
 		|| resource == '/social-connect/contacts' 
@@ -263,7 +263,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		|| resource == "/search/trending_search" 
 		|| (resource == "/follows" && method != "POST")
 	   	|| resource == "/blog-scraper" 
-	   	|| (resource == "/events" && method == "GET" && resourceIds == null)
+	   	|| (resource == "/events" && method == "GET" && !resourceIds)
 	   	|| ( resource == "/library" )
 	   	|| ( resource == '/social-connect' )
 	   	|| ( resource == '/user' && method == "GET" && resourceIds == null)
@@ -276,6 +276,8 @@ app.get("/auth/isAuthorized", function (req, res) {
 		resourceIds = "0";
 		resources = [];
 	}
+	
+	console.log(resource,resourceIds,resources);
 	
 	// Validate query parameters
 	if (!validResources.includes(resource) 
