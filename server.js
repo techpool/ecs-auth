@@ -275,7 +275,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	   	|| ( resource == '/report' && method == 'POST' && resourceIds == null )
 	   	|| ( (resource == '/authors' || resource == '/pratilipis') && method == 'GET' && resourceIds == null )
 	    	|| resource == '/growthjava'
-	   	|| resource == '/coverimage-recommendation') {
+	   	|| resource == '/coverimage-recommendation'
 	   	|| (resource == '/user' && method == 'GET' && resourceIds == null )) {
 		resourceIds = "0";
 		resources = [];
