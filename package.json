@@ -4,7 +4,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "mocha"
+    "test": "mocha",
+    "sevice": "node server.js",
+    "worker": "node worker.js"
   },
   "dependencies": {
     "@google-cloud/datastore": "^1.0.0",
@@ -20,7 +22,8 @@
     "request": "2.81.0",
     "request-promise": "4.2.1",
     "co": "4.6.0",
-    "lodash": "4.17.4"
+    "lodash": "4.17.4",
+    "aws-sdk": "2.82.0"
   },
   "devDependencies": {
     "mocha": "3.4.2",
