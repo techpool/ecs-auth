@@ -48,6 +48,8 @@ function processMessage(message,receiptHandle) {
     		cacheUtil.del(accessTokens[i]);
     	}
     	deleteMessage(receiptHandle);
+    } else {
+    	deleteMessage(receiptHandle);
     }
 }
 
