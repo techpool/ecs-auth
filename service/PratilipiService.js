@@ -73,8 +73,6 @@ Pratilipi.prototype.getPratilipis = function (ids,accessToken) {
 	        });
 		});
 	}
-	
-	
 }
 
 // Get Pratilipis by slug

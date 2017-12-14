@@ -42,7 +42,7 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
 	'/pratilipi/content/batch','/pratilipi/content/chapter/add','/pratilipi/content/chapter/delete',
 	'/pratilipi/content/index','/pratilipi/content','/coverimage-recommendation',
 	'/report','/init',
-	'/users/v2.0/admins/users/*','/admins/users','/events/v2.0'];
+	'/users/v2.0/admins/users/*','/admins/users','/events/v2.0','/user/firebase-token'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
 
 var AEES = UserAccessList.AEES;
@@ -134,7 +134,7 @@ app.use((request, response, next) => {
 		} else if (resource == '/user/email' || resource == '/user/passwordupdate' || resource == '/user/verification') {
 			resource = '/user'
 			request.query.validationType = "NONE";
-		} else if (resource == '/user' || resource == '/user/logout') {
+		} else if (resource == '/user' || resource == '/user/logout' || resource == '/user/firebase-token') {
 			resource = '/user'
 			request.query.validationType = "POSTLOGIN";
 			if (request.query.userId != undefined && request.query.userId != 0) {
@@ -271,8 +271,9 @@ app.get("/auth/isAuthorized", function (req, res) {
 	   	|| ( resource == '/notifications' && method == 'GET' && resourceIds == null )
 	   	|| ( resource == '/init' && method == 'GET' && resourceIds == null ) 
 	   	|| ( resource == '/report' && method == 'POST' && resourceIds == null )
-	   	|| ( (resource == '/authors' || resource == '/pratilipis') && method == 'GET' && resourceIds == null) 
-	   	|| resource == '/coverimage-recommendation') {
+	   	|| ( (resource == '/authors' || resource == '/pratilipis') && method == 'GET' && resourceIds == null ) 
+	   	|| resource == '/coverimage-recommendation'
+	   	|| (resource == '/user' && method == 'GET' && resourceIds == null )) {
 		resourceIds = "0";
 		resources = [];
 	}
@@ -348,7 +349,6 @@ app.get("/auth/isAuthorized", function (req, res) {
 	var resourcePromise = userIdPromise.then (function () {
 		
 		req.log.push("Fetching resources for ",resourceIds,resourceType);
-		
 		if ((resource == "/pratilipis" && method != "POST" && resourceType == null) || ((resource == "/reviews" || resource == "/userpratilipi/reviews") && method == "POST")) {
 			if (slug) {
 				resources = [];
@@ -553,7 +553,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 								accessType = AccessType.AUTHOR_DELETE;
 							}
 							
-							language = author.LANGUAGE;
+							language = author.language;
 							
 							var hasAccess = AEES.hasUserAccess(userId,language,accessType);
 							if (hasAccess) {
