@@ -41,8 +41,8 @@ function receiveMessageCallback (err, data) {
 }
 
 function processMessage(message,receiptHandle) {
-	console.log("Recivied the message, need to act on this..!!!",message, message.name, receiptHandle);
-    if (message.name == 'USER.DELETE') {
+	console.log("Recivied the message, need to act on this..!!!",message, message.event, receiptHandle);
+    if (message.event == 'USER.DELETE') {
     	var accessTokens = message.message.accessToken; 
     	for (var i=0; i < accessTokens.length; i++) {
     		cacheUtil.deleteFromCache(accessTokens[i]);
