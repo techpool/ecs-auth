@@ -45,7 +45,7 @@ function processMessage(message,receiptHandle) {
     if (message.event == 'USER.DELETE') {
     	var accessTokens = message.message.accessToken; 
     	for (var i=0; i < accessTokens.length; i++) {
-    		cacheUtil.deleteFromCache(accessTokens[i]);
+    		cacheUtil.del(accessTokens[i]);
     	}
     	deleteMessage(receiptHandle);
     }
