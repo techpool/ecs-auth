@@ -18,26 +18,26 @@ var receiveMessageParams = {
 
 
 function getMessages() {
-	console.log("reading msgs");
-  sqs.receiveMessage(receiveMessageParams, receiveMessageCallback);
+	console.log("Polling for msgs...");
+	sqs.receiveMessage(receiveMessageParams, receiveMessageCallback);
 }
 
 function receiveMessageCallback (err, data) {
 	var message;
 	var temp;
 	var receiptHandle;
-  if (data && data.Messages && data.Messages.length > 0) {
+	if (data && data.Messages && data.Messages.length > 0) {
 	    for (var i=0; i < data.Messages.length; i++) {
 		      temp =  JSON.parse(data.Messages[i].Body);
 		      message = JSON.parse(temp.Message);
 		      receiptHandle = data.Messages[i].ReceiptHandle;
 		      processMessage(message,receiptHandle); 
 	    }
-  } 
+	} 
   
-  if (err) {
-	  console.log('Error while reading messages',err);
-  }
+	if (err) {
+		console.log('Error while reading messages',err);
+	}
 }
 
 function processMessage(message,receiptHandle) {
@@ -71,7 +71,7 @@ function SQS() {
 }
 
 SQS.prototype.init = function() {
-	setInterval(getMessages, 15000);
+	setInterval(getMessages, snsSqsConfig.POLL_SLEEP_TIME);
 }
 
 module.exports = SQS;
