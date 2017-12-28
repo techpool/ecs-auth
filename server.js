@@ -40,7 +40,7 @@ var validResources = ['/pratilipis','/authors','/recommendation/pratilipis','/se
         '/user/register','/user/login','/user/login/facebook','/user/login/google','/user/verification',
         '/user/email','/user/passwordupdate','/user','/user/logout','/authors/recommendation',
 	'/pratilipi/content/batch','/pratilipi/content/chapter/add','/pratilipi/content/chapter/delete',
-	'/pratilipi/content/index','/pratilipi/content','/coverimage-recommendation','/growthjava',
+	'/pratilipi/content/index','/pratilipi/content','/coverimage-recommendation','/template-engine','/growthjava',
 	'/report','/init',
 	'/users/v2.0/admins/users/*','/admins/users','/events/v2.0','/user/firebase-token'];
 var validMethods   = ['POST','GET','PUT','PATCH','DELETE'];
@@ -142,6 +142,8 @@ app.use((request, response, next) => {
 			}
 		} else if (resource == '/growthjava/pratilipis/metadata') {
 			resource = '/growthjava';
+		} else if (resource == '/template-engine/mobile/homescreen/widgets') {
+			resource = '/template-engine';
 		} else if (resource == '/coverimage-recommendation/cover/select' || resource == '/coverimage-recommendation/cover') {
 			resource = '/coverimage-recommendation';
 		} else if (resource == '/users/v2.0/admins/users/*') {
@@ -275,6 +277,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	   	|| ( resource == '/report' && method == 'POST' && resourceIds == null )
 	   	|| ( (resource == '/authors' || resource == '/pratilipis') && method == 'GET' && resourceIds == null )
 	    	|| resource == '/growthjava'
+	    	|| resource == '/template-engine'
 	   	|| resource == '/coverimage-recommendation'
 	   	|| (resource == '/user' && method == 'GET' && resourceIds == null )) {
 		resourceIds = "0";
@@ -657,6 +660,13 @@ app.get("/auth/isAuthorized", function (req, res) {
 				data[0] = new resourceResponse(200,0,true);
 			} else if (resource == '/growthjava') {
 				data[0] = new resourceResponse(200,0,true);
+			} else if (resource == '/template-engine'){
+				var isAEES = AEES.isAEE(userId);
+				if (!isAEES) {
+					data[0] = new resourceResponse(200,null,true);
+				} else {
+					data[0] = new resourceResponse(403,null,false);	
+				}
 			} else if (resource == '/coverimage-recommendation'){
 				var isAEES = AEES.isAEE(userId);
 				if (!isAEES) {
