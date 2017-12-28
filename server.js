@@ -277,6 +277,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 	   	|| ( resource == '/report' && method == 'POST' && resourceIds == null )
 	   	|| ( (resource == '/authors' || resource == '/pratilipis') && method == 'GET' && resourceIds == null )
 	    	|| resource == '/growthjava'
+	    	|| resource == '/template-engine'
 	   	|| resource == '/coverimage-recommendation'
 	   	|| (resource == '/user' && method == 'GET' && resourceIds == null )) {
 		resourceIds = "0";
@@ -659,6 +660,13 @@ app.get("/auth/isAuthorized", function (req, res) {
 				data[0] = new resourceResponse(200,0,true);
 			} else if (resource == '/growthjava') {
 				data[0] = new resourceResponse(200,0,true);
+			} else if (resource == '/template-engine'){
+				var isAEES = AEES.isAEE(userId);
+				if (!isAEES) {
+					data[0] = new resourceResponse(200,null,true);
+				} else {
+					data[0] = new resourceResponse(403,null,false);	
+				}
 			} else if (resource == '/coverimage-recommendation'){
 				var isAEES = AEES.isAEE(userId);
 				if (!isAEES) {
