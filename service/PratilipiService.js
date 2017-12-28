@@ -100,12 +100,14 @@ Pratilipi.prototype.getPratilipisBySlug = function (slug,accessToken) {
 		});
 	} else { 
 		return new Promise(function (resolve, reject) {
-			var url = that.url+"?slug="+slug;
+			var url = that.url;
 	        var options = {
 	          method: 'GET',
 	          uri: url,
+	          qs: {
+	          	slug:slug
+	          },
 	          agent : agent,
-		  encoding: 'utf-8',
 	          json : true,
 	          headers: serviceHeaders
 	        };
