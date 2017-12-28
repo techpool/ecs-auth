@@ -98,13 +98,14 @@ Pratilipi.prototype.getPratilipisBySlug = function (slug,accessToken) {
 			};
 			resolve(pratilipis);
 		});
-	} else {
+	} else { 
 		return new Promise(function (resolve, reject) {
 			var url = that.url+"?slug="+slug;
 	        var options = {
 	          method: 'GET',
 	          uri: url,
 	          agent : agent,
+		  encoding: 'utf-8',
 	          json : true,
 	          headers: serviceHeaders
 	        };
