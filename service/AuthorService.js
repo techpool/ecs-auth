@@ -113,10 +113,13 @@ Author.prototype.getAuthorsBySlug = function (slug) {
 		});
 	} else {
 		return new Promise(function (resolve, reject) {
-			var url = that.url+"?slug="+slug;
+			var url = that.url;
 	        var options = {
 	          method: 'GET',
 	          uri: url,
+	          qs: {
+	          	slug:slug
+	          },
 	          agent : agent,
 	          json : true,
 	          headers: serviceHeaders
