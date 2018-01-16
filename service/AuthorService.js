@@ -1,3 +1,5 @@
+var logger = require( '../lib/logger.js' );
+
 var http = require('http');
 var https = require('https');
 var httpPromise = require('request-promise');
@@ -28,7 +30,7 @@ function Author (stage) {
 
 // get Authors
 Author.prototype.getAuthors = function (ids) {
-	console.log('Getting authors for: ',ids);
+	logger.info('Getting authors for: ',ids);
 	var that = this;
 	if (this.stage == 'local') {
 		return new Promise(function (resolve, reject) {
@@ -55,7 +57,7 @@ Author.prototype.getAuthors = function (ids) {
 	          resolve(data);
 	        })
 	        .catch(err => {
-			console.log('Error while getting authors',err);
+			logger.error('Error while getting authors',err);
 	          reject(err);
 	        });
 		});
@@ -64,7 +66,7 @@ Author.prototype.getAuthors = function (ids) {
 
 // get Author
 Author.prototype.getAuthor = function (id) {
-	console.log('Getting author for: ',id);
+	logger.info('Getting author for: ',id);
 	var that = this;
 	if (this.stage == 'local') {
 		return new Promise(function (resolve, reject) {
@@ -90,7 +92,7 @@ Author.prototype.getAuthor = function (id) {
 	          resolve(data[0]);
 	        })
 	        .catch(err => {
-			console.log('Error while getting author',err);
+			logger.error('Error while getting author',err);
 	          reject(err);
 	        });
 		});
@@ -100,7 +102,7 @@ Author.prototype.getAuthor = function (id) {
 
 // Get author by slug
 Author.prototype.getAuthorsBySlug = function (slug) {
-	console.log('Getting author for: ',slug);
+	logger.info('Getting author for: ',slug);
 	var that = this;
 	if (this.stage == 'local') {
 		return new Promise(function (resolve, reject) {
@@ -129,7 +131,7 @@ Author.prototype.getAuthorsBySlug = function (slug) {
 	          resolve(data);
 	        })
 	        .catch(err => {
-			console.log('Error while getting author',err);
+			logger.error('Error while getting author',err);
 	          reject(err);
 	        });
 		});

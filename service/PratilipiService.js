@@ -1,3 +1,5 @@
+var logger = require( '../lib/logger.js' );
+
 var http = require('http');
 var https = require('https');
 var httpPromise = require('request-promise');
@@ -31,7 +33,7 @@ function Pratilipi (stage) {
 
 //get Pratilipis
 Pratilipi.prototype.getPratilipis = function (ids,accessToken) {
-	console.log('Getting pratilipis for: ',ids);
+	logger.info('Getting pratilipis for: ',ids);
 	var that = this;
 	serviceHeaders['access-token'] = accessToken;
 	if (this.stage == 'local') {
@@ -68,7 +70,7 @@ Pratilipi.prototype.getPratilipis = function (ids,accessToken) {
 	          resolve(data);
 	        })
 	        .catch(err => {
-			console.log('Error while getting pratilipis',err);
+			logger.error('Error while getting pratilipis',err);
 	          reject(err);
 	        });
 		});
@@ -77,7 +79,7 @@ Pratilipi.prototype.getPratilipis = function (ids,accessToken) {
 
 // Get Pratilipis by slug
 Pratilipi.prototype.getPratilipisBySlug = function (slug,accessToken) {
-	console.log('Getting pratilipis for: ',slug);
+	logger.info('Getting pratilipis for: ',slug);
 	var that = this;
 	serviceHeaders['access-token'] = accessToken;
 	if (this.stage == 'local') {
@@ -116,7 +118,7 @@ Pratilipi.prototype.getPratilipisBySlug = function (slug,accessToken) {
 	          resolve(data);
 	        })
 	        .catch(err => {
-			console.log('Error while getting pratilipis',err);
+			logger.error('Error while getting pratilipis',err);
 	          reject(err);
 	        });
 		});

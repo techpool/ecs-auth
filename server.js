@@ -1,6 +1,6 @@
 // Imports
 var express = require('express');
-var logger = require('morgan');
+var morgan = require('morgan');
 var url = require('url')
 var co  = require('co');
 
@@ -19,6 +19,8 @@ const ReviewService      = require('./service/ReviewService');
 const CommentService     = require('./service/CommentService');
 const UserAccessList     = require('./config/UserAccessUtil.js');
 const AccessType         = require('./config/AccessType.js').AccessType;
+
+const logger = require( './lib/logger.js' );
 
 //const cacheUtility = require('./lib/CacheUtility.js')({
 // 	port : config.REDIS_HOST_PORT,
@@ -60,7 +62,8 @@ app.get("/health", function (req, res) {
 	res.status("200").send(message);
 });
 
-app.use(logger('short'));
+app.use(morgan('short'));
+app.use( logger.logger( 'auth' ) );
 
 // for initializing log object
 app.use((request, response, next) => {
@@ -201,19 +204,19 @@ app.delete("/auth/accessToken", function(req, res){
 	 			req.log.push("successfully deleted access token from cache ");
 	 			res.status(200).send(JSON.stringify({"message":"Successfully deleted"}));
 	 			req.log.push({"message":"Successfully deleted"});
-				console.log(JSON.stringify({"log":req.log}));
+				logger.info(JSON.stringify({"log":req.log}));
 	 		})
 	 		.catch((err) => {
 	 			req.log.push("Error while deleting access token from cache " + JSON.stringify(err,null,4));
 	 			res.status(500).send(JSON.stringify(new errorResponse('Some exception occured at the server.')));
 	 			req.log.push({"message":"Some exception occured at the server."});
-				console.log(JSON.stringify({"log":req.log}));
+				logger.error(JSON.stringify({"log":req.log}));
 	 		});
 	 		
 	} else {
 		res.status(400).send( JSON.stringify(new errorResponse("Invalid parameters")));
 		req.log.push({"message":"Invalid parameters."});
-		console.log(JSON.stringify({"log":req.log}));
+		logger.error(JSON.stringify({"log":req.log}));
 	}
 });
 
@@ -284,7 +287,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		resources = [];
 	}
 	
-	console.log(resource,resourceIds,resources);
+	logger.info(resource,resourceIds,resources);
 	
 	// Validate query parameters
 	if (!validResources.includes(resource) 
@@ -294,7 +297,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 		res.setHeader('content-type', 'application/json');
 		res.status(400).send( JSON.stringify(new errorResponse("1 Invalid parameters")));
 		req.log.push({"message":"Invalid parameters"});
-		console.log(JSON.stringify({"log":req.log}));
+		logger.error(JSON.stringify({"log":req.log}));
 		return;
 	}
 	
@@ -306,7 +309,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 			res.setHeader('content-type', 'application/json');
 			res.status( 400 ).send( JSON.stringify( new errorResponse( "2 Invalid parameters" ) ) );
 			req.log.push({"message":"Invalid parameters"});
-			console.log(JSON.stringify({"log":req.log}));
+			logger.error(JSON.stringify({"log":req.log}));
 			return;
 		}
 		
@@ -341,7 +344,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 				res.setHeader('content-type', 'application/json');
 				res.status(400).send( JSON.stringify(new errorResponse("Access-Token or User-Id are required in request header")));
 				req.log.push({"message":"Access-Token or User-Id are required in request header"});
-				console.log(JSON.stringify({"log":req.log}));
+				logger.error(JSON.stringify({"log":req.log}));
 				return;
 			} else {
 				resolve();
@@ -722,7 +725,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 					data[0] = new resourceResponse(200,null,true);
 				}
 			} else if (resource == "/user") {
-				//console.log(method,validationType,userId,req.query.userId);
+				//logger.info(method,validationType,userId,req.query.userId);
 				if (method == "POST") {
 					
 					if (validationType == "PRELOGIN" && userId != 0) {
@@ -799,17 +802,17 @@ app.get("/auth/isAuthorized", function (req, res) {
 		}
 		res.status(200).send(JSON.stringify(new isAuthorizedResponse(resource,method,data)));
 		req.log.push(new isAuthorizedResponse(resource,method,data));
-		console.log(JSON.stringify({"log":req.log}));
+		logger.info(JSON.stringify({"log":req.log}));
 	})
 	.catch( function( error ) {
-		console.log(error);
-		console.log(req.log);
+		logger.error(error);
+		logger.error(req.log);
 	});
 
 });
 
 function isUserAuthorToPratilipi(index,data,userId,pratilipi,req) {
-	console.log('Checking if user author to pratilipi');
+	logger.info('Checking if user author to pratilipi');
 	return new Promise( function (resolve,reject) {
 		authorService.getAuthor(pratilipi.author.authorId)
 	    .then ((author) => {
@@ -880,7 +883,7 @@ var server = app.listen(app.get('port'), function () {
 	
    var host = server.address().address
    var port = server.address().port
-   console.log("The service running on "+host+":"+port);
+   logger.info("The service running on "+host+":"+port);
 });
 
 
