@@ -142,7 +142,7 @@ app.use((request, response, next) => {
 			}
 		} else if (resource == '/growthjava/pratilipis/metadata') {
 			resource = '/growthjava';
-		} else if (resource == '/template-engine/mobile/homescreen/widgets') {
+		} else if (resource == '/template-engine/*') {
 			resource = '/template-engine';
 		} else if (resource == '/coverimage-recommendation/cover/select' || resource == '/coverimage-recommendation/cover') {
 			resource = '/coverimage-recommendation';
