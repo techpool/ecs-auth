@@ -814,7 +814,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 function isUserAuthorToPratilipi(index,data,userId,pratilipi,req) {
 	logger.info('Checking if user author to pratilipi');
 	return new Promise( function (resolve,reject) {
-		authorService.getAuthor(pratilipi.author.authorId)
+		authorService.getAuthor(pratilipi.authorId)
 	    .then ((author) => {
 	        if (author && author.userId == userId) {
 	        	data[index] = new resourceResponse(200,pratilipi.pratilipiId,true);
@@ -834,7 +834,7 @@ function isUserAuthorToPratilipi(index,data,userId,pratilipi,req) {
 function getAuthorByPratilipiId(pratilipi,req) {
 	return new Promise( function (resolve,reject) {
 		try{
-			return authorService.getAuthor(pratilipi.author.authorId)
+			return authorService.getAuthor(pratilipi.authorId)
 			.then ((author) => {
 			    if (author!=null) {
 			    	resolve(author);

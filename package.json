@@ -28,7 +28,9 @@
   "devDependencies": {
     "mocha": "3.4.2",
     "chai": "4.0.2",
-    "chai-http": "3.0.0"
+    "chai-http": "3.0.0",
+    "winston": "~2",
+    "moment-timezone": "~0"
   },
   "author": "Giridhar"
 }
