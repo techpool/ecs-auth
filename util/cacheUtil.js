@@ -1,3 +1,5 @@
+var logger = require( '../lib/logger.js' );
+
 var config = require( './../config/main' )[ process.env.STAGE || 'local'];
 const cacheUtility = require('./../lib/CacheUtility.js')({
  	port : config.REDIS_HOST_PORT,
@@ -11,12 +13,12 @@ function add(key, value) {
 	return new Promise (function (resolve,reject) {
 	 	cacheUtility.insert( key, value )
 	 	.then(function(){
-	 		console.log("Successfully added to cache!!!");
+	 		logger.info("Successfully added to cache!!!");
 	 		resolve();
 	 	})
 	 	.catch ((err) => {
-	 		console.log("Error while adding to cache");
-	 		console.log(err);
+	 		logger.error("Error while adding to cache");
+	 		logger.error(err);
 	        reject();  
 	 	});
 	});
@@ -30,8 +32,8 @@ function get (key) {
 	 		resolve(data);
 	 	})
 	 	.catch ((err) => {
-	 		console.log("Error while getting from cache");
-	 		console.log(err);
+	 		logger.error("Error while getting from cache");
+	 		logger.error(err);
 	        reject();  
 	 	});
 	});
@@ -41,12 +43,12 @@ function del (key) {
 	return new Promise (function (resolve,reject) {
 	 	cacheUtility.delete( key )
 	 	.then( function(){
-	 		console.log("Successfully delete from cache!!!");
+	 		logger.info("Successfully delete from cache!!!");
 	 		resolve();
 	 	})
 	 	.catch ((err) => {
-	 		console.log("Error while deleting from cache");
-	 		console.log(err);
+	 		logger.error("Error while deleting from cache");
+	 		logger.error(err);
 	        reject();  
 	 	});
 	});
