@@ -43,11 +43,7 @@ Pratilipi.prototype.getPratilipis = function (ids,accessToken) {
 			    "title": "pratilipi",
 			    "titleEn": "pratilipi",
 			    "language": "HINDI",
-			    "author": {
-			        "authorId": 98765,
-			        "name": "admin",
-			        "pageUrl": "/ad-min"
-			    },
+			    "authorId": 98765,
 			    "pageUrl": "/ad-min/hi-pratilipi",
 			    "state": "DRAFTED",
 			    "listingDateMillis": 1490540595169
@@ -57,7 +53,7 @@ Pratilipi.prototype.getPratilipis = function (ids,accessToken) {
 	} else {
 		return new Promise(function (resolve, reject) {
 			var pratilipiIds = ids.join();
-			var url = that.url+"?id="+pratilipiIds;
+			var url = that.url+"/metadata?id="+pratilipiIds;
 	        var options = {
 	          method: 'GET',
 	          uri: url,
@@ -89,11 +85,7 @@ Pratilipi.prototype.getPratilipisBySlug = function (slug,accessToken) {
 			    "title": "pratilipi",
 			    "titleEn": "pratilipi",
 			    "language": "HINDI",
-			    "author": {
-			        "authorId": 98765,
-			        "name": "admin",
-			        "pageUrl": "/ad-min"
-			    },
+			    "authorId": 98765,
 			    "pageUrl": "/ad-min/hi-pratilipi",
 			    "state": "DRAFTED",
 			    "listingDateMillis": 1490540595169
@@ -105,7 +97,7 @@ Pratilipi.prototype.getPratilipisBySlug = function (slug,accessToken) {
 			var url = that.url;
 	        var options = {
 	          method: 'GET',
-	          uri: url,
+	          uri: url+'/metadata',
 	          qs: {
 	          	slug:slug
 	          },

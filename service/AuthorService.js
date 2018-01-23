@@ -118,7 +118,7 @@ Author.prototype.getAuthorsBySlug = function (slug) {
 			var url = that.url;
 	        var options = {
 	          method: 'GET',
-	          uri: url,
+	          uri: url+'/meta_data',
 	          qs: {
 	          	slug:slug
 	          },
