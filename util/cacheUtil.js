@@ -11,7 +11,7 @@ const cacheUtility = require('./../lib/CacheUtility.js')({
 
 function add(key, value) {
 	return new Promise (function (resolve,reject) {
-	 	cacheUtility.insert( key, value )
+	 	cacheUtility.insert( key, value, 172800)
 	 	.then(function(){
 	 		logger.info("Successfully added to cache!!!");
 	 		resolve();
@@ -19,7 +19,7 @@ function add(key, value) {
 	 	.catch ((err) => {
 	 		logger.error("Error while adding to cache");
 	 		logger.error(err);
-	        reject();  
+	        	reject();  
 	 	});
 	});
 }
@@ -34,7 +34,7 @@ function get (key) {
 	 	.catch ((err) => {
 	 		logger.error("Error while getting from cache");
 	 		logger.error(err);
-	        reject();  
+	        	reject();  
 	 	});
 	});
 }
@@ -49,7 +49,7 @@ function del (key) {
 	 	.catch ((err) => {
 	 		logger.error("Error while deleting from cache");
 	 		logger.error(err);
-	        reject();  
+	        	reject();  
 	 	});
 	});
 }
