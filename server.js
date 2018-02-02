@@ -660,8 +660,14 @@ app.get("/auth/isAuthorized", function (req, res) {
 				} else {
 					data[0] = new resourceResponse(200,0,true);
 				}
-			} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/social-connect" || resource == "/authors/recommendation") {
+			} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/authors/recommendation") {
 				data[0] = new resourceResponse(200,0,true);
+			} else if ( resource == "/social-connect" ) {
+				if (userId == 0 || userId == null) {
+					data[0] = new resourceResponse(403,null,false);
+				} else {
+					data[0] = new resourceResponse(200,null,true);
+				}
 			} else if (resource == '/growthjava') {
 				data[0] = new resourceResponse(200,0,true);
 			} else if (resource == '/template-engine'){
