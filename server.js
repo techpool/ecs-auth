@@ -664,11 +664,10 @@ app.get("/auth/isAuthorized", function (req, res) {
 			} else if (resource == '/growthjava') {
 				data[0] = new resourceResponse(200,0,true);
 			} else if (resource == '/template-engine'){
-				var isAEES = AEES.isAEE(userId);
-				if (!isAEES) {
-					data[0] = new resourceResponse(200,null,true);
+				if (userId == 0 || userId == null) {
+					data[0] = new resourceResponse(403,null,false);
 				} else {
-					data[0] = new resourceResponse(403,null,false);	
+					data[0] = new resourceResponse(200,null,true);
 				}
 			} else if (resource == '/coverimage-recommendation'){
 				var isAEES = AEES.isAEE(userId);
