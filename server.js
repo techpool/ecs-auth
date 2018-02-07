@@ -129,7 +129,8 @@ app.use((request, response, next) => {
 		|| resource == '/social-connect/access_token/unlink' 
 		|| resource == '/social-connect/access_token/remind_me_later' 
 		|| resource == '/social-connect/contacts/invite'
-		|| resource == '/social-connect/referred/by_invitation') {
+		|| resource == '/social-connect/referred/by_invitation'
+		|| resource == '/social-connect/contacts/scrape_phone_contacts') {
 			resource = '/social-connect'	
 		} else if (resource == '/user/register' || resource == '/user/login' 
 			|| resource == '/user/login/facebook' || resource == '/user/login/google') {
