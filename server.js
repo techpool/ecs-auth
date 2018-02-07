@@ -321,7 +321,11 @@ app.get("/auth/isAuthorized", function (req, res) {
 	// Get User-Id for accessToken
 	// TODO: remove accepting user-id from internal services. accept only accesstoken
 	var userIdPromise;
-	if ((userId == undefined || userId == null) && accessToken != null) {
+	if (userId) {
+		userIdPromise = new Promise((resolve,reject)=>{
+			resolve();
+		});	
+	} else if (accessToken && accessToken != 'null') {
 		userIdPromise = cacheUtility.get(accessToken)
 		.then((user) => {
 			if( user !== null ) {
@@ -340,19 +344,12 @@ app.get("/auth/isAuthorized", function (req, res) {
 			userId = id;
 		});
 	} else {
-		// TODO: Check if given User-Id is valid
-		userIdPromise = new Promise((resolve,reject)=>{
-			if (userId == null) {
-				res.setHeader('content-type', 'application/json');
-				res.status(400).send( JSON.stringify(new errorResponse("Access-Token or User-Id are required in request header")));
-				req.log.push({"message":"Access-Token or User-Id are required in request header"});
-				logger.error(JSON.stringify({"log":req.log}));
-				return;
-			} else {
-				resolve();
-			}
+		res.setHeader('content-type', 'application/json');
+		res.status(400).send( JSON.stringify(new errorResponse("Access-Token or User-Id are required in request header")));
+		req.log.push({"message":"Access-Token or User-Id are required in request header"});
+		logger.error(JSON.stringify({"log":req.log}));
+		return;
 			
-		});
 	}
 	
 	// Get resources by ids
