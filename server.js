@@ -128,7 +128,9 @@ app.use((request, response, next) => {
 		|| resource == '/social-connect/contacts' 
 		|| resource == '/social-connect/access_token/unlink' 
 		|| resource == '/social-connect/access_token/remind_me_later' 
-		|| resource == '/social-connect/contacts/invite') {
+		|| resource == '/social-connect/contacts/invite'
+		|| resource == '/social-connect/referred/by_invitation'
+		|| resource == '/social-connect/contacts/scrape_phone_contacts') {
 			resource = '/social-connect'	
 		} else if (resource == '/user/register' || resource == '/user/login' 
 			|| resource == '/user/login/facebook' || resource == '/user/login/google') {
@@ -659,16 +661,21 @@ app.get("/auth/isAuthorized", function (req, res) {
 				} else {
 					data[0] = new resourceResponse(200,0,true);
 				}
-			} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/social-connect" || resource == "/authors/recommendation") {
+			} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/authors/recommendation") {
 				data[0] = new resourceResponse(200,0,true);
+			} else if ( resource == "/social-connect" ) {
+				if (userId == 0 || userId == null) {
+					data[0] = new resourceResponse(403,null,false);
+				} else {
+					data[0] = new resourceResponse(200,null,true);
+				}
 			} else if (resource == '/growthjava') {
 				data[0] = new resourceResponse(200,0,true);
 			} else if (resource == '/template-engine'){
-				var isAEES = AEES.isAEE(userId);
-				if (!isAEES) {
-					data[0] = new resourceResponse(200,null,true);
+				if (userId == 0 || userId == null) {
+					data[0] = new resourceResponse(403,null,false);
 				} else {
-					data[0] = new resourceResponse(403,null,false);	
+					data[0] = new resourceResponse(200,null,true);
 				}
 			} else if (resource == '/coverimage-recommendation'){
 				var isAEES = AEES.isAEE(userId);
