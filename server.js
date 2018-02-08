@@ -128,7 +128,9 @@ app.use((request, response, next) => {
 		|| resource == '/social-connect/contacts' 
 		|| resource == '/social-connect/access_token/unlink' 
 		|| resource == '/social-connect/access_token/remind_me_later' 
-		|| resource == '/social-connect/contacts/invite') {
+		|| resource == '/social-connect/contacts/invite'
+		|| resource == '/social-connect/referred/by_invitation'
+		|| resource == '/social-connect/contacts/scrape_phone_contacts') {
 			resource = '/social-connect'	
 		} else if (resource == '/user/register' || resource == '/user/login' 
 			|| resource == '/user/login/facebook' || resource == '/user/login/google') {
@@ -315,11 +317,15 @@ app.get("/auth/isAuthorized", function (req, res) {
 		
 		resourceIds = resourceIds.split(',').map(Number);
 	}
-
+	
 	// Get User-Id for accessToken
 	// TODO: remove accepting user-id from internal services. accept only accesstoken
 	var userIdPromise;
-	if ((userId == undefined || userId == null) && accessToken != null) {
+	if (userId) {
+		userIdPromise = new Promise((resolve,reject)=>{
+			resolve();
+		});	
+	} else if (accessToken && accessToken != 'null') {
 		userIdPromise = cacheUtility.get(accessToken)
 		.then((user) => {
 			if( user !== null ) {
@@ -327,36 +333,54 @@ app.get("/auth/isAuthorized", function (req, res) {
 	 			req.log.push('Got user-id from cache ' + userId);
 	 			res.setHeader('User-Id', userId);
 	 			return userId;
-	 		} else {
- 				return getFromDB(accessToken,res, req);
 	 		}
 		})
-		.catch( (err) => {
-			req.log.push('error while fetching user-id from cache');
-			return getFromDB(accessToken, res, req);
-		}).then((id) => {
-			userId = id;
-		});
-	} else {
-		// TODO: Check if given User-Id is valid
-		userIdPromise = new Promise((resolve,reject)=>{
-			if (userId == null) {
-				res.setHeader('content-type', 'application/json');
-				res.status(400).send( JSON.stringify(new errorResponse("Access-Token or User-Id are required in request header")));
-				req.log.push({"message":"Access-Token or User-Id are required in request header"});
-				logger.error(JSON.stringify({"log":req.log}));
-				return;
-			} else {
-				resolve();
+		.then (function () {
+			if (!userId) {
+						
+				return getFromDB(accessToken, res, req)
+                        	.then((id) => {
+
+                                	if (id || id == 0) {
+                                        	userId = id; 
+                                        	return userId;
+                                	} else {
+                                        	console.log('user id is null from db');
+                                        	throw new Error('Invalid Token');
+                                	}
+
+                        	})
+				.catch((err) => {
+					console.log('Error while collecting from db  ');
+					throw err;
+				})
 			}
-			
-		});
+		}) 
+		.catch( (err) => {	
+			req.log.push('error while fetching user-id from cache or accesstoken not exists in cache');
+			res.setHeader('content-type', 'application/json');
+			if (err.message && err.message == 'Invalid Token') {
+				res.status(401).send( JSON.stringify(new errorResponse("Access Token is invalid")));
+				req.log.push({"message":"Access Token is invalid"});
+			} else {
+				res.status(500).send( JSON.stringify(new errorResponse("Internal server error")));	
+				req.log.push({"message":"Access Token is invalid"});
+			}
+			throw err;
+		})
+	} else {
+		res.setHeader('content-type', 'application/json');
+		//res.status(400).send( JSON.stringify(new errorResponse("Access-Token or User-Id are required in request header")));
+		res.status(401).send( JSON.stringify(new errorResponse("Access Token is invalid")));
+		//req.log.push({"message":"Access-Token or User-Id are required in request header"});
+		req.log.push({"message":"Access Token is invalid"});
+		logger.error(JSON.stringify({"log":req.log}));
+		return;		
 	}
 	
 	// Get resources by ids
 	var resources;
 	var resourcePromise = userIdPromise.then (function () {
-		
 		req.log.push("Fetching resources for ",resourceIds,resourceType);
 		if ((resource == "/pratilipis" && method != "POST" && resourceType == null) || ((resource == "/reviews" || resource == "/userpratilipi/reviews") && method == "POST")) {
 			if (slug) {
@@ -659,16 +683,21 @@ app.get("/auth/isAuthorized", function (req, res) {
 				} else {
 					data[0] = new resourceResponse(200,0,true);
 				}
-			} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/social-connect" || resource == "/authors/recommendation") {
+			} else if (resource == "/recommendation/pratilipis" || resource == "/search/search" || resource == "/search/trending_search" || resource == "/authors/recommendation") {
 				data[0] = new resourceResponse(200,0,true);
+			} else if ( resource == "/social-connect" ) {
+				if (userId == 0 || userId == null) {
+					data[0] = new resourceResponse(403,null,false);
+				} else {
+					data[0] = new resourceResponse(200,null,true);
+				}
 			} else if (resource == '/growthjava') {
 				data[0] = new resourceResponse(200,0,true);
 			} else if (resource == '/template-engine'){
-				var isAEES = AEES.isAEE(userId);
-				if (!isAEES) {
-					data[0] = new resourceResponse(200,null,true);
+				if (userId == 0 || userId == null) {
+					data[0] = new resourceResponse(403,null,false);
 				} else {
-					data[0] = new resourceResponse(403,null,false);	
+					data[0] = new resourceResponse(200,null,true);
 				}
 			} else if (resource == '/coverimage-recommendation'){
 				var isAEES = AEES.isAEE(userId);
@@ -858,22 +887,33 @@ function getAuthorByPratilipiId(pratilipi,req) {
 
 
 function getFromDB(accessToken, res,req) {
-	return userService
- 	.getUserId( accessToken )
- 	.then( ( id ) => {
- 		req.log.push("Reading user-id from user service " + accessToken + " " + id);
- 		
- 		// add to cache
- 		var user = new User(id);
- 		cacheUtility.add( accessToken, user );
- 		res.setHeader('User-Id', id);
- 		return id;
- 	})
- 	.catch( ( err ) => {
- 		req.log.push(err.message);
- 		req.log.push(err.stack);
- 		return 0;
- 	});
+	return new Promise( function (resolve,reject) {
+		
+			return userService.getUserId( accessToken )
+ 			.then( ( id ) => {
+		
+ 				req.log.push("Reading user-id from user service " + accessToken + " " + id);
+ 				if (id || id == 0) {
+ 			// add to cache
+ 					var user = new User(id);
+ 					cacheUtility.add( accessToken, user );
+ 					res.setHeader('User-Id', id);
+ 					resolve(id);
+				} else {
+					reject(new Error('Invalid Token')); 
+				}
+ 			}).catch( ( err ) => {
+ 				req.log.push(err.message);
+ 				req.log.push(err.stack);
+ 				if (err.statusCode == 404) {
+					reject(new Error('Invalid Token'));
+				} else {
+					reject(err);
+				}
+ 			});
+	
+		
+	});
 }
 
 

@@ -37,7 +37,12 @@ User.prototype.getUserId = function (accessToken) {
         };
         httpPromise(options)
         .then(data => {
-          resolve(data.userId);
+	  if (data) { 
+          	resolve(data.userId);
+	  } else {
+		resolve(null);
+	  }
+		
         })
         .catch(err => {
           reject(err);
