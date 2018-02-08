@@ -37,6 +37,7 @@ User.prototype.getUserId = function (accessToken) {
         };
         httpPromise(options)
         .then(data => {
+	  console.log('The accesstoken object from db is ',data);
           resolve(data.userId);
         })
         .catch(err => {
