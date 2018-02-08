@@ -341,7 +341,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 				return getFromDB(accessToken, res, req)
                         	.then((id) => {
 
-                                	if (id) {
+                                	if (id || id == 0) {
                                         	userId = id; 
                                         	return userId;
                                 	} else {
@@ -893,7 +893,7 @@ function getFromDB(accessToken, res,req) {
  			.then( ( id ) => {
 		
  				req.log.push("Reading user-id from user service " + accessToken + " " + id);
- 				if (id) {
+ 				if (id || id == 0) {
  			// add to cache
  					var user = new User(id);
  					cacheUtility.add( accessToken, user );
