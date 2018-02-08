@@ -357,7 +357,7 @@ app.get("/auth/isAuthorized", function (req, res) {
 			}
 		}) 
 		.catch( (err) => {	
-			req.log.push('error while fetching user-id from cache or accesstoken not exists in cache');
+			req.log.push('error while fetching user-id from cache/db or accesstoken not exists in cache/db '+accessToken);
 			res.setHeader('content-type', 'application/json');
 			if (err.message && err.message == 'Invalid Token') {
 				res.status(401).send( JSON.stringify(new errorResponse("Access Token is invalid")));
