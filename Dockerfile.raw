@@ -1,4 +1,4 @@
-FROM $DOCKER_REPO/node:8.3.0
+FROM 370531249777.dkr.ecr.ap-south-1.amazonaws.com/golang:1.9.4
 ENV NODE_ENV=production
 
 COPY package.json .
