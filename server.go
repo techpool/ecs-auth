@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"net/http"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 
@@ -43,6 +44,11 @@ func main () {
 
 	//Initialize routes
 	controllers.Init(app)
+
+	//Health API
+	app.GET("/health",func(c echo.Context) error {
+		return c.String(http.StatusOK, "healthy")
+	})
 
 	fmt.Println("Starting the server..")
 	app.Logger.Fatal(app.Start(":"+config.Server.Port))

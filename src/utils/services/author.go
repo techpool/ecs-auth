@@ -9,9 +9,9 @@ import (
 )
 
 type Author struct {
-	AuthorId int64
-	UserId int64
-	Language string
+	AuthorId int64 `json:"authorId"`
+	UserId int64 `json:"userId"`
+	Language string `json:"language"`
 }
 
 func GetAuthors(idStr string) ([]Author, error) {

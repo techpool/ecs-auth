@@ -3,14 +3,15 @@ package services
 import (
 	"io/ioutil"
 	"encoding/json"
+	//"fmt"
 
 	config "auth/src/config"
 	utils "auth/src/utils"
 )
 
 type AccessToken struct {
-	id string
-	userId int64
+	Id string `json:"id"`
+	UserId int64 `json:"userId"`
 }
 
 func GetUserIdByAccessToken (accessToken string) (interface{}, error) {
@@ -21,19 +22,24 @@ func GetUserIdByAccessToken (accessToken string) (interface{}, error) {
 
 	resp, err := utils.HttpGet(config.Endpoints["user"]+"/v2.0/access-tokens/get-userid", headers)
         if err != nil {
-                //handle error
+                panic(err)
 		return nil, err
         }
         defer resp.Body.Close()
         body, err := ioutil.ReadAll(resp.Body)
         if err != nil {
-                //handle error
+                panic(err)
 		return nil, err
         }
-        var at AccessToken
-        json.Unmarshal(body,&at)
+
+        at := AccessToken{}
+        err = json.Unmarshal(body,&at)
+	if err != nil {
+		panic(err)
+	}
+
 	if (at == AccessToken{}) {
 		return nil, nil
 	}
-        return at.userId, nil
+        return at.UserId, nil
 }

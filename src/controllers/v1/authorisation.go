@@ -7,6 +7,7 @@ import (
 	"strings"
 	"strconv"
 	"regexp"
+	"encoding/json"
 
 	"github.com/labstack/echo"
 	"auth/src/utils"
@@ -37,6 +38,8 @@ func Validate(c echo.Context) error {
 	//var resources []interface{}
 	var pratilipis []utilServices.Pratilipi
 	var authors   []utilServices.Author
+	var reviews []utilServices.Review
+	var comments []utilServices.Comment
 	var userId int64
 	var accessToken string
 	var err error
@@ -83,9 +86,9 @@ func Validate(c echo.Context) error {
 	language := c.QueryParam("language")
 	authorId := c.QueryParam("authorId")
 	state := c.QueryParam("state")
-	//validationType := c.Get("validationType")
+	validationType := c.Get("validationType")
 	slug := c.QueryParam("slug")
-
+	userIdQP,err := strconv.ParseInt(c.QueryParam("userId"),10,64)
 
 	if resource == "/userpratilipi/reviews" {
 		resourceIds = c.QueryParam("pratilipiId")
@@ -162,7 +165,7 @@ func Validate(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, nil)
 	}
 
-	if method != "POST" || 
+	if method != "POST" ||
 		(resource == "/pratilipis" && resourceType == "AUTHOR") || 
 		(resource == "/follows") ||
 		((resource == "/userpratilipi/reviews" || resource == "/reviews") && method == "POST") {
@@ -225,20 +228,19 @@ func Validate(c echo.Context) error {
 		if len(authors) == 0 {
 			return c.JSON(http.StatusForbidden, nil)
 		}
-	}/* else if (resource == "/reviews" || resource == "/userpratilipi/reviews") && 
+	} else if (resource == "/reviews" || resource == "/userpratilipi/reviews") && 
 		(method == "PATCH" || method == "DELETE") {
-		resources, err := GetReviews(resourceIdArray, accessToken)
+		reviews, err = utilServices.GetReviews(resourceIds, userId)
 		if err != nil {
 			// handle error
 		}
 	} else if (resource == "/comments" || resource == "/comment") && 
 		(method == "PATCH" || method == "DELETE") {
-		resources, err := GetComments(resourceIdArray, userId)
+		comments, err = utilServices.GetComments(resourceIds, userId)
 		if err != nil {
 			// handle error
 		}
 	}
-	*/
 
 	fmt.Println("After receiving the resources", resource, method)
 	//roles := aee.GetRoles(userId)
@@ -268,7 +270,7 @@ func Validate(c echo.Context) error {
 				}
 			}
 		} else {
-			if (method == "POST") {
+			if method == "POST" {
 				var hasAccess = aee.HasUserAccess(userId, language, "PRATILIPI_ADD")
 				if hasAccess {
 					rpData = append(rpData,resourcePermission{200, 0, true})
@@ -315,6 +317,219 @@ func Validate(c echo.Context) error {
 				}
 			}
 		}
+	} else if resource == "/authors" {
+		if method == "POST" {
+			var hasAccess = aee.HasUserAccess(userId,language,"AUTHOR_ADD")
+			if hasAccess {
+				rpData = append(rpData,resourcePermission{200,0,true})
+			} else {
+				rpData = append(rpData,resourcePermission{403,0,false})
+			}
+		} else if method == "GET" {
+			for _, val := range resourceIdArray {
+				rpData = append(rpData,resourcePermission{200,val,true})
+			}
+			//TODO: handle single id case - refer 574/server.js
+		} else {
+			for i, author := range authors {
+				if author != (utilServices.Author{}) {
+					var permission string
+					if method == "PUT" || method == "PATCH" {
+						permission = "AUTHOR_UPDATE"
+					} else if method == "DELETE"{
+						permission = "AUTHOR_DELETE"
+					}
+
+					language = author.Language
+
+					var hasAccess = aee.HasUserAccess(userId,language,permission)
+					if hasAccess {
+						if !aee.IsAee(userId) && permission == "AUTHOR_UPDATE" {
+							if userId == author.UserId {
+								rpData = append(rpData,resourcePermission{200, author.AuthorId, true})
+							} else {
+								rpData = append(rpData,resourcePermission{403, author.AuthorId, false})
+							}
+						} else {
+							rpData = append(rpData,resourcePermission{200, author.AuthorId, true})
+						}
+					} else {
+						rpData = append(rpData,resourcePermission{403, author.AuthorId, false})
+					}
+				} else {
+					rpData = append(rpData,resourcePermission{403, resourceIdArray[i], false})
+				}
+			}
+
+		}
+	} else if resource == "/follows" {
+		if method == "POST" {
+			var hasAccess = aee.HasUserAccess(userId, language, "USER_AUTHOR_FOLLOWING")
+			if hasAccess {
+				var author = authors[0]
+				if author != (utilServices.Author{}) && author.UserId == userId {
+					rpData = append(rpData,resourcePermission{403, author.AuthorId, false})
+				} else {
+					rpData = append(rpData,resourcePermission{200, author.AuthorId, true})
+				}
+			} else {
+				rpData = append(rpData,resourcePermission{403, resourceIdArray[0], false})
+			}
+		} else {
+			rpData = append(rpData,resourcePermission{200, resourceIdArray[0], true})
+		}
+	} else if resource == "/revies" || resource == "/userpratilipi/reviews" {
+		if method == "POST" {
+			if userId == 0 {
+				rpData = append(rpData,resourcePermission{403, 0, false})
+			} else {
+				pratilipi := pratilipis[0]
+				//var author utilServices.Author
+				if pratilipi != (utilServices.Pratilipi{}) {
+					tempAuthors, err := utilServices.GetAuthors(strconv.FormatInt(pratilipi.AuthorId,10))
+					if err != nil || len(tempAuthors) == 0 || tempAuthors[0] == (utilServices.Author{}) {
+						rpData = append(rpData,resourcePermission{403, 0, false})
+					} else {
+						author := tempAuthors[0]
+						if author.UserId != userId {
+							 rpData = append(rpData,resourcePermission{200, 0, true})
+						} else {
+							 rpData = append(rpData,resourcePermission{403, 0, false})
+						}
+					}
+				}
+			}
+		} else if method == "GET" {
+			rpData = append(rpData,resourcePermission{200, resourceIdArray[0], true})
+		} else {
+			review := reviews[0]
+			if review != (utilServices.Review{}) && review.User.Id == userId || aee.IsAee(userId) {
+				rpData = append(rpData,resourcePermission{200, review.Id, true})
+			} else {
+				rpData = append(rpData,resourcePermission{403, review.Id, false})
+			}
+		}
+	} else if resource == "/comments" || resource == "/comment" {
+		if method == "POST" {
+			if userId == 0 {
+				rpData = append(rpData,resourcePermission{403, 0, false})
+			} else {
+				rpData = append(rpData,resourcePermission{200, 0, true})
+			}
+		} else if method == "GET" {
+			rpData = append(rpData,resourcePermission{200, resourceIdArray[0], true})
+		} else {
+			comment := comments[0]
+			if comment != (utilServices.Comment{}) && comment.User.Id == userId {
+				rpData = append(rpData,resourcePermission{200, comment.Id, true})
+			} else {
+				rpData = append(rpData,resourcePermission{403, comment.Id, false})
+			}
+		}
+	} else if resource == "/votes" || resource =="/vote" {
+		if method == "POST" {
+			if userId == 0 {
+				rpData = append(rpData,resourcePermission{403, 0, false})
+			} else {
+				rpData = append(rpData,resourcePermission{200, 0, true})
+			}
+		} else {
+			rpData = append(rpData,resourcePermission{200, 0, true})
+		}
+	} else if resource == "/recommendation/pratilipis" || 
+		resource == "/search/search" || 
+		resource == "/search/trending_search" || 
+		resource == "/authors/recommendation" {
+		rpData = append(rpData,resourcePermission{200, 0, true})
+	} else if resource == "/social-connect" || resource == "/template-engine" {
+		if userId == 0 {
+			rpData = append(rpData,resourcePermission{403, 0, false})
+		} else {
+			rpData = append(rpData,resourcePermission{200, 0, true})
+		}
+	} else if resource == "/growthjava" {
+		rpData = append(rpData,resourcePermission{200, 0, true})
+	} else if resource == "/coverimage-recommendation" || resource == "/blog-scraper" {
+		if aee.IsAee(userId) {
+			rpData = append(rpData,resourcePermission{200, 0, true})
+		} else {
+			rpData = append(rpData,resourcePermission{403, 0, false})
+		}
+	} else if resource == "/events" {
+		eventId := resourceIdArray[0]
+		if method == "POST" || method == "PATCH" {
+			if aee.IsAee(userId) {
+				rpData = append(rpData,resourcePermission{200, eventId, true})
+			} else {
+				rpData = append(rpData,resourcePermission{403, eventId, false})
+			}
+		} else if method == "GET" {
+			rpData = append(rpData,resourcePermission{200, eventId, true})
+		} else {
+			rpData = append(rpData,resourcePermission{403, eventId, false})
+		}
+	} else if resource == "/devices" || resource == "/notifications" || resource == "/library" {
+		if userId == 0 {
+			rpData = append(rpData,resourcePermission{403, 0, false})
+		} else {
+			rpData = append(rpData,resourcePermission{200, 0, true})
+		}
+	} else if resource == "/report" || resource == "/init" {
+		rpData = append(rpData,resourcePermission{200, 0, true})
+	} else if resource == "/user" {
+		if method == "POST" {
+			if validationType == "PRELOGIN" && userId > 0 {
+				rpData = append(rpData,resourcePermission{200, 0, true})
+			} else if validationType == "POSTLOGIN" {
+				if userIdQP == 0 {
+					if aee.IsAee(userId) || userId == userIdQP {
+						rpData = append(rpData,resourcePermission{200, userIdQP, true})
+					} else {
+						rpData = append(rpData,resourcePermission{403, userIdQP, false})
+					}
+				} else {
+					if userId > 0 {
+						rpData = append(rpData,resourcePermission{200, userId, true})
+					} else {
+						rpData = append(rpData,resourcePermission{403, 0, false})
+					}
+				}
+			} else {
+				rpData = append(rpData,resourcePermission{200, 0, true})
+			}
+		} else if method == "GET" {
+			if len(resourceIdArray) > 0  && resourceIdArray[0] > 0 {
+				if aee.IsAee(userId) {
+					rpData = append(rpData,resourcePermission{200, 0, true})
+				} else {
+					rpData = append(rpData,resourcePermission{403, 0, false})
+				}
+			} else {
+				rpData = append(rpData,resourcePermission{200, 0, true})
+			}
+		} else if method == "PATCH" {
+			if userIdQP == 0 {
+				if aee.IsAee(userId) || userId == userIdQP {
+					rpData = append(rpData,resourcePermission{200, userIdQP, true})
+                                } else {
+                                        rpData = append(rpData,resourcePermission{403, userIdQP, false})
+				}
+			} else {
+				if userId > 0 {
+                                        rpData = append(rpData,resourcePermission{200, userId, true})
+                                } else {
+                                        rpData = append(rpData,resourcePermission{403, userId, false})
+				}
+			}
+		}
+	} else if resource == "/admins/users" {
+		if method == "DELETE" && aee.IsAee(userId) {
+			rpData = append(rpData,resourcePermission{200, userId, true})
+		} else {
+			rpData = append(rpData,resourcePermission{403, userId, false})
+		}
+	} else {
+		rpData = append(rpData,resourcePermission{200, 0, true})
 	}
 
 	//resource, method, data
@@ -325,7 +540,7 @@ func Validate(c echo.Context) error {
 	}
 
 	fmt.Println("After validating the resource",responseBodyObject)
-
+	c.Response().Header().Set("User-Id",strconv.FormatInt(userId,10))
 	return c.JSON(http.StatusOK, responseBodyObject)
 }
 
@@ -468,22 +683,44 @@ func pathMapping(apiType string, c echo.Context) echo.Context {
 }
 
 func GetUserIdByAccessToken(accessToken string) (int64,error) {
+	type cache struct {
+		Id int64 `json:"id"`
+	}
+
 	val, err := utils.GetCache(accessToken)
 	if err != nil {
+		panic(err)
 		return 0, err
 	}
 
 	if (val == nil) {
 		val, err = utilServices.GetUserIdByAccessToken(accessToken)
 		if err != nil {
+			panic(err)
+			return 0, err
+		}
+
+		temp := &cache{val.(int64)}
+		j, err := json.Marshal(temp)
+		if err != nil {
+			panic(err)
 			return 0, err
 		}
 
 		// Insert into cache
-		err = utils.SetCache(accessToken, val.(string),259200)
+		err = utils.SetCache(accessToken, string(j),259200)
 		if err != nil {
 			//handle error
 		}
+		return val.(int64), nil
+	} else {
+
+		c := cache{}
+		err = json.Unmarshal([]byte(val.(string)),&c)
+		if err != nil {
+			panic(err)
+			return 0, nil
+		}
+		return c.Id,nil
 	}
-	return val.(int64),nil
 }
