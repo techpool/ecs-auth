@@ -3,6 +3,7 @@ package services
 import (
 	"io/ioutil"
 	"encoding/json"
+	"fmt"
 
 	config "auth/src/config"
 	utils "auth/src/utils"
@@ -16,34 +17,52 @@ type Pratilipi struct {
 }
 
 func GetPratilipis(idStr, accessToken string) ([]Pratilipi,error) {
-	var headers map[string]string
+	var pratilipis []Pratilipi
+	headers := map[string] string{
+                "Access-Token" : accessToken,
+        }
+
 	resp, err := utils.HttpGet(config.Endpoints["pratilipi"]+"/metadata?id="+idStr, headers)
 	if err != nil {
                 //handle error
-        }
-        defer resp.Body.Close()
-        body, err := ioutil.ReadAll(resp.Body)
+		fmt.Println("error while getting pratilipis")
+		panic(err)
+        } else {
+		defer resp.Body.Close()
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
         if err != nil {
                 //handle error
-        }
-	var pratilipis []Pratilipi
+		fmt.Println("error while parsing pratilipis ")
+		panic(err)
+	}
+
 	json.Unmarshal(body,&pratilipis)
         return pratilipis, nil
 
 }
 
 func GetPratilipisBySlug(slug, accessToken string) ([]Pratilipi,error) {
-	var headers map[string]string
-	resp, err := utils.HttpGet(config.Endpoints["pratilipi"]+"/metadata?slug="+slug, headers)
-        if err != nil {
-                //handle error
-        }
-        defer resp.Body.Close()
-        body, err := ioutil.ReadAll(resp.Body)
-        if err != nil {
-                //handle error
-        }
 	var pratilipis []Pratilipi
+	headers := map[string] string{
+                "Access-Token" : accessToken,
+        }
+
+	resp, err := utils.HttpGet(config.Endpoints["pratilipi"]+"/metadata?slug="+slug, headers)
+	if err != nil {
+                fmt.Println("error while getting pratilipis by slug")
+		panic(err)
+        } else {
+		defer resp.Body.Close()
+        }
+
+	body, err := ioutil.ReadAll(resp.Body)
+        if err != nil {
+                fmt.Println("Error while reading response from body + pratilipis + slug")
+		panic(err)
+	}
+
 	json.Unmarshal(body,&pratilipis)
         return pratilipis, nil
 }

@@ -21,10 +21,11 @@ func main () {
 		fmt.Println("Stage variable is not set")
 	}
 
-	apiEndpoint := os.Getenv("API_ENDPOINT")
+	apiEndpoint := os.Getenv("API_END_POINT")
 	if len(apiEndpoint) == 0 {
-		fmt.Println("Api endpoint variable is not set")
+		fmt.Println("Api endpoint variable is not set")	
 	}
+
 
 	//Middleware
 	app.Use(middleware.Logger())

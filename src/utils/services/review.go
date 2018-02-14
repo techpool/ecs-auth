@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
         "encoding/json"
 	"strconv"
+	"fmt"
 
         config "auth/src/config"
         utils "auth/src/utils"
@@ -22,20 +23,28 @@ type Review struct {
 }
 
 func GetReviews(idStr string, userId int64) ([]Review, error) {
+	var reviews []Review
 	headers := map[string] string {
                 "User-Id" : strconv.FormatInt(userId, 10),
         }
+
 	resp, err := utils.HttpGet(config.Endpoints["social"]+"/v2.0/reviews?id="+idStr, headers)
 	if err != nil {
                 //handle error
+		fmt.Println("Error while getting reviews ")
+		panic(err)
+        } else {
+		defer resp.Body.Close()
         }
-        defer resp.Body.Close()
-        body, err := ioutil.ReadAll(resp.Body)
+
+	body, err := ioutil.ReadAll(resp.Body)
         if err != nil {
                 //handle error
-        }
-        var reviews []Review
-        json.Unmarshal(body,&reviews)
+		fmt.Println("Error while parsing review body")
+		panic(err)
+	}
+
+	json.Unmarshal(body,&reviews)
         return reviews, nil
 
 }

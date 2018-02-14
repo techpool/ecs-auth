@@ -87,7 +87,7 @@ var aeeMap = map[string] Aee {
 func (role Role) HasAccess (language, permission string) bool {
 	
 	// Validate language for the role
-	if strings.ToLower(language) != strings.ToLower(role.language.nameEn) {
+	if role.language.name != "" && strings.ToLower(language) != strings.ToLower(role.language.nameEn) {
 		return false
 	}
 	
@@ -120,7 +120,7 @@ func (aee Aee) GetRoles (userId int64) []Role {
 
 func (aee Aee) HasUserAccess (userId int64, language string, permission string) bool {
 	
-	if userId == 0 || len(permission) == 0 {
+	if len(permission) == 0 {
 		return false
 	}
 	

@@ -23,8 +23,6 @@ type response struct {
 }
 
 func Test(c echo.Context) error {
-//	fmt.Println(c.Request().Header["Access-Token"])
-	//validateParams("test",c)
 	resp := response{"Hello test"}
 	fmt.Println(resp)
 	return c.JSON(http.StatusOK, resp)
@@ -35,7 +33,6 @@ func Validate(c echo.Context) error {
 
 	var resourceType string
 	var resourceIdArray []int64
-	//var resources []interface{}
 	var pratilipis []utilServices.Pratilipi
 	var authors   []utilServices.Author
 	var reviews []utilServices.Review
@@ -59,7 +56,6 @@ func Validate(c echo.Context) error {
 	}
 
 	aee := utils.Aee{}
-	//role := utils.Role{}
 
 	//Path mapping
 	c = pathMapping("validate",c)
@@ -75,7 +71,7 @@ func Validate(c echo.Context) error {
 		userId, err = strconv.ParseInt(userIdArr[0],10,64)
 	}
 
-	if len(accessToken) == 0 && userId == 0 {
+	if len(accessTokenArr) == 0 && len(userIdArr) == 0 {
 		return c.JSON(http.StatusUnauthorized,nil)
 	}
 
@@ -114,7 +110,7 @@ func Validate(c echo.Context) error {
 		}
 	}
 
-	if len(authorId) > 0 {
+	if authorId != "null" && len(authorId) > 0 {
 		resourceIds = authorId;
 		resourceType = "AUTHOR";
 	}
@@ -194,7 +190,9 @@ func Validate(c echo.Context) error {
 	fmt.Println("After reading userid by access token", accessToken, userId)
 
 	//TODO: Fetch respective resources
-	if (resource == "/pratilipis" && method != "POST" && len(resourceType) > 0) || ((resource == "/reviews" || resource == "/userpratilipi/reviews") && method == "POST") {
+	if (resource == "/pratilipis" && method != "POST" && len(resourceType) == 0) || ((resource == "/reviews" || resource == "/userpratilipi/reviews") && method == "POST") {
+
+		fmt.Println("Getting pratilipi resource ", slug, resourceIds)
 		if len(slug) > 0 {
 			pratilipis, err = utilServices.GetPratilipisBySlug(slug,accessToken)
 			if err != nil {
@@ -206,7 +204,7 @@ func Validate(c echo.Context) error {
 				// handle error
 			}
 		}
-
+		fmt.Println("Got pratilips for resource ", pratilipis)
 		if len(pratilipis) == 0 {
 			return c.JSON(http.StatusForbidden, nil)
 		}
@@ -246,7 +244,7 @@ func Validate(c echo.Context) error {
 	//roles := aee.GetRoles(userId)
 	//TODO: Verify user-action-resource
 	if resource == "/pratilipis" {
-		fmt.Println("validating /pratilipis resource")
+		fmt.Println("validating /pratilipis resource", resourceType, method, pratilipis)
 		if resourceType == "AUTHOR" {
 			//author := resources[0].(utilServices.Author)
 			author := authors[0]
@@ -278,8 +276,14 @@ func Validate(c echo.Context) error {
 					rpData = append(rpData,resourcePermission{403, 0, false})
 				}
 			} else {
-				for _,pratilipi := range pratilipis {
+
+				if len(pratilipis) > 0 {
+					authors, _ = getAuthorsForPratilipis(pratilipis)
+				}
+				for i,pratilipi := range pratilipis {
 					//pratilipi := resource.(utilServices.Pratilipi)
+					fmt.Println("The pratilipi to validate",pratilipi)
+
 					if (pratilipi != utilServices.Pratilipi{}) {
 						var permission string
 						if method == "GET" {
@@ -296,11 +300,16 @@ func Validate(c echo.Context) error {
 
 						language = pratilipi.Language;
 						var hasAccess = aee.HasUserAccess(userId,language,permission)
+						fmt.Println("validation in progress ", hasAccess, userId, language, permission)
 						if (hasAccess) {
 							if !aee.IsAee(userId) && 
 								(permission == "PRATILIPI_UPDATE" || permission == "PRATILIPI_DELETE" || permission == "PRATILIPI_READ_DRAFT_CONTENT") {
-								isAuthor := isUserAuthorToPratilipi(userId,pratilipi.PratilipiId)
-								if isAuthor {
+								//isAuthor := isUserAuthorToPratilipi(userId,pratilipi.AuthorId)
+								//fmt.Println("Validate update check for user on pratilipi", isAuthor)
+								//if isAuthor {
+								if len(authors) == 0 {
+									rpData = append(rpData,resourcePermission{403, pratilipi.PratilipiId, false})
+								} else if authors[i].UserId == userId {
 									rpData = append(rpData,resourcePermission{200, pratilipi.PratilipiId, true})
 								} else {
 									rpData = append(rpData,resourcePermission{403, pratilipi.PratilipiId, false})
@@ -309,6 +318,7 @@ func Validate(c echo.Context) error {
 								rpData = append(rpData,resourcePermission{200, pratilipi.PratilipiId, true})
 							}
 						} else {
+							fmt.Println("User has noaccess to pratilipi")
 							rpData = append(rpData,resourcePermission{403, pratilipi.PratilipiId, false})
 						}
 					} else {
@@ -329,7 +339,6 @@ func Validate(c echo.Context) error {
 			for _, val := range resourceIdArray {
 				rpData = append(rpData,resourcePermission{200,val,true})
 			}
-			//TODO: handle single id case - refer 574/server.js
 		} else {
 			for i, author := range authors {
 				if author != (utilServices.Author{}) {
@@ -363,6 +372,7 @@ func Validate(c echo.Context) error {
 
 		}
 	} else if resource == "/follows" {
+		fmt.Println("validating follows ",resource, method, language, userId, authors, resourceIdArray)
 		if method == "POST" {
 			var hasAccess = aee.HasUserAccess(userId, language, "USER_AUTHOR_FOLLOWING")
 			if hasAccess {
@@ -378,7 +388,8 @@ func Validate(c echo.Context) error {
 		} else {
 			rpData = append(rpData,resourcePermission{200, resourceIdArray[0], true})
 		}
-	} else if resource == "/revies" || resource == "/userpratilipi/reviews" {
+	} else if resource == "/reviews" || resource == "/userpratilipi/reviews" {
+		fmt.Println("validating reviews - ",method, pratilipis, reviews, userId, aee.IsAee(userId))
 		if method == "POST" {
 			if userId == 0 {
 				rpData = append(rpData,resourcePermission{403, 0, false})
@@ -387,6 +398,7 @@ func Validate(c echo.Context) error {
 				//var author utilServices.Author
 				if pratilipi != (utilServices.Pratilipi{}) {
 					tempAuthors, err := utilServices.GetAuthors(strconv.FormatInt(pratilipi.AuthorId,10))
+					fmt.Println("Authors in review are ",tempAuthors)
 					if err != nil || len(tempAuthors) == 0 || tempAuthors[0] == (utilServices.Author{}) {
 						rpData = append(rpData,resourcePermission{403, 0, false})
 					} else {
@@ -410,6 +422,7 @@ func Validate(c echo.Context) error {
 			}
 		}
 	} else if resource == "/comments" || resource == "/comment" {
+		fmt.Println("validating comments - ",method,  comments, userId)
 		if method == "POST" {
 			if userId == 0 {
 				rpData = append(rpData,resourcePermission{403, 0, false})
@@ -419,14 +432,19 @@ func Validate(c echo.Context) error {
 		} else if method == "GET" {
 			rpData = append(rpData,resourcePermission{200, resourceIdArray[0], true})
 		} else {
-			comment := comments[0]
-			if comment != (utilServices.Comment{}) && comment.User.Id == userId {
-				rpData = append(rpData,resourcePermission{200, comment.Id, true})
+			if len(comments) > 0 {
+				comment := comments[0]
+				if comment != (utilServices.Comment{}) && comment.User.Id == userId {
+					rpData = append(rpData,resourcePermission{200, comment.Id, true})
+				} else {
+					rpData = append(rpData,resourcePermission{403, comment.Id, false})
+				}
 			} else {
-				rpData = append(rpData,resourcePermission{403, comment.Id, false})
+				rpData = append(rpData,resourcePermission{403, 0, false})
 			}
 		}
 	} else if resource == "/votes" || resource =="/vote" {
+		fmt.Println("validating votes", resource, method, userId)
 		if method == "POST" {
 			if userId == 0 {
 				rpData = append(rpData,resourcePermission{403, 0, false})
@@ -441,22 +459,39 @@ func Validate(c echo.Context) error {
 		resource == "/search/trending_search" || 
 		resource == "/authors/recommendation" {
 		rpData = append(rpData,resourcePermission{200, 0, true})
-	} else if resource == "/social-connect" || resource == "/template-engine" {
+	} else if resource == "/social-connect" {
+		fmt.Println("validating ", resource, userId)
 		if userId == 0 {
 			rpData = append(rpData,resourcePermission{403, 0, false})
 		} else {
 			rpData = append(rpData,resourcePermission{200, 0, true})
 		}
-	} else if resource == "/growthjava" {
+	} else if resource == "/template-engine" {
+                fmt.Println("validating ", resource, userId)
+                if userId == 0 {
+                        rpData = append(rpData,resourcePermission{403, 0, false})
+                } else {
+                        rpData = append(rpData,resourcePermission{200, 0, true})
+                }
+        } else if resource == "/growthjava" {
 		rpData = append(rpData,resourcePermission{200, 0, true})
-	} else if resource == "/coverimage-recommendation" || resource == "/blog-scraper" {
-		if aee.IsAee(userId) {
+	} else if resource == "/coverimage-recommendation" {
+		fmt.Println("validating ", resource, userId)
+		if !aee.IsAee(userId) {
 			rpData = append(rpData,resourcePermission{200, 0, true})
 		} else {
 			rpData = append(rpData,resourcePermission{403, 0, false})
 		}
-	} else if resource == "/events" {
+	} else if resource == "/blog-scraper" {
+                fmt.Println("validating ", resource, userId)
+                if aee.IsAee(userId) {
+                        rpData = append(rpData,resourcePermission{200, 0, true})
+                } else {
+                        rpData = append(rpData,resourcePermission{403, 0, false})
+                }   
+        } else if resource == "/events" {
 		eventId := resourceIdArray[0]
+		fmt.Println("validating ", resource, userId, eventId, method)
 		if method == "POST" || method == "PATCH" {
 			if aee.IsAee(userId) {
 				rpData = append(rpData,resourcePermission{200, eventId, true})
@@ -469,6 +504,7 @@ func Validate(c echo.Context) error {
 			rpData = append(rpData,resourcePermission{403, eventId, false})
 		}
 	} else if resource == "/devices" || resource == "/notifications" || resource == "/library" {
+		fmt.Println("validating ", resource, userId)
 		if userId == 0 {
 			rpData = append(rpData,resourcePermission{403, 0, false})
 		} else {
@@ -477,6 +513,7 @@ func Validate(c echo.Context) error {
 	} else if resource == "/report" || resource == "/init" {
 		rpData = append(rpData,resourcePermission{200, 0, true})
 	} else if resource == "/user" {
+		fmt.Println("validating ", resource, method, userId, validationType, userIdQP, resourceIdArray)
 		if method == "POST" {
 			if validationType == "PRELOGIN" && userId > 0 {
 				rpData = append(rpData,resourcePermission{200, 0, true})
@@ -523,6 +560,7 @@ func Validate(c echo.Context) error {
 			}
 		}
 	} else if resource == "/admins/users" {
+		fmt.Println("validating ", resource, userId, method)
 		if method == "DELETE" && aee.IsAee(userId) {
 			rpData = append(rpData,resourcePermission{200, userId, true})
 		} else {
@@ -544,8 +582,29 @@ func Validate(c echo.Context) error {
 	return c.JSON(http.StatusOK, responseBodyObject)
 }
 
-func isUserAuthorToPratilipi(userId ,pratilipiId int64) bool {
-	return true
+func DeleteToken(c echo.Context) error {
+	fmt.Println("Delete access token ")
+
+	var accessToken string
+	type message struct {
+		Message string `json:"message"`
+	}
+
+	//Reading headers
+	accessTokenArr := c.Request().Header["Access-Token"]
+	if len(accessTokenArr) > 0 {
+		accessToken = accessTokenArr[0]
+	}
+
+	if len(accessToken) > 0 {
+		err := utils.DeleteCache(accessToken)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, message{"Failed to delete the token"})
+		}
+		return c.JSON(http.StatusOK, message{"Successfully deleted the token"})
+	} else {
+		return c.JSON(http.StatusBadRequest, message{"Access-Token required"})
+	}
 }
 
 func pathMapping(apiType string, c echo.Context) echo.Context {
@@ -556,6 +615,7 @@ func pathMapping(apiType string, c echo.Context) echo.Context {
 	if apiType == "validate" {
 		resource, _ := url.QueryUnescape(c.QueryParam("resource"))
 		originalResource = resource
+
 		if strings.HasPrefix(resource,"/blog-scraper") {
 			re := regexp.MustCompile("/[a-z0-9]{22}")
 			resource = re.ReplaceAllString(resource, wildString)
@@ -590,6 +650,7 @@ func pathMapping(apiType string, c echo.Context) echo.Context {
 			strings.HasPrefix(resource,"/library") {
 			resource = "/library"
 		} else if resource == "/report/v1.0/report" {
+			fmt.Println("mapping report api")
 			resource = "/report"
 		} else if resource == "/notification/list" || 
 			resource == "/notification" || 
@@ -661,7 +722,6 @@ func pathMapping(apiType string, c echo.Context) echo.Context {
 			resource = "/admins/users"
 		}
 
-		//fmt.Println(originalResource, resource, validationType, c.QueryParam("method"))
 		c.Set("originalResource",originalResource)
 		c.Set("resource",resource)
 		c.Set("validationType",validationType)
@@ -723,4 +783,50 @@ func GetUserIdByAccessToken(accessToken string) (int64,error) {
 		}
 		return c.Id,nil
 	}
+}
+
+func getAuthorsForPratilipis(pratilipis []utilServices.Pratilipi) ([]utilServices.Author, error) {
+	var idStr string
+	for _,p := range pratilipis {
+		idStr += strconv.FormatInt(p.AuthorId,10)+","
+	}
+
+	sz := len(idStr)
+	if sz > 0 {
+		idStr = idStr[:sz-1]
+	}
+
+	fmt.Println("In get authors for pratilipis - ", idStr)
+
+	authors, err := utilServices.GetAuthors(idStr)
+	if err != nil {
+		return []utilServices.Author{},err
+	}
+
+	fmt.Println("Got authors for pratilipis", authors)
+	return authors,nil
+
+}
+
+func isUserAuthorToPratilipi(userId, authorId int64) bool {
+
+	authors, err := utilServices.GetAuthors(strconv.FormatInt(authorId,10))
+	if err != nil {
+		panic(err)
+		return false
+	}
+
+	if len(authors) == 0 {
+		return false
+	}
+
+	if authors[0] == (utilServices.Author{}) {
+		return false
+	}
+
+	if authors[0].UserId != userId {
+		return false
+	}
+
+	return true
 }

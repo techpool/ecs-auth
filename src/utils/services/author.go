@@ -16,33 +16,44 @@ type Author struct {
 
 func GetAuthors(idStr string) ([]Author, error) {
 	var headers map[string]string
+	var authors []Author
+
 	resp, err := utils.HttpGet(config.Endpoints["author"]+"/meta_data?id="+idStr, headers)
 	if err != nil {
 		//handle error
+		panic(err)
+	} else {
+		defer resp.Body.Close()
 	}
-	defer resp.Body.Close()
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		//handle error
+		panic(err)
 	}
-	var authors []Author
+
 	json.Unmarshal(body,&authors)
 	return authors, nil
 }
 
 func GetAuthorsBySlug(slugs string) ([]Author, error) {
 	var headers map[string]string
+	var authors []Author
+
 	resp, err := utils.HttpGet(config.Endpoints["author"]+"/meta_data?slug="+slugs, headers)
 	if err != nil {
                 //handle error
-        }
-        defer resp.Body.Close()
+		panic(err)
+	} else {
+		defer resp.Body.Close()
+	}
+
         body, err := ioutil.ReadAll(resp.Body)
         if err != nil {
                 //handle error
-        }
+		panic(err)
+	}
 
-        var authors []Author
         json.Unmarshal(body,&authors)
         return authors, nil
 }
