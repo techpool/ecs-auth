@@ -1,12 +1,15 @@
-FROM 370531249777.dkr.ecr.ap-south-1.amazonaws.com/node:8.3.0
+FROM 370531249777.dkr.ecr.ap-south-1.amazonaws.com/golang:1.9.4
 
-COPY package.json .
-RUN npm install
+RUN mkdir -p /go/src/auth
+WORKDIR /go/src/auth
 
-COPY server.js .
-COPY worker.js .
-COPY service service
-COPY util util
-COPY config config
+#ENV STAGE devo
+#ENV API_ENDPOINT http://internal-devo-lb-pvt-1359086914.ap-southeast-1.elb.amazonaws.com
 
-EXPOSE 80
+COPY . .
+
+RUN go get -d -v ./...
+RUN go install -v ./...
+
+CMD ["auth"]
+
