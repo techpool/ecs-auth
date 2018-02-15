@@ -28,7 +28,8 @@ func GetReviews(idStr string, userId int64) ([]Review, error) {
 	if err != nil {
                 //handle error
 		log.Println("Error: While getting reviews ")
-		panic(err)
+		//panic(err)
+		return reviews,err
         } else {
 		defer resp.Body.Close()
         }
@@ -37,7 +38,8 @@ func GetReviews(idStr string, userId int64) ([]Review, error) {
         if err != nil {
                 //handle error
 		log.Println("Error: While parsing review body")
-		panic(err)
+		//panic(err)
+		return reviews,err
 	}
 
 	json.Unmarshal(body,&reviews)

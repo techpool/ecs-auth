@@ -12,13 +12,14 @@ var netTransport = &http.Transport{
                 Timeout: 5 * time.Second,
         }).Dial,
         TLSHandshakeTimeout: 5 * time.Second,
-        MaxIdleConns:       10,
+        MaxIdleConns:       1024,
         IdleConnTimeout:    30 * time.Second,
         DisableCompression: true,
+	DisableKeepAlives: false,
 }
 
 var netClient = &http.Client{
-        Timeout: time.Second * 10,
+        Timeout: time.Millisecond * 100,
         Transport: netTransport,
 }
 /*

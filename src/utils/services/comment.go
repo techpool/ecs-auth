@@ -27,7 +27,7 @@ type Temp struct {
 }
 
 func GetComments(idStr string, userId int64) ([]Comment, error) {
-
+	var comments []Comment
         headers := map[string] string{
                 "User-Id" : strconv.FormatInt(userId, 10),
         }
@@ -36,7 +36,8 @@ func GetComments(idStr string, userId int64) ([]Comment, error) {
         if err != nil {
                 //handle error
 		log.Println("Error: While getting comments")
-		panic(err)
+		//panic(err)
+		return comments, err
 	} else {
 		defer resp.Body.Close()
         }
@@ -45,7 +46,8 @@ func GetComments(idStr string, userId int64) ([]Comment, error) {
         if err != nil {
                 //handle error
 		log.Println("Error: While parsing comments body")
-		panic(err)
+		//panic(err)
+		return comments, err
 	}
 
 	var temp Temp

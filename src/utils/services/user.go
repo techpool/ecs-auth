@@ -23,20 +23,23 @@ func GetUserIdByAccessToken (accessToken string) (interface{}, error) {
 	resp, err := utils.HttpGet(config.Endpoints["user"]+"/v2.0/access-tokens/get-userid", headers)
         if err != nil {
 		log.Println("Error: While getting accesstoken ")
-                panic(err)
+                //panic(err)
+		return nil, err
         }
         defer resp.Body.Close()
         body, err := ioutil.ReadAll(resp.Body)
         if err != nil {
 		log.Println("Error: While parsing response body")
-                panic(err)
+                //panic(err)
+		return nil, err
         }
 
         at := AccessToken{}
         err = json.Unmarshal(body,&at)
 	if err != nil {
-		panic(err)
+		//panic(err)
 		log.Println("Error: While json unmarshall")
+		return nil, err
 	}
 
 	if (at == AccessToken{}) {

@@ -761,7 +761,7 @@ func pathMapping(apiType string, c echo.Context) echo.Context {
 }
 
 func GetUserIdByAccessToken(accessToken string) (int64,error) {
-	log.Printf("Getting userId for accesstoken ",accessToken)
+	log.Println("Getting userId for accesstoken ",accessToken)
 	type cache struct {
 		Id int64 `json:"id"`
 	}

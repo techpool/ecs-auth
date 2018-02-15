@@ -26,7 +26,8 @@ func GetPratilipis(idStr, accessToken string) ([]Pratilipi,error) {
 	if err != nil {
                 //handle error
 		log.Println("Error: While getting pratilipis")
-		panic(err)
+		//panic(err)
+		return pratilipis, err
         } else {
 		defer resp.Body.Close()
 	}
@@ -35,7 +36,8 @@ func GetPratilipis(idStr, accessToken string) ([]Pratilipi,error) {
         if err != nil {
                 //handle error
 		log.Println("Error: While parsing pratilipis ")
-		panic(err)
+		//panic(err)
+		return pratilipis, err
 	}
 
 	json.Unmarshal(body,&pratilipis)
@@ -52,7 +54,8 @@ func GetPratilipisBySlug(slug, accessToken string) ([]Pratilipi,error) {
 	resp, err := utils.HttpGet(config.Endpoints["pratilipi"]+"/metadata?slug="+slug, headers)
 	if err != nil {
                 log.Println("Error: While getting pratilipis by slug")
-		panic(err)
+		//panic(err)
+		return pratilipis, err
         } else {
 		defer resp.Body.Close()
         }
@@ -60,7 +63,8 @@ func GetPratilipisBySlug(slug, accessToken string) ([]Pratilipi,error) {
 	body, err := ioutil.ReadAll(resp.Body)
         if err != nil {
                 log.Println("Error: While reading response from body + pratilipis + slug")
-		panic(err)
+		//panic(err)
+		return pratilipis, err
 	}
 
 	json.Unmarshal(body,&pratilipis)
