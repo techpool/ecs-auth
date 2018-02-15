@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"net/http"
 	"github.com/labstack/echo"
@@ -18,12 +18,12 @@ func main () {
 
 	stage := os.Getenv("STAGE")
 	if len(stage) == 0 {
-		fmt.Println("Stage variable is not set")
+		log.Println("Stage variable is not set")
 	}
 
 	apiEndpoint := os.Getenv("API_END_POINT")
 	if len(apiEndpoint) == 0 {
-		fmt.Println("Api endpoint variable is not set")	
+		log.Println("Api endpoint variable is not set")
 	}
 
 
@@ -36,7 +36,9 @@ func main () {
 	//Initialize resource
 	err := resources.Init()
 	if err != nil {
-		panic(err)
+//		panic(err)
+		log.Println("Terminating the app as the resources are not loaded successfully")
+		os.Exit(2)
 	}
 	defer resources.Terminate()
 
@@ -51,6 +53,6 @@ func main () {
 		return c.String(http.StatusOK, "healthy")
 	})
 
-	fmt.Println("Starting the server..")
+	log.Println("Starting the server..")
 	app.Logger.Fatal(app.Start(":"+config.Server.Port))
 }

@@ -4,7 +4,7 @@ import (
 	"github.com/go-redis/redis"
 
 	"auth/src/config"
-	"fmt"
+	"log"
 )
 
 var (
@@ -13,12 +13,12 @@ var (
 
 func Init() error {
 
+	log.Println("Initialising redis")
 	Redis = redis.NewClient(&redis.Options{
 		Addr: config.Redis.Host,
 		DB: config.Redis.DB,
 	});
 
-	fmt.Println(Redis)
 
 	_, err := Redis.Ping().Result()
 	if err != nil {
