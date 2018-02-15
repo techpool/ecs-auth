@@ -12,14 +12,14 @@ var netTransport = &http.Transport{
                 Timeout: 5 * time.Second,
         }).Dial,
         TLSHandshakeTimeout: 5 * time.Second,
-        MaxIdleConns:       1024,
+        MaxIdleConns:       50,
         IdleConnTimeout:    30 * time.Second,
         DisableCompression: true,
 	DisableKeepAlives: false,
 }
 
 var netClient = &http.Client{
-        Timeout: time.Millisecond * 100,
+        Timeout: time.Millisecond * 500,
         Transport: netTransport,
 }
 /*
@@ -36,7 +36,7 @@ func HttpGet(url string, headers map[string]string) (*http.Response, error) {
 	}
 	response, err := netClient.Do(req)
 	if err != nil {
-		log.Println("Error: While getting resources from other services")
+		log.Println("Error: While getting resources from other services ",)
 		return nil, err
 	}
 
