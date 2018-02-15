@@ -3,7 +3,6 @@ package utils
 import (
 	"time"
 	"auth/src/resources"
-	"fmt"
 	"github.com/go-redis/redis"
 )
 
@@ -23,7 +22,6 @@ func SetCache(key, val string, ttl uint32) error {
 }
 
 func GetCache(key string) (interface{},error) {
-	fmt.Println(client)
 	val, err := client.Get(key).Result()
 	if err == redis.Nil {
 		return nil, nil

@@ -3,8 +3,8 @@ package services
 import (
         "io/ioutil"
         "encoding/json"
-	"strconv"
-	"fmt"
+		"strconv"
+		"log"
 
         config "auth/src/config"
         utils "auth/src/utils"
@@ -31,11 +31,11 @@ func GetComments(idStr string, userId int64) ([]Comment, error) {
         headers := map[string] string{
                 "User-Id" : strconv.FormatInt(userId, 10),
         }
-
+	log.Println("get from author service: ",config.Endpoints["social"]+"/v2.0/comments?id="+idStr)
 	resp, err := utils.HttpGet(config.Endpoints["social"]+"/v2.0/comments?id="+idStr, headers)
         if err != nil {
                 //handle error
-		fmt.Println("Error while getting comments")
+		log.Println("Error while getting comments")
 		panic(err)
 	} else {
 		defer resp.Body.Close()
@@ -44,7 +44,7 @@ func GetComments(idStr string, userId int64) ([]Comment, error) {
 	body, err := ioutil.ReadAll(resp.Body)
         if err != nil {
                 //handle error
-		fmt.Println("Error while parsing comments body")
+		log.Println("Error while parsing comments body")
 		panic(err)
 	}
 

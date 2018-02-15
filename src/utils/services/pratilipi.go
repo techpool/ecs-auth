@@ -3,7 +3,7 @@ package services
 import (
 	"io/ioutil"
 	"encoding/json"
-	"fmt"
+	"log"
 
 	config "auth/src/config"
 	utils "auth/src/utils"
@@ -21,11 +21,11 @@ func GetPratilipis(idStr, accessToken string) ([]Pratilipi,error) {
 	headers := map[string] string{
                 "Access-Token" : accessToken,
         }
-
+	log.Println("get from author service: ",config.Endpoints["pratilipi"]+"/metadata?id="+idStr)
 	resp, err := utils.HttpGet(config.Endpoints["pratilipi"]+"/metadata?id="+idStr, headers)
 	if err != nil {
                 //handle error
-		fmt.Println("error while getting pratilipis")
+		log.Println("error while getting pratilipis")
 		panic(err)
         } else {
 		defer resp.Body.Close()
@@ -34,7 +34,7 @@ func GetPratilipis(idStr, accessToken string) ([]Pratilipi,error) {
 	body, err := ioutil.ReadAll(resp.Body)
         if err != nil {
                 //handle error
-		fmt.Println("error while parsing pratilipis ")
+		log.Println("error while parsing pratilipis ")
 		panic(err)
 	}
 
@@ -48,10 +48,10 @@ func GetPratilipisBySlug(slug, accessToken string) ([]Pratilipi,error) {
 	headers := map[string] string{
                 "Access-Token" : accessToken,
         }
-
+	log.Println("get from author service: ",config.Endpoints["pratilipi"]+"/metadata?slug="+slug)
 	resp, err := utils.HttpGet(config.Endpoints["pratilipi"]+"/metadata?slug="+slug, headers)
 	if err != nil {
-                fmt.Println("error while getting pratilipis by slug")
+                log.Println("error while getting pratilipis by slug")
 		panic(err)
         } else {
 		defer resp.Body.Close()
@@ -59,7 +59,7 @@ func GetPratilipisBySlug(slug, accessToken string) ([]Pratilipi,error) {
 
 	body, err := ioutil.ReadAll(resp.Body)
         if err != nil {
-                fmt.Println("Error while reading response from body + pratilipis + slug")
+                log.Println("Error while reading response from body + pratilipis + slug")
 		panic(err)
 	}
 

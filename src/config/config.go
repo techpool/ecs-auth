@@ -4,7 +4,7 @@ import (
 	"gopkg.in/ini.v1"
 	"path/filepath"
 	"runtime"
-	"fmt"
+	"log"
 )
 
 var Server struct {
@@ -18,13 +18,12 @@ var Redis struct {
 }
 
 var Endpoints map[string] string
-
 var config *ini.File
 var err error
 
 func Init (stage , apiEndpoint string) {
 
-	fmt.Println("Loading the config..")
+	log.Println("Loading the config..")
 
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {

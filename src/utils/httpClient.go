@@ -1,11 +1,11 @@
 package utils
 
 import (
-//	"net"
+		"net"
         "net/http"
-	"time"
+		"time"
 )
-/*
+
 var netTransport = &http.Transport{
         Dial: (&net.Dialer{
                 Timeout: 5 * time.Second,
@@ -15,10 +15,10 @@ var netTransport = &http.Transport{
         IdleConnTimeout:    30 * time.Second,
         DisableCompression: true,
 }
-*/
+
 var netClient = &http.Client{
         Timeout: time.Second * 10,
-   //     Transport: netTransport,
+        Transport: netTransport,
 }
 /*
 type HttpClient interface {
