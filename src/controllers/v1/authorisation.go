@@ -15,7 +15,7 @@ import (
 	utilServices "auth/src/utils/services"
 )
 
-var validResources = []string{"/pratilipis","/authors","/recommendation/pratilipis","/search/search","/search/trending_search","/follows","/userauthor/follow/list", "/userauthor/follow","/reviews","/userpratilipi","/userpratilipi/review","/userpratilipi/review/list","/userpratilipi/reviews","/comments","/comment","/comment/list","/vote","/votes", "/blog-scraper","/event","/event/list","/events","/event/pratilipi","/devices", "/notifications","/userpratilipi/library","/userpratilipi/library/list","/library", "/social-connect","/user/register","/user/login","/user/login/facebook","/user/login/google","/user/verification","/user/email","/user/passwordupdate","/user","/user/logout","/authors/recommendation","/pratilipi/content/batch","/pratilipi/content/chapter/add","/pratilipi/content/chapter/delete","/pratilipi/content/index","/pratilipi/content","/coverimage-recommendation","/template-engine","/growthjava","/report","/init","/users/v2.0/admins/users/*","/admins/users","/events/v2.0","/user/firebase-token"}
+var validResources = []string{"/pratilipis","/authors","/recommendation/pratilipis","/search/search","/search/trending_search","/follows","/userauthor/follow/list", "/userauthor/follow","/reviews","/userpratilipi","/userpratilipi/review","/userpratilipi/review/list","/userpratilipi/reviews","/comments","/comment","/comment/list","/vote","/votes", "/blog-scraper","/event","/event/list","/events","/event/pratilipi","/devices", "/notifications","/userpratilipi/library","/userpratilipi/library/list","/library", "/social-connect","/user/register","/user/login","/user/login/facebook","/user/login/google","/user/verification","/user/email","/user/passwordupdate","/user","/user/logout","/authors/recommendation","/pratilipi/content/batch","/pratilipi/content/chapter/add","/pratilipi/content/chapter/delete","/pratilipi/content/index","/pratilipi/content","/coverimage-recommendation","/template-engine","/growthjava","/report","/init","/users/v2.0/admins/users/*","/admins/users","/events/v2.0","/user/firebase-token","/oasis"}
 
 var validMethods = []string{"POST","GET","PUT","PATCH","DELETE"}
 
@@ -148,7 +148,8 @@ func Validate(c echo.Context) error {
 		resource == "/growthjava" || 
 		resource == "/template-engine" || 
 		resource == "/coverimage-recommendation" || 
-		(resource == "/user" && method == "GET" && len(resourceIds) == 0 ) {
+		(resource == "/user" && method == "GET" && len(resourceIds) == 0 || 
+		resource == "/oasis") {
 		resourceIds = "0"
 
 	}
@@ -505,7 +506,7 @@ func Validate(c echo.Context) error {
                         rpData = append(rpData,resourcePermission{200, 0, true})
                 } else {
                         rpData = append(rpData,resourcePermission{403, 0, false})
-                }   
+                }
         } else if resource == "/events" {
 		eventId := resourceIdArray[0]
 		log.Println("validating ", resource, userId, eventId, method)
@@ -583,8 +584,14 @@ func Validate(c echo.Context) error {
 		} else {
 			rpData = append(rpData,resourcePermission{403, userId, false})
 		}
-	} else {
-		rpData = append(rpData,resourcePermission{200, 0, true})
+	} else if resource == "/oasis" {
+		if userId > 0 {
+			 rpData = append(rpData,resourcePermission{200, 0, true})
+		} else {
+			rpData = append(rpData,resourcePermission{403, 0, false})
+		}
+	}else {
+		rpData = append(rpData,resourcePermission{403, 0, false})
 	}
 
 	//resource, method, data
