@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"regexp"
 	"encoding/json"
+	"errors"
 
 	"github.com/labstack/echo"
 	"auth/src/utils"
@@ -74,13 +75,17 @@ func Validate(c echo.Context) error {
 	if len(accessTokenArr) == 0 && len(userIdArr) == 0 || accessToken == "null" {
 		return c.String(http.StatusUnauthorized,"Access Token is invalid")
 	}
-	
+
 	//Fetch UserId for given accessToken
 	if userId == 0 && len(accessToken) > 0 {
 		userId, err = GetUserIdByAccessToken(accessToken)
 		if err != nil {
 			log.Println("Error: While getting userId for accessToken")
-			return c.JSON(http.StatusInternalServerError,nil)
+			if err.Error() == "AccessToken not found" {
+				return c.String(http.StatusUnauthorized,"Access Token is invalid")
+			} else {
+				return c.JSON(http.StatusInternalServerError,nil)
+			}
 		}
 	}
 
@@ -772,6 +777,10 @@ func GetUserIdByAccessToken(accessToken string) (int64,error) {
 			//panic(err)
 			log.Println("Error: While reading from db")
 			return 0, err
+		}
+
+		if val == nil {
+			return 0, errors.New("AccessToken not found")
 		}
 
 		temp := &cache{val.(int64)}
