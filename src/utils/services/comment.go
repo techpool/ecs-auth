@@ -31,7 +31,7 @@ func GetComments(idStr string, userId int64) ([]Comment, error) {
         headers := map[string] string{
                 "User-Id" : strconv.FormatInt(userId, 10),
         }
-	log.Println("get from author service: ",config.Endpoints["social"]+"/v2.0/comments?id="+idStr)
+	log.Println("get from comment service: ",config.Endpoints["social"]+"/v2.0/comments?id="+idStr)
 	resp, err := utils.HttpGet(config.Endpoints["social"]+"/v2.0/comments?id="+idStr, headers)
         if err != nil {
                 //handle error

@@ -71,12 +71,20 @@ func Validate(c echo.Context) error {
 		userId, err = strconv.ParseInt(userIdArr[0],10,64)
 	}
 
-	if len(accessTokenArr) == 0 && len(userIdArr) == 0 {
-		return c.JSON(http.StatusUnauthorized,nil)
+	if len(accessTokenArr) == 0 && len(userIdArr) == 0 || accessToken == "null" {
+		return c.String(http.StatusUnauthorized,"Access Token is invalid")
+	}
+	
+	//Fetch UserId for given accessToken
+	if userId == 0 && len(accessToken) > 0 {
+		userId, err = GetUserIdByAccessToken(accessToken)
+		if err != nil {
+			log.Println("Error: While getting userId for accessToken")
+			return c.JSON(http.StatusInternalServerError,nil)
+		}
 	}
 
-	log.Println("The accessToken is:", accessToken)
-	log.Println("The userId is:", userId)
+	log.Printf("After reading userid %v for accessToken %v", userId, accessToken)
 
 	//Reading query params
 	resource := c.Get("resource")
@@ -140,8 +148,6 @@ func Validate(c echo.Context) error {
 
 	}
 
-	log.Printf("After parameter mapping resource: %v, method: %v, resourceIds: %v, resourceType: %v",resource, method, resourceIds, resourceType)
-
 	//Parameter validations
 	isValidResource := false
 	for _,val := range validResources {
@@ -179,18 +185,7 @@ func Validate(c echo.Context) error {
 		}
 	}
 
-	log.Printf("After parameter mapping resource: %v, method: %v, resourceIds: %v, resourceType: %v",resource, method, resourceIds, resourceType)
-
-	//Fetch UserId for given accessToken
-	if userId == 0 && len(accessToken) > 0 {
-		userId, err = GetUserIdByAccessToken(accessToken)
-		if err != nil {
-			log.Println("Error: While getting userId for accessToken")
-			return c.JSON(http.StatusInternalServerError,nil)
-		}
-	}
-
-	log.Printf("After reading userid %v for accessToken %v", userId, accessToken)
+	log.Printf("After parameter mapping & validating. resource: %v, method: %v, resourceIds: %v, resourceType: %v",resource, method, resourceIds, resourceType)
 
 	//TODO: Fetch respective resources
 	if (resource == "/pratilipis" && method != "POST" && len(resourceType) == 0) || ((resource == "/reviews" || resource == "/userpratilipi/reviews") && method == "POST") {
@@ -257,9 +252,9 @@ func Validate(c echo.Context) error {
 		}
 	}
 
-	//roles := aee.GetRoles(userId)
-	//TODO: Verify user-action-resource
-	log.Printf("After receiving the resources going to validate resource %v, method %v", resource, method)
+
+	//Verify user-action-resource
+	log.Printf("After receiving the resources going to validate. resource %v, method %v", resource, method)
 	if resource == "/pratilipis" {
 		log.Println("validating /pratilipis resource", resourceType, method, pratilipis)
 		if resourceType == "AUTHOR" {
@@ -668,7 +663,6 @@ func pathMapping(apiType string, c echo.Context) echo.Context {
 			strings.HasPrefix(resource,"/library") {
 			resource = "/library"
 		} else if resource == "/report/v1.0/report" {
-			log.Println("mapping report api")
 			resource = "/report"
 		} else if resource == "/notification/list" || 
 			resource == "/notification" || 
@@ -761,7 +755,7 @@ func pathMapping(apiType string, c echo.Context) echo.Context {
 }
 
 func GetUserIdByAccessToken(accessToken string) (int64,error) {
-	log.Println("Getting userId for accesstoken ",accessToken)
+
 	type cache struct {
 		Id int64 `json:"id"`
 	}
@@ -772,6 +766,7 @@ func GetUserIdByAccessToken(accessToken string) (int64,error) {
 	}
 
 	if (val == nil) {
+		log.Println("Get userId from db as not available in cache for accesstoken ", accessToken)
 		val, err = utilServices.GetUserIdByAccessToken(accessToken)
 		if err != nil {
 			//panic(err)
@@ -787,6 +782,7 @@ func GetUserIdByAccessToken(accessToken string) (int64,error) {
 			return 0, err
 		}
 
+		log.Println("Add userId from db into cache for accesstoken & userId ", accessToken, j)
 		// Insert into cache
 		err = utils.SetCache(accessToken, string(j),259200)
 		if err != nil {

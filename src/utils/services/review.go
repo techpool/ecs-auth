@@ -18,12 +18,16 @@ type Review struct {
 	User User `json:user`
 }
 
+type ReviewData struct {
+        Data []Review `json:"data"`
+}
+
 func GetReviews(idStr string, userId int64) ([]Review, error) {
 	var reviews []Review
 	headers := map[string] string {
                 "User-Id" : strconv.FormatInt(userId, 10),
         }
-	log.Println("get from author service: ",config.Endpoints["social"]+"/v2.0/reviews?id="+idStr)
+	log.Println("get from review service: ",config.Endpoints["social"]+"/v2.0/reviews?id="+idStr)
 	resp, err := utils.HttpGet(config.Endpoints["social"]+"/v2.0/reviews?id="+idStr, headers)
 	if err != nil {
                 //handle error
@@ -41,8 +45,8 @@ func GetReviews(idStr string, userId int64) ([]Review, error) {
 		//panic(err)
 		return reviews,err
 	}
-
-	json.Unmarshal(body,&reviews)
-        return reviews, nil
+	var reviewData ReviewData
+	json.Unmarshal(body,&reviewData)
+        return reviewData.Data, nil
 
 }

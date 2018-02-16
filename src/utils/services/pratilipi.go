@@ -21,7 +21,7 @@ func GetPratilipis(idStr, accessToken string) ([]Pratilipi,error) {
 	headers := map[string] string{
                 "Access-Token" : accessToken,
         }
-	log.Println("get from author service: ",config.Endpoints["pratilipi"]+"/metadata?id="+idStr)
+	log.Println("get from pratilipi service: ",config.Endpoints["pratilipi"]+"/metadata?id="+idStr)
 	resp, err := utils.HttpGet(config.Endpoints["pratilipi"]+"/metadata?id="+idStr, headers)
 	if err != nil {
                 //handle error
@@ -50,7 +50,7 @@ func GetPratilipisBySlug(slug, accessToken string) ([]Pratilipi,error) {
 	headers := map[string] string{
                 "Access-Token" : accessToken,
         }
-	log.Println("get from author service: ",config.Endpoints["pratilipi"]+"/metadata?slug="+slug)
+	log.Println("get from pratilipi service: ",config.Endpoints["pratilipi"]+"/metadata?slug="+slug)
 	resp, err := utils.HttpGet(config.Endpoints["pratilipi"]+"/metadata?slug="+slug, headers)
 	if err != nil {
                 log.Println("Error: While getting pratilipis by slug")

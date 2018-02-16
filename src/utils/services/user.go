@@ -19,7 +19,7 @@ func GetUserIdByAccessToken (accessToken string) (interface{}, error) {
 	headers := map[string] string{
 		"Access-Token" : accessToken,
 	}
-	log.Println("get from author service: ",config.Endpoints["user"]+"/v2.0/access-tokens/get-userid")
+	log.Println("get from user service: ",config.Endpoints["user"]+"/v2.0/access-tokens/get-userid")
 	resp, err := utils.HttpGet(config.Endpoints["user"]+"/v2.0/access-tokens/get-userid", headers)
         if err != nil {
 		log.Println("Error: While getting accesstoken ")
