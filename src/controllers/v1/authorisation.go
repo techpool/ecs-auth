@@ -536,7 +536,7 @@ func Validate(c echo.Context) error {
 			if validationType == "PRELOGIN" && userId > 0 {
 				rpData = append(rpData,resourcePermission{200, 0, true})
 			} else if validationType == "POSTLOGIN" {
-				if userIdQP == 0 {
+				if userIdQP > 0 {
 					if aee.IsAee(userId) || userId == userIdQP {
 						rpData = append(rpData,resourcePermission{200, userIdQP, true})
 					} else {
@@ -563,7 +563,7 @@ func Validate(c echo.Context) error {
 				rpData = append(rpData,resourcePermission{200, 0, true})
 			}
 		} else if method == "PATCH" {
-			if userIdQP == 0 {
+			if userIdQP > 0 {
 				if aee.IsAee(userId) || userId == userIdQP {
 					rpData = append(rpData,resourcePermission{200, userIdQP, true})
                                 } else {
