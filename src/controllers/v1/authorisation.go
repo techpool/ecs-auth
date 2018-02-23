@@ -509,7 +509,7 @@ func Validate(c echo.Context) error {
         }
     } else if resource == "/events" {
 
-    	eventId := 0
+    	var eventId int64
 
     	if method != "POST" {
 			eventId = resourceIdArray[0]
