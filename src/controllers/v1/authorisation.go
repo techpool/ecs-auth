@@ -508,9 +508,11 @@ func Validate(c echo.Context) error {
                 rpData = append(rpData,resourcePermission{403, 0, false})
         }
     } else if resource == "/events" {
-    	
+
+    	eventId := 0
+
     	if method != "POST" {
-			eventId := resourceIdArray[0]
+			eventId = resourceIdArray[0]
     	}
 		log.Println("validating ", resource, userId, eventId, method)
 		if method == "POST" || method == "PATCH" {
