@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"net/http"
+	"time"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 
@@ -14,7 +15,10 @@ import (
 )
 
 func main () {
+
 	app := echo.New()
+	app.Server.ReadTimeout = 15 * time.Second
+	app.Server.WriteTimeout = 45 * time.Second
 
 	stage := os.Getenv("STAGE")
 	if len(stage) == 0 {
