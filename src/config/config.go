@@ -2,9 +2,12 @@ package config
 
 import (
 	"gopkg.in/ini.v1"
-	"path/filepath"
-	"runtime"
+	//"path/filepath"
+	//"runtime"
 	"log"
+	"os"
+	"fmt"
+	"strconv"
 )
 
 var Server struct {
@@ -25,29 +28,19 @@ func Init (stage , apiEndpoint string) {
 
 	log.Println("Loading the config..")
 
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		panic("No caller information")
-	}
+	if stage == "local" {
+		Server.Port = "8080"
+		Redis.Host = "localhost:8080"
+		Redis.DB = 3
+	} else {
+		redisEndpoint := os.Getenv("MASTER_REDIS_ENDPOINT")
+		redisPort := os.Getenv("MASTER_REDIS_PORT")
+		redisDB := os.Getenv("MASTER_REDIS_DB")
+		redisHost := fmt.Sprintf("%s:%d",redisEndpoint,redisPort)
 
-	filename = filepath.Join(filepath.Dir(filename), stage+".config.ini")
-
-	config, err = ini.InsensitiveLoad(filename)
-	if err != nil  {
-		panic(err)
-		return
-	}
-
-	// Load server config
-	err = load("server",&Server)
-	if err != nil {
-		panic(err)
-	}
-
-	// Load redis config
-	err = load("redis", &Redis)
-	if err != nil {
-		panic(err)
+		Server.Port = "8080"
+		Redis.Host = redisHost
+		Redis.DB, _  = strconv.Atoi(redisDB)
 	}
 
 	Endpoints = make(map[string] string)
@@ -57,6 +50,3 @@ func Init (stage , apiEndpoint string) {
 	Endpoints["pratilipi"] = apiEndpoint+"/pratilipis"
 }
 
-func load (section string, obj interface{}) error {
-	return config.Section(section).MapTo(obj)
-}
