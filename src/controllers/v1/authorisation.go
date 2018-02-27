@@ -501,14 +501,19 @@ func Validate(c echo.Context) error {
 			rpData = append(rpData,resourcePermission{403, 0, false})
 		}
 	} else if resource == "/blog-scraper" {
-                log.Println("validating ", resource, userId)
-                if aee.IsAee(userId) {
-                        rpData = append(rpData,resourcePermission{200, 0, true})
-                } else {
-                        rpData = append(rpData,resourcePermission{403, 0, false})
-                }
-        } else if resource == "/events" {
-		eventId := resourceIdArray[0]
+        log.Println("validating ", resource, userId)
+        if aee.IsAee(userId) {
+                rpData = append(rpData,resourcePermission{200, 0, true})
+        } else {
+                rpData = append(rpData,resourcePermission{403, 0, false})
+        }
+    } else if resource == "/events" {
+
+    	var eventId int64
+
+    	if method != "POST" {
+			eventId = resourceIdArray[0]
+    	}
 		log.Println("validating ", resource, userId, eventId, method)
 		if method == "POST" || method == "PATCH" {
 			if aee.IsAee(userId) {
