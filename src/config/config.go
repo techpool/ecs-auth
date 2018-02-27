@@ -38,7 +38,7 @@ func Init (stage , apiEndpoint string) {
 		redisDB := os.Getenv("MASTER_REDIS_DB")
 		redisHost := fmt.Sprintf("%s:%d",redisEndpoint,redisPort)
 
-		Server.Port = "8080"
+		Server.Port = "80"
 		Redis.Host = redisHost
 		Redis.DB, _  = strconv.Atoi(redisDB)
 	}
