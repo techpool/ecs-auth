@@ -19,12 +19,12 @@ var validResources = []string{"/pratilipis","/authors","/recommendation/pratilip
 
 var validMethods = []string{"POST","GET","PUT","PATCH","DELETE"}
 
-type response struct {
-	message string
+type errorResponse struct {
+	Message string `json:"message"`
 }
 
 func Test(c echo.Context) error {
-	resp := response{"Hello test"}
+	resp := errorResponse{"Hello test"}
 	log.Println(resp)
 	return c.JSON(http.StatusOK, resp)
 }
@@ -84,7 +84,7 @@ func Validate(c echo.Context) error {
 			if err.Error() == "AccessToken not found" {
 				return c.String(http.StatusUnauthorized,"Access Token is invalid")
 			} else {
-				return c.JSON(http.StatusInternalServerError,nil)
+				return c.JSON(http.StatusInternalServerError,errorResponse{"Some exception occured while processing accesstoken"})
 			}
 		}
 	}
@@ -173,7 +173,7 @@ func Validate(c echo.Context) error {
 		!isValidMethod ||
 		(method != "POST" && len(resourceIds) == 0 && len(slug) == 0) ||
 		((resource == "/pratilipis" || resource == "/authors") && method == "POST" && len(language) == 0) {
-		return c.JSON(http.StatusBadRequest, nil)
+		return c.JSON(http.StatusBadRequest, errorResponse{"Insufficient/invalid parameters in request"})
 	}
 
 	if method != "POST" ||
@@ -181,7 +181,7 @@ func Validate(c echo.Context) error {
 		(resource == "/follows") ||
 		((resource == "/userpratilipi/reviews" || resource == "/reviews") && method == "POST") {
 		if len(resourceIds) == 0 {
-			return c.JSON(http.StatusBadRequest, nil)
+			return c.JSON(http.StatusBadRequest, errorResponse{"Insufficient/invalid parameters in request"})
 		}
 
 		tempResourceIdArray := strings.Split(resourceIds,",")
@@ -212,7 +212,7 @@ func Validate(c echo.Context) error {
 		}
 		log.Println("Got pratilips: ", pratilipis)
 		if len(pratilipis) == 0 {
-			return c.JSON(http.StatusForbidden, nil)
+			return c.JSON(http.StatusForbidden, errorResponse{"Invalid resource ids"})
 		}
 	} else if (resource == "/authors" && (method == "PATCH" || method == "DELETE")) || 
 			(resource == "/pratilipis" && resourceType == "AUTHOR") || 
@@ -233,7 +233,7 @@ func Validate(c echo.Context) error {
 		}
 		log.Println("Got authors: ", pratilipis)
 		if len(authors) == 0 {
-			return c.JSON(http.StatusForbidden, nil)
+			return c.JSON(http.StatusForbidden, errorResponse{"Invalid resource ids"})
 		}
 	} else if (resource == "/reviews" || resource == "/userpratilipi/reviews") && 
 		(method == "PATCH" || method == "DELETE") {
@@ -244,7 +244,7 @@ func Validate(c echo.Context) error {
 			log.Println("Error while getting reviews")
 		}
 		if len(reviews) == 0 {
-			return c.JSON(http.StatusForbidden, nil)
+			return c.JSON(http.StatusForbidden, errorResponse{"Invalid resource ids"})
 		}
 	} else if (resource == "/comments" || resource == "/comment") && 
 		(method == "PATCH" || method == "DELETE") {
@@ -254,7 +254,7 @@ func Validate(c echo.Context) error {
 			log.Println("Error while getting comments")
 		}
 		if len(comments) == 0 {
-			 return c.JSON(http.StatusForbidden, nil)
+			 return c.JSON(http.StatusForbidden, errorResponse{"Invalid resource ids"})
 		}
 	}
 
@@ -501,19 +501,17 @@ func Validate(c echo.Context) error {
 			rpData = append(rpData,resourcePermission{403, 0, false})
 		}
 	} else if resource == "/blog-scraper" {
-        log.Println("validating ", resource, userId)
-        if aee.IsAee(userId) {
-                rpData = append(rpData,resourcePermission{200, 0, true})
-        } else {
-                rpData = append(rpData,resourcePermission{403, 0, false})
-        }
-    } else if resource == "/events" {
-
-    	var eventId int64
-
-    	if method != "POST" {
+		log.Println("validating ", resource, userId)
+		if aee.IsAee(userId) {
+	                rpData = append(rpData,resourcePermission{200, 0, true})
+	        } else {
+		        rpData = append(rpData,resourcePermission{403, 0, false})
+	        }
+	} else if resource == "/events" {
+		var eventId int64
+		if method != "POST" {
 			eventId = resourceIdArray[0]
-    	}
+		}
 		log.Println("validating ", resource, userId, eventId, method)
 		if method == "POST" || method == "PATCH" {
 			if aee.IsAee(userId) {
