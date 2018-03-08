@@ -691,7 +691,7 @@ func pathMapping(apiType string, c echo.Context) echo.Context {
 			resource == "/notification/batch" {
 			resource = "/notifications"
 		} else if resource == "/init/v1.0/list" || 
-			resource == "/init/v1.0/init" {
+			resource == "/init/v1.0/init" || resource == "/init/v2.0/init" {
 			resource = "/init"
 		} else if resource == "/userpratilipi" || 
 			resource == "/userpratilipi/review" || 
