@@ -110,7 +110,15 @@
     "message": "Invalid parameters"
   }
   ~~~
+  OR
  
+ * **Code:** 401
+  ~~~
+  {
+    "message":"Access Token is invalid"
+  }
+  ~~~
+
   OR
  
   * **Code:** 500 INTERNAL SERVER ERROR  
