@@ -73,7 +73,7 @@ func Validate(c echo.Context) error {
 	}
 
 	if len(accessTokenArr) == 0 && len(userIdArr) == 0 || accessToken == "null" {
-		return c.String(http.StatusUnauthorized,"Access Token is invalid")
+		return c.JSON(http.StatusUnauthorized,errorResponse{"Access Token is invalid"})
 	}
 
 	//Fetch UserId for given accessToken
@@ -82,7 +82,7 @@ func Validate(c echo.Context) error {
 		if err != nil {
 			log.Println("Error: While getting userId for accessToken")
 			if err.Error() == "AccessToken not found" {
-				return c.String(http.StatusUnauthorized,"Access Token is invalid")
+				return c.JSON(http.StatusUnauthorized,errorResponse{"Access Token is invalid"})
 			} else {
 				return c.JSON(http.StatusInternalServerError,errorResponse{"Some exception occured while processing accesstoken"})
 			}
