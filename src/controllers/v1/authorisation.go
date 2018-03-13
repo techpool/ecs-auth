@@ -589,11 +589,11 @@ func Validate(c echo.Context) error {
 			rpData = append(rpData,resourcePermission{403, userId, false})
 		}
 	} else if resource == "/oasis" {
-		if userId > 0 {
+		// if userId > 0 {
 			 rpData = append(rpData,resourcePermission{200, 0, true})
-		} else {
-			rpData = append(rpData,resourcePermission{403, 0, false})
-		}
+		// } else {
+			// rpData = append(rpData,resourcePermission{403, 0, false})
+		// }
 	} else if resource == "/user_pratilipi/v2.0/user_pratilipis" {
 		if userId > 0 {
 			 rpData = append(rpData,resourcePermission{200, 0, true})
