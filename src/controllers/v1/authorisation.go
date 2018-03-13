@@ -754,6 +754,8 @@ func pathMapping(apiType string, c echo.Context) echo.Context {
 			resource = "/coverimage-recommendation"
 		} else if resource == "/users/v2.0/admins/users/*" {
 			resource = "/admins/users"
+		} else if resource == "/oasis/v1.0/pratilipis/summary" {
+			resource = "/pratilipis"
 		}
 
 		c.Set("originalResource",originalResource)
