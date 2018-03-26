@@ -56,6 +56,14 @@ var roleMap = map[string] Role {
 }
 
 var aeeMap = map[string] Aee {
+	"TAMIL":	{6755388384268755,[]Role{roleMap["MEMBER"],roleMap["ADMIN"],roleMap["ADMIN_TAMIL"]}},
+	"TELUGU":	{6755388384268768,[]Role{roleMap["MEMBER"],roleMap["ADMIN"],roleMap["ADMIN_TELUGU"]}},
+	"MALAYALAM":	{6755388383961732,[]Role{roleMap["MEMBER"],roleMap["ADMIN"],roleMap["ADMIN_MALAYALAM"]}},
+	"KANNADA":       {5970332946006016,[]Role{roleMap["MEMBER"],roleMap["ADMIN"],roleMap["ADMIN_KANNADA"]}},
+	"HINDI":       {4646846495457280,[]Role{roleMap["MEMBER"],roleMap["ADMIN"],roleMap["ADMIN_HINDI"]}},
+	"GUJARATI":       {6755388384270028,[]Role{roleMap["MEMBER"],roleMap["ADMIN"],roleMap["ADMIN_GUJARATI"]}},
+	"BENGALI":       {6322371079176192,[]Role{roleMap["MEMBER"],roleMap["ADMIN"],roleMap["ADMIN_BENGALI"]}},
+	"MARATHI":       {6755388384269894,[]Role{roleMap["MEMBER"],roleMap["ADMIN"],roleMap["ADMIN_MARATHI"]}},
 	"MOUMITA": 		{6243664397336576, []Role{roleMap["MEMBER"],roleMap["ADMIN"],roleMap["ADMIN_BENGALI"]}},
 	"NIMISHA": 		{5644707593977856, []Role{roleMap["MEMBER"],roleMap["ADMIN"],roleMap["ADMIN_GUJARATI"],roleMap["ADMIN_HINDI"]}},
 	"VEENA": 		{4790800105865216, []Role{roleMap["MEMBER"],roleMap["ADMIN"],roleMap["ADMIN_GUJARATI"],roleMap["ADMIN_HINDI"],roleMap["ADMIN_MARATHI"]}},
