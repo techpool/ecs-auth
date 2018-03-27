@@ -16,9 +16,9 @@ import (
 
 func main () {
 
-	app := echo.New()
-	app.Server.ReadTimeout = 15 * time.Second
-	app.Server.WriteTimeout = 45 * time.Second
+	runType := os.Args[1]
+
+	log.Println("server has started", runType)
 
 	stage := os.Getenv("STAGE")
 	if len(stage) == 0 {
@@ -29,10 +29,6 @@ func main () {
 	if len(apiEndpoint) == 0 {
 		log.Println("Api endpoint variable is not set")
 	}
-
-
-	//Middleware
-	app.Use(middleware.Logger())
 
 	//Load config
 	config.Init(stage, apiEndpoint)
@@ -49,8 +45,16 @@ func main () {
 	//Initialise utils
 	utils.Init()
 
+	if runType == "service" {
+	app := echo.New()
+        app.Server.ReadTimeout = 15 * time.Second
+        app.Server.WriteTimeout = 45 * time.Second
+
+	//Middleware
+        app.Use(middleware.Logger())
+
 	//Initialize routes
-	controllers.Init(app)
+        controllers.Init(app)
 
 	//Health API
 	app.GET("/health",func(c echo.Context) error {
@@ -59,4 +63,10 @@ func main () {
 
 	log.Println("Starting the server..")
 	app.Logger.Fatal(app.Start(":"+config.Server.Port))
+	} else if runType == "worker" {
+		log.Println("Starting the worker..")
+		utils.SQSInit()
+	}
+
 }
+

@@ -2,8 +2,8 @@ package config
 
 import (
 	"gopkg.in/ini.v1"
-	//"path/filepath"
-	//"runtime"
+	"path/filepath"
+	"runtime"
 	"log"
 	"os"
 	"fmt"
@@ -20,6 +20,12 @@ var Redis struct {
 	DB int
 }
 
+var SQS struct {
+	Region string
+	QueueURL string
+	PollIntervalSeconds int
+}
+
 var Endpoints map[string] string
 var config *ini.File
 var err error
@@ -27,6 +33,17 @@ var err error
 func Init (stage , apiEndpoint string) {
 
 	log.Println("Loading the config..")
+
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		panic("No caller information")
+	}
+	var err error
+	filename = filepath.Join(filepath.Dir(filename), stage+".config.ini")
+	config, err = ini.InsensitiveLoad(filename)
+	if err != nil {
+		panic(err)
+	}
 
 	if stage == "local" {
 		Server.Port = "8080"
@@ -48,5 +65,15 @@ func Init (stage , apiEndpoint string) {
 	Endpoints["user"] = apiEndpoint+"/users"
 	Endpoints["author"] = apiEndpoint+"/authors"
 	Endpoints["pratilipi"] = apiEndpoint+"/pratilipis"
+
+	err = Load("sqs", &SQS)
+	if err != nil {
+		panic(err)
+	}
+
+}
+
+func Load(section string, tpl interface{}) error {
+	return config.Section(section).MapTo(tpl)
 }
 
