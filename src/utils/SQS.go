@@ -4,6 +4,7 @@ import (
 	"time"
 	"log"
 	"auth/src/config"
+	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -11,9 +12,14 @@ import (
 )
 
 func SQSInit() {
-	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	}))
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String(config.SQS.Region)},
+	)
+
+	if err != nil {
+		os.Exit(2)
+	}
+
 	svc := sqs.New(sess)
 
 	ticker := time.NewTicker(time.Duration(config.SQS.PollIntervalSeconds) * time.Second)
