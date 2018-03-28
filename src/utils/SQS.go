@@ -13,7 +13,7 @@ import (
 )
 
 type SqsMessage struct {
-	message Message
+	message string
 }
 
 type Message struct {
@@ -68,10 +68,18 @@ func SQSInit() {
 func processMessages(sqsMessages []*sqs.Message) {
 	for _,sqsMsg := range sqsMessages {
 		var sqsMessage SqsMessage
+		log.Println("The SQS Message: ",sqsMsg)
+		log.Println("The SQS Message Body: ",*sqsMsg.Body)
+		log.Println("The Bytes of SQS Message Body: ",[]byte(*sqsMsg.Body))
 		if err := json.Unmarshal([]byte(*sqsMsg.Body),&sqsMessage); err != nil {
 			log.Println("Error while unmarshaling error ",err)
 		}
-		log.Println(sqsMessage)
+		var message Message
+		if err := json.Unmarshal([]byte(sqsMessage.message),&message); err != nil {
+			log.Println("Error while unmarshalling 2 error", err)
+		}
+
+		log.Println(message)
 	}
 }
 
