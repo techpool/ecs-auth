@@ -5,11 +5,30 @@ import (
 	"log"
 	"auth/src/config"
 	"os"
+	"encoding/json"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 )
+
+type SqsMessage struct {
+	message Message
+}
+
+type Message struct {
+	version string
+	meta Meta
+	name string
+	event string
+}
+
+type Meta struct {
+	resourceType string
+	resourceID string
+	serviceID string
+	serviceVersion string
+}
 
 func SQSInit() {
 	sess, err := session.NewSession(&aws.Config{
@@ -23,7 +42,7 @@ func SQSInit() {
 	svc := sqs.New(sess)
 
 	ticker := time.NewTicker(time.Duration(config.SQS.PollIntervalSeconds) * time.Second)
-
+	log.Println(config.SQS.QueueURL)
 	for _ = range ticker.C {
 		result, err := svc.ReceiveMessage(&sqs.ReceiveMessageInput{
 			AttributeNames: []*string{
@@ -41,8 +60,18 @@ func SQSInit() {
 			log.Println("Error while reading from queue ",err)
 			ticker.Stop()
 		}
-		log.Println(result)
+
+		processMessages(result.Messages)
 	}
 }
 
+func processMessages(sqsMessages []*sqs.Message) {
+	for _,sqsMsg := range sqsMessages {
+		var sqsMessage SqsMessage
+		if err := json.Unmarshal([]byte(*sqsMsg.Body),&sqsMessage); err != nil {
+			log.Println("Error while unmarshaling error ",err)
+		}
+		log.Println(sqsMessage)
+	}
+}
 
