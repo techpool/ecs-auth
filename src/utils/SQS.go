@@ -74,6 +74,7 @@ func processMessages(sqsMessages []*sqs.Message) {
 		if err := json.Unmarshal([]byte(*sqsMsg.Body),&sqsMessage); err != nil {
 			log.Println("Error while unmarshaling error ",err)
 		}
+		log.Println(sqsMessage)
 		var message Message
 		if err := json.Unmarshal([]byte(sqsMessage.message),&message); err != nil {
 			log.Println("Error while unmarshalling 2 error", err)
