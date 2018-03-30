@@ -21,13 +21,18 @@ type Message struct {
 	Meta Meta
 	Name string
 	Event string
+	Message InnerMessage
 }
 
 type Meta struct {
 	ResourceType string
-	ResourceID string
+	ResourceID int64
 	ServiceID string
 	ServiceVersion string
+}
+
+type InnerMessage struct {
+	AccessToken []string
 }
 
 func SQSInit() {
@@ -68,9 +73,6 @@ func SQSInit() {
 func processMessages(sqsMessages []*sqs.Message) {
 	for _,sqsMsg := range sqsMessages {
 		var sqsMessage SqsMessage
-		log.Println("The SQS Message: ",sqsMsg)
-		log.Println("The SQS Message Body: ",*sqsMsg.Body)
-		log.Println("The Bytes of SQS Message Body: ",[]byte(*sqsMsg.Body))
 		if err := json.Unmarshal([]byte(*sqsMsg.Body),&sqsMessage); err != nil {
 			log.Println("Error while unmarshaling error ",err)
 		}
@@ -81,6 +83,8 @@ func processMessages(sqsMessages []*sqs.Message) {
 		}
 
 		log.Println(message)
+		log.Println(message.Message)
+		log.Println(message.Message.AccessToken)
 	}
 }
 
