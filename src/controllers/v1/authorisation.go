@@ -728,7 +728,10 @@ func pathMapping(apiType string, c echo.Context) echo.Context {
 		} else if resource == "/user/register" || 
 			resource == "/user/login" || 
 			resource == "/user/login/facebook" || 
-			resource == "/user/login/google" {
+			resource == "/user/login/google" || 
+			resource == "/users/v2.0/identifiers/is-valid" || 
+			resource == "/users/v2.0/sessions/login" || 
+			resource == "/users/v2.0/sessions/signup" {
 			resource = "/user"
 			validationType = "PRELOGIN"
 		} else if resource == "/user/email" || 
@@ -738,7 +741,8 @@ func pathMapping(apiType string, c echo.Context) echo.Context {
 			validationType = "NONE"
 		} else if resource == "/user" || 
 			resource == "/user/logout" || 
-			resource == "/user/firebase-token" {
+			resource == "/user/firebase-token" || 
+			resource == "/users/v2.0/sessions/logout" {
 			resource = "/user"
 			validationType = "POSTLOGIN"
 			if len(c.QueryParam("userId")) > 0 {
