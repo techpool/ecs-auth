@@ -13,21 +13,21 @@ import (
 )
 
 type SqsMessage struct {
-	message string
+	Message string
 }
 
 type Message struct {
-	version string
-	meta Meta
-	name string
-	event string
+	Version string
+	Meta Meta
+	Name string
+	Event string
 }
 
 type Meta struct {
-	resourceType string
-	resourceID string
-	serviceID string
-	serviceVersion string
+	ResourceType string
+	ResourceID string
+	ServiceID string
+	ServiceVersion string
 }
 
 func SQSInit() {
@@ -74,8 +74,9 @@ func processMessages(sqsMessages []*sqs.Message) {
 		if err := json.Unmarshal([]byte(*sqsMsg.Body),&sqsMessage); err != nil {
 			log.Println("Error while unmarshaling error ",err)
 		}
+		log.Println(sqsMessage)
 		var message Message
-		if err := json.Unmarshal([]byte(sqsMessage.message),&message); err != nil {
+		if err := json.Unmarshal([]byte(sqsMessage.Message),&message); err != nil {
 			log.Println("Error while unmarshalling 2 error", err)
 		}
 
