@@ -760,7 +760,8 @@ func pathMapping(apiType string, c echo.Context) echo.Context {
 			resource = "/admins/users"
 		} else if resource == "/oasis/v1.0/pratilipis/summary" {
 			resource = "/pratilipis"
-		} else if resource == "/recommendations/v2.0/pratilipis" {
+		} else if resource == "/recommendations/v2.0/pratilipis" || 
+			resource == "/recommendations/v2.1/pratilipis" {
 			resource = "/recommendation/pratilipis"
 		}
 
