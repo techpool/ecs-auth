@@ -536,6 +536,11 @@ func Validate(c echo.Context) error {
 		rpData = append(rpData,resourcePermission{200, 0, true})
 	} else if resource == "/user" {
 		log.Println("validating ", resource, method, userId, validationType, userIdQP, resourceIdArray)
+
+		if validationType == "NONE" {
+			rpData = append(rpData,resourcePermission{200, 0, true})
+		} else {
+
 		if method == "POST" {
 			if validationType == "PRELOGIN" && userId > 0 {
 				rpData = append(rpData,resourcePermission{200, 0, true})
@@ -580,6 +585,7 @@ func Validate(c echo.Context) error {
                                         rpData = append(rpData,resourcePermission{403, userId, false})
 				}
 			}
+		}
 		}
 	} else if resource == "/admins/users" {
 		log.Println("validating ", resource, userId, method)
@@ -731,12 +737,14 @@ func pathMapping(apiType string, c echo.Context) echo.Context {
 			resource == "/user/login/google" || 
 			resource == "/users/v2.0/identifiers/is-valid" || 
 			resource == "/users/v2.0/sessions/login" || 
-			resource == "/users/v2.0/sessions/signup" {
+			resource == "/users/v2.0/sessions/signup"  {
 			resource = "/user"
 			validationType = "PRELOGIN"
 		} else if resource == "/user/email" || 
 			resource == "/user/passwordupdate" || 
-			resource == "/user/verification" {
+			resource == "/user/verification" || 
+			resource == "/users/v2.0/passwords/forgot/intent" || 
+			resource == "/users/v2.0/passwords/reset" {
 			resource = "/user"
 			validationType = "NONE"
 		} else if resource == "/user" || 
