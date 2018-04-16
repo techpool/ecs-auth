@@ -80,7 +80,7 @@ func Validate(c echo.Context) error {
 	if userId == 0 && len(accessToken) > 0 {
 		userId, err = GetUserIdByAccessToken(accessToken)
 		if err != nil {
-			log.Println("Error: While getting userId for accessToken")
+			log.Println("Error: While getting userId for accessToken",accessToken);
 			if err.Error() == "AccessToken not found" {
 				return c.JSON(http.StatusUnauthorized,errorResponse{"Access Token is invalid"})
 			} else {
