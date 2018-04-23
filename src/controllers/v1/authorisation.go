@@ -15,7 +15,7 @@ import (
 	utilServices "auth/src/utils/services"
 )
 
-var validResources = []string{"/pratilipis","/authors","/recommendation/pratilipis","/search/search","/search/trending_search","/follows","/userauthor/follow/list", "/userauthor/follow","/reviews","/userpratilipi","/userpratilipi/review","/userpratilipi/review/list","/userpratilipi/reviews","/comments","/comment","/comment/list","/vote","/votes", "/blog-scraper","/event","/event/list","/events","/event/pratilipi","/devices", "/notifications","/userpratilipi/library","/userpratilipi/library/list","/library", "/social-connect","/user/register","/user/login","/user/login/facebook","/user/login/google","/user/verification","/user/email","/user/passwordupdate","/user","/user/logout","/authors/recommendation","/pratilipi/content/batch","/pratilipi/content/chapter/add","/pratilipi/content/chapter/delete","/pratilipi/content/index","/pratilipi/content","/coverimage-recommendation","/template-engine","/growthjava","/report","/init","/users/v2.0/admins/users/*","/admins/users","/events/v2.0","/user/firebase-token","/oasis","/user_pratilipi/v2.0/user_pratilipis"}
+var validResources = []string{"/pratilipis","/authors","/recommendation/pratilipis","/search/search","/search/trending_search","/follows","/userauthor/follow/list", "/userauthor/follow","/reviews","/userpratilipi","/userpratilipi/review","/userpratilipi/review/list","/userpratilipi/reviews","/comments","/comment","/comment/list","/vote","/votes", "/blog-scraper","/event","/event/list","/events","/event/pratilipi","/devices", "/notifications","/userpratilipi/library","/userpratilipi/library/list","/library", "/social-connect","/user/register","/user/login","/user/login/facebook","/user/login/google","/user/verification","/user/email","/user/passwordupdate","/user","/user/logout","/authors/recommendation","/pratilipi/content/batch","/pratilipi/content/chapter/add","/pratilipi/content/chapter/delete","/pratilipi/content/index","/pratilipi/content","/coverimage-recommendation","/template-engine","/growthjava","/report","/init","/users/v2.0/admins/users/*","/admins/users","/events/v2.0","/user/firebase-token","/oasis","/user_pratilipi/v2.0/user_pratilipis","/blogs"}
 
 var validMethods = []string{"POST","GET","PUT","PATCH","DELETE"}
 
@@ -150,7 +150,8 @@ func Validate(c echo.Context) error {
 		resource == "/template-engine" || 
 		resource == "/coverimage-recommendation" || 
 		(resource == "/user" && method == "GET" && len(resourceIds) == 0 || 
-		resource == "/oasis") {
+		resource == "/oasis" || 
+		resource == "/blogs") {
 		resourceIds = "0"
 
 	}
@@ -606,6 +607,24 @@ func Validate(c echo.Context) error {
 		} else {
 			rpData = append(rpData,resourcePermission{403, 0, false})
 		}
+	} else if resource == "/blogs" {
+		if method == "GET" {
+			rpData = append(rpData,resourcePermission{200, 0, true})
+		} else if method == "POST" {
+			var hasAccess = aee.HasUserAccess(userId, language, "BLOG_POST_ADD")
+			if hasAccess {
+				 rpData = append(rpData,resourcePermission{200, 0, true})
+			} else {
+				rpData = append(rpData,resourcePermission{403, 0, false})
+			}
+		} else if method == "UPDATE" {
+			var hasAccess = aee.HasUserAccess(userId, language, "BLOG_POST_UPDATE")
+			if hasAccess {
+				rpData = append(rpData,resourcePermission{200, 0, true})
+			} else {
+				rpData = append(rpData,resourcePermission{403, 0, false})
+			}
+		}
 	} else {
 		rpData = append(rpData,resourcePermission{403, 0, false})
 	}
@@ -771,8 +790,13 @@ func pathMapping(apiType string, c echo.Context) echo.Context {
 		} else if resource == "/recommendations/v2.0/pratilipis" || 
 			resource == "/recommendations/v2.1/pratilipis" {
 			resource = "/recommendation/pratilipis"
-		} else if resource == "/user_pratilipi/v2.0/user_pratilipis/read_history" {
+		} else if resource == "/oasis/v1.0/user_pratilipis/read_history" {
 			resource = "/user_pratilipi/v2.0/user_pratilipis"
+		} else if resource == "/blogs/v1.0" || 
+			resource == "/blogs/v1.0/list" || 
+			resource == "/author-interviews/v1.0" || 
+			resource == "/author-interviews/v1.0/list" {
+			resource = "/blogs"
 		}
 
 		c.Set("originalResource",originalResource)
