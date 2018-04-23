@@ -771,6 +771,8 @@ func pathMapping(apiType string, c echo.Context) echo.Context {
 		} else if resource == "/recommendations/v2.0/pratilipis" || 
 			resource == "/recommendations/v2.1/pratilipis" {
 			resource = "/recommendation/pratilipis"
+		} else if resource == "/user_pratilipi/v2.0/user_pratilipis/read_history" {
+			resource = "/user_pratilipi/v2.0/user_pratilipis"
 		}
 
 		c.Set("originalResource",originalResource)
