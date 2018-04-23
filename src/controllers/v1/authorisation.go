@@ -617,13 +617,15 @@ func Validate(c echo.Context) error {
 			} else {
 				rpData = append(rpData,resourcePermission{403, 0, false})
 			}
-		} else if method == "UPDATE" {
+		} else if method == "PATCH" {
 			var hasAccess = aee.HasUserAccess(userId, language, "BLOG_POST_UPDATE")
 			if hasAccess {
 				rpData = append(rpData,resourcePermission{200, 0, true})
 			} else {
 				rpData = append(rpData,resourcePermission{403, 0, false})
 			}
+		} else {
+			rpData = append(rpData,resourcePermission{403, 0, false})
 		}
 	} else {
 		rpData = append(rpData,resourcePermission{403, 0, false})
