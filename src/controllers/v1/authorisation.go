@@ -794,10 +794,14 @@ func pathMapping(apiType string, c echo.Context) echo.Context {
 			resource = "/recommendation/pratilipis"
 		} else if resource == "/oasis/v1.0/user_pratilipis/read_history" {
 			resource = "/user_pratilipi/v2.0/user_pratilipis"
-		} else if resource == "/blogs/v1.0" || 
-			resource == "/blogs/v1.0/list" || 
-			resource == "/author-interviews/v1.0" || 
-			resource == "/author-interviews/v1.0/list" {
+		} else if resource == "/oasis/blogs/v1.0" || 
+			resource == "/oasis/blogs/v1.0/list" || 
+			resource == "/oasis/author-interviews/v1.0" || 
+			resource == "/oasis/author-interviews/v1.0/list" || 
+			resource == "/blogs/v1.0" || 
+			resource == "/blogs/v1.0/list" ||  
+                        resource == "/author-interviews/v1.0" ||  
+                        resource == "/author-interviews/v1.0/list" {
 			resource = "/blogs"
 		}
 
