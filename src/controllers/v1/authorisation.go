@@ -686,6 +686,8 @@ func pathMapping(apiType string, c echo.Context) echo.Context {
 			resource = re.ReplaceAllString(resource, wildString)
 		}
 
+		log.Println(resource);
+
 		if resource == "/image/pratilipi/cover" || 
 			resource == "/image/pratilipi/*/cover" || 
 			resource == "/pratilipis/*" || 
@@ -793,7 +795,7 @@ func pathMapping(apiType string, c echo.Context) echo.Context {
 			resource == "/recommendations/v2.1/pratilipis" {
 			resource = "/recommendation/pratilipis"
 		} else if resource == "/oasis/v1.0/user_pratilipis/history" || 
-			resource == "/user_pratilipi/v2.0/user_pratilipis/history" {
+			resource == "/user_pratilipi/v2.0/user_pratilipis/history/*" {
 			resource = "/user_pratilipi/v2.0/user_pratilipis"
 		} else if resource == "/oasis/blogs/v1.0" || 
 			resource == "/oasis/blogs/v1.0/list" || 
