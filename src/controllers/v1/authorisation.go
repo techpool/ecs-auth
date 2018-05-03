@@ -818,6 +818,8 @@ func pathMapping(apiType string, c echo.Context) echo.Context {
 			resource = "/blogs"
 		} else if resource == "/content/v1.0/contents/clipped" {
 			resource = "/content"
+		} else if resource == "/oasis/v1.0/authors" {
+			resource = "/authors"
 		}
 
 		c.Set("originalResource",originalResource)
