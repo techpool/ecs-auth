@@ -699,6 +699,9 @@ func pathMapping(apiType string, c echo.Context) echo.Context {
 		if strings.HasPrefix(resource,"/blog-scraper") {
 			re := regexp.MustCompile("/[a-z0-9]{22}")
 			resource = re.ReplaceAllString(resource, wildString)
+		} else if strings.HasPrefix(resource,"/event-participate") {
+			re := regexp.MustCompile("/[a-z0-9]{22}")
+			resource = re.ReplaceAllString(resource, wildString)
 		} else {
 			re := regexp.MustCompile("/[0-9]+")
 			resource = re.ReplaceAllString(resource, wildString)
@@ -772,7 +775,9 @@ func pathMapping(apiType string, c echo.Context) echo.Context {
 			resource == "/social-connect/referred/by_invitation" || 
 			resource == "/social-connect/contacts/scrape_phone_contacts" {
 			resource = "/social-connect"
-		} else if resource == "/event-participate/metadata" || 
+		} else if resource == "/event-participate/metadata/*" || 
+			resource == "/event-participate/content/*" || 
+			resource == "/event-participate/list" || 
 			resource == "/event-participate/images" {
 			resource = "/event-participate"
 		} else if resource == "/user/register" || 
