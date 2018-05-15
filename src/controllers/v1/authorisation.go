@@ -697,10 +697,10 @@ func pathMapping(apiType string, c echo.Context) echo.Context {
 		originalResource = resource
 
 		if strings.HasPrefix(resource,"/blog-scraper") {
-			re := regexp.MustCompile("/[a-z0-9]{22}")
+			re := regexp.MustCompile("/[a-z0-9]{24}")
 			resource = re.ReplaceAllString(resource, wildString)
 		} else if strings.HasPrefix(resource,"/event-participate") {
-			re := regexp.MustCompile("/[a-z0-9]{22}")
+			re := regexp.MustCompile("/[a-z0-9]{24}")
 			resource = re.ReplaceAllString(resource, wildString)
 		} else {
 			re := regexp.MustCompile("/[0-9]+")
