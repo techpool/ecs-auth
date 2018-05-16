@@ -776,6 +776,7 @@ func pathMapping(apiType string, c echo.Context) echo.Context {
 			resource == "/social-connect/contacts/scrape_phone_contacts" {
 			resource = "/social-connect"
 		} else if resource == "/event-participate/metadata/*" || 
+			resource == "/event-participate/metadata" || 
 			resource == "/event-participate/content/*" || 
 			resource == "/event-participate/list" || 
 			resource == "/event-participate/images" {
