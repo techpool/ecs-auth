@@ -15,7 +15,7 @@ import (
 	utilServices "auth/src/utils/services"
 )
 
-var validResources = []string{"/pratilipis","/authors","/recommendation/pratilipis","/search/search","/search/trending_search","/follows","/userauthor/follow/list", "/userauthor/follow","/reviews","/userpratilipi","/userpratilipi/review","/userpratilipi/review/list","/userpratilipi/reviews","/comments","/comment","/comment/list","/vote","/votes", "/blog-scraper","/event","/event/list","/events","/event/pratilipi","/devices", "/notifications","/userpratilipi/library","/userpratilipi/library/list","/library", "/social-connect","/user/register","/user/login","/user/login/facebook","/user/login/google","/user/verification","/user/email","/user/passwordupdate","/user","/user/logout","/authors/recommendation","/pratilipi/content/batch","/pratilipi/content/chapter/add","/pratilipi/content/chapter/delete","/pratilipi/content/index","/pratilipi/content","/coverimage-recommendation","/template-engine","/growthjava","/report","/init","/users/v2.0/admins/users/*","/admins/users","/events/v2.0","/user/firebase-token","/oasis","/user_pratilipi/v2.0/user_pratilipis","/blogs","/content", "/event-participate"}
+var validResources = []string{"/pratilipis","/authors","/recommendation/pratilipis","/search/search","/search/trending_search","/follows","/userauthor/follow/list", "/userauthor/follow","/reviews","/userpratilipi","/userpratilipi/review","/userpratilipi/review/list","/userpratilipi/reviews","/comments","/comment","/comment/list","/vote","/votes", "/blog-scraper","/event","/event/list","/events","/event/pratilipi","/devices", "/notifications","/userpratilipi/library","/userpratilipi/library/list","/library", "/social-connect","/user/register","/user/login","/user/login/facebook","/user/login/google","/user/verification","/user/email","/user/passwordupdate","/user","/user/logout","/authors/recommendation","/pratilipi/content/batch","/pratilipi/content/chapter/add","/pratilipi/content/chapter/delete","/pratilipi/content/index","/pratilipi/content","/coverimage-recommendation","/template-engine","/growthjava","/report","/init","/users/v2.0/admins/users/*","/admins/users","/events/v2.0","/user/firebase-token","/oasis","/user_pratilipi/v2.0/user_pratilipis","/blogs","/content", "/event-participate","/image_manager/recommendation"}
 
 var validMethods = []string{"POST","GET","PUT","PATCH","DELETE"}
 
@@ -152,7 +152,8 @@ func Validate(c echo.Context) error {
 		resource == "/coverimage-recommendation" || 
 		(resource == "/user" && method == "GET" && len(resourceIds) == 0 || 
 		resource == "/oasis" || 
-		resource == "/blogs") {
+		resource == "/blogs" || 
+		resource == "/image_manager/recommendation") {
 		resourceIds = "0"
 
 	}
@@ -645,6 +646,8 @@ func Validate(c echo.Context) error {
 				rpData = append(rpData,resourcePermission{403, 0, false})
 			}
 		}
+	} else if resource == "/image_manager/recommendation" {
+		rpData = append(rpData,resourcePermission{200, 0, true})
 	} else {
 		rpData = append(rpData,resourcePermission{403, 0, false})
 	}
