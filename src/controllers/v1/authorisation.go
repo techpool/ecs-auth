@@ -792,7 +792,8 @@ func pathMapping(apiType string, c echo.Context) echo.Context {
 			resource == "/event-participate/list" || 
 			resource == "/event-participate/images" {
 			resource = "/event-participate"
-		} else if resource == "/event-participate/admin/list" {
+		} else if resource == "/event-participate/admin/list" ||
+			resource == "/event-participate/admin/publish" {
 			resource = "/event-participate/admin"
 		} else if resource == "/user/register" || 
 			resource == "/user/login" || 
