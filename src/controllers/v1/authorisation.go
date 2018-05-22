@@ -15,7 +15,7 @@ import (
 	utilServices "auth/src/utils/services"
 )
 
-var validResources = []string{"/pratilipis","/authors","/recommendation/pratilipis","/search/search","/search/trending_search","/follows","/userauthor/follow/list", "/userauthor/follow","/reviews","/userpratilipi","/userpratilipi/review","/userpratilipi/review/list","/userpratilipi/reviews","/comments","/comment","/comment/list","/vote","/votes", "/blog-scraper","/event","/event/list","/events","/event/pratilipi","/devices", "/notifications","/userpratilipi/library","/userpratilipi/library/list","/library", "/social-connect","/user/register","/user/login","/user/login/facebook","/user/login/google","/user/verification","/user/email","/user/passwordupdate","/user","/user/logout","/authors/recommendation","/pratilipi/content/batch","/pratilipi/content/chapter/add","/pratilipi/content/chapter/delete","/pratilipi/content/index","/pratilipi/content","/coverimage-recommendation","/template-engine","/growthjava","/report","/init","/users/v2.0/admins/users/*","/admins/users","/events/v2.0","/user/firebase-token","/oasis","/user_pratilipi/v2.0/user_pratilipis","/blogs","/content", "/event-participate","/image_manager/recommendation"}
+var validResources = []string{"/pratilipis","/authors","/recommendation/pratilipis","/search/search","/search/trending_search","/follows","/userauthor/follow/list", "/userauthor/follow","/reviews","/userpratilipi","/userpratilipi/review","/userpratilipi/review/list","/userpratilipi/reviews","/comments","/comment","/comment/list","/vote","/votes", "/blog-scraper","/event","/event/list","/events","/event/pratilipi","/devices", "/notifications","/userpratilipi/library","/userpratilipi/library/list","/library", "/social-connect","/user/register","/user/login","/user/login/facebook","/user/login/google","/user/verification","/user/email","/user/passwordupdate","/user","/user/logout","/authors/recommendation","/pratilipi/content/batch","/pratilipi/content/chapter/add","/pratilipi/content/chapter/delete","/pratilipi/content/index","/pratilipi/content","/coverimage-recommendation","/template-engine","/growthjava","/report","/init","/users/v2.0/admins/users/*","/admins/users","/events/v2.0","/user/firebase-token","/oasis","/user_pratilipi/v2.0/user_pratilipis","/blogs","/content", "/event-participate", "/event-participate/admin", "/image_manager/recommendation"}
 
 var validMethods = []string{"POST","GET","PUT","PATCH","DELETE"}
 
@@ -149,6 +149,7 @@ func Validate(c echo.Context) error {
 		resource == "/growthjava" || 
 		resource == "/template-engine" || 
 		resource == "/event-participate" ||
+		resource == "/event-participate/admin" ||
 		resource == "/coverimage-recommendation" || 
 		(resource == "/user" && method == "GET" && len(resourceIds) == 0 || 
 		resource == "/oasis" || 
@@ -495,6 +496,13 @@ func Validate(c echo.Context) error {
 		} else {
 			rpData = append(rpData,resourcePermission{200, 0, true})
 		}
+	} else if resource == "/event-participate/admin" {
+		log.Println("validating ", resource, userId)
+		if aee.IsAee(userId) {
+	                rpData = append(rpData,resourcePermission{200, 0, true})
+	        } else {
+		        rpData = append(rpData,resourcePermission{403, 0, false})
+	        }
 	} else if resource == "/template-engine" {
                 log.Println("validating ", resource, userId)
                 if userId == 0 {
@@ -784,6 +792,8 @@ func pathMapping(apiType string, c echo.Context) echo.Context {
 			resource == "/event-participate/list" || 
 			resource == "/event-participate/images" {
 			resource = "/event-participate"
+		} else if resource == "/event-participate/admin/list" {
+			resource = "/event-participate/admin"
 		} else if resource == "/user/register" || 
 			resource == "/user/login" || 
 			resource == "/user/login/facebook" || 
